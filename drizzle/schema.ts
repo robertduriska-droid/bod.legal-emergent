@@ -1,17 +1,10 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, json } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
- * Extend this file with additional tables as your product grows.
- * Columns use camelCase to match both database fields and generated types.
  */
 export const users = mysqlTable("users", {
-  /**
-   * Surrogate primary key. Auto-incremented numeric value managed by the database.
-   * Use this for relations between tables.
-   */
   id: int("id").autoincrement().primaryKey(),
-  /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
@@ -25,4 +18,95 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// TODO: Add your tables here
+/**
+ * Contracts table - stores uploaded contract metadata and status
+ */
+export const contracts = mysqlTable("contracts", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  /** Original filename */
+  fileName: varchar("fileName", { length: 512 }).notNull(),
+  /** MIME type: application/pdf or application/vnd.openxmlformats-officedocument.wordprocessingml.document */
+  mimeType: varchar("mimeType", { length: 128 }).notNull(),
+  /** S3 storage key */
+  fileKey: varchar("fileKey", { length: 512 }).notNull(),
+  /** Served URL path */
+  fileUrl: varchar("fileUrl", { length: 512 }).notNull(),
+  /** Number of pages (if detected) */
+  pageCount: int("pageCount"),
+  /** Selected pricing plan: basic, standard, premium, audit */
+  plan: mysqlEnum("plan", ["basic", "standard", "premium", "audit"]).notNull(),
+  /** Workflow status */
+  status: mysqlEnum("status", ["pending", "analyzing", "in_review", "completed"]).default("pending").notNull(),
+  /** Language for analysis output */
+  language: varchar("language", { length: 5 }).default("sk").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Contract = typeof contracts.$inferSelect;
+export type InsertContract = typeof contracts.$inferInsert;
+
+/**
+ * Clauses table - individual clause analysis results from AI
+ */
+export const clauses = mysqlTable("clauses", {
+  id: int("id").autoincrement().primaryKey(),
+  contractId: int("contractId").notNull(),
+  /** Clause number/order */
+  clauseNumber: int("clauseNumber").notNull(),
+  /** Clause title/heading */
+  title: varchar("title", { length: 512 }).notNull(),
+  /** Original clause text excerpt */
+  excerpt: text("excerpt"),
+  /** Risk level assigned by AI */
+  riskLevel: mysqlEnum("riskLevel", ["high", "medium", "low"]).notNull(),
+  /** AI finding/recommendation */
+  finding: text("finding").notNull(),
+  /** Suggested redline edit */
+  suggestedEdit: text("suggestedEdit"),
+  /** Legal basis citation (e.g. "§ 536 Obchodného zákonníka") */
+  legalBasis: text("legalBasis"),
+  /** URL to Slov-Lex or EUR-Lex */
+  legalSourceUrl: varchar("legalSourceUrl", { length: 512 }),
+  /** Risk category from taxonomy */
+  riskCategory: varchar("riskCategory", { length: 128 }),
+  /** Lawyer annotation (added during review) */
+  lawyerAnnotation: text("lawyerAnnotation"),
+  /** Whether lawyer approved this finding */
+  lawyerApproved: int("lawyerApproved").default(0),
+  /** Whether lawyer overrode the risk level */
+  overriddenRiskLevel: mysqlEnum("overriddenRiskLevel", ["high", "medium", "low"]),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Clause = typeof clauses.$inferSelect;
+export type InsertClause = typeof clauses.$inferInsert;
+
+/**
+ * Reports table - final lawyer-signed reports
+ */
+export const reports = mysqlTable("reports", {
+  id: int("id").autoincrement().primaryKey(),
+  contractId: int("contractId").notNull(),
+  /** Reviewing lawyer user ID */
+  lawyerId: int("lawyerId"),
+  /** Summary of the analysis */
+  summary: text("summary"),
+  /** Risk counts JSON: { high: number, medium: number, low: number } */
+  riskSummary: json("riskSummary"),
+  /** Overall recommendation */
+  recommendation: text("recommendation"),
+  /** Whether the report is signed by a lawyer */
+  isSigned: int("isSigned").default(0).notNull(),
+  /** Timestamp when lawyer signed */
+  signedAt: timestamp("signedAt"),
+  /** Lawyer's name for the signature */
+  lawyerName: varchar("lawyerName", { length: 256 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Report = typeof reports.$inferSelect;
+export type InsertReport = typeof reports.$inferInsert;

@@ -1,5 +1,27 @@
 {
   "version": "7",
   "dialect": "mysql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1783538190656,
+      "tag": "0000_jittery_daredevil",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1783538577238,
+      "tag": "0001_secret_silver_samurai",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1783539626332,
+      "tag": "0002_happy_madame_hydra",
+      "breakpoints": true
+    }
+  ]
 }

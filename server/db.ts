@@ -1,11 +1,10 @@
-import { eq } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, contracts, clauses, reports, InsertContract, InsertClause, InsertReport, Contract, Clause, Report } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
-// Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
@@ -17,6 +16,8 @@ export async function getDb() {
   }
   return _db;
 }
+
+// ─── User Helpers ───────────────────────────────────────────────────────────
 
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) {
@@ -85,8 +86,93 @@ export async function getUserByOpenId(openId: string) {
   }
 
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// ─── Contract Helpers ───────────────────────────────────────────────────────
+
+export async function createContract(data: InsertContract): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(contracts).values(data);
+  return Number(result[0].insertId);
+}
+
+export async function getContractById(id: number): Promise<Contract | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(contracts).where(eq(contracts.id, id)).limit(1);
+  return result[0];
+}
+
+export async function getContractsByUserId(userId: number): Promise<Contract[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db.select().from(contracts).where(eq(contracts.userId, userId)).orderBy(desc(contracts.createdAt));
+}
+
+export async function getAllContracts(): Promise<Contract[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db.select().from(contracts).orderBy(desc(contracts.createdAt));
+}
+
+export async function updateContractStatus(id: number, status: Contract["status"]): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(contracts).set({ status }).where(eq(contracts.id, id));
+}
+
+// ─── Clause Helpers ─────────────────────────────────────────────────────────
+
+export async function createClauses(data: InsertClause[]): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  if (data.length === 0) return;
+  await db.insert(clauses).values(data);
+}
+
+export async function getClausesByContractId(contractId: number): Promise<Clause[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db.select().from(clauses).where(eq(clauses.contractId, contractId));
+}
+
+export async function updateClause(id: number, data: Partial<Pick<Clause, "lawyerAnnotation" | "lawyerApproved" | "overriddenRiskLevel">>): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(clauses).set(data).where(eq(clauses.id, id));
+}
+
+// ─── Report Helpers ─────────────────────────────────────────────────────────
+
+export async function createReport(data: InsertReport): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(reports).values(data);
+  return Number(result[0].insertId);
+}
+
+export async function getReportByContractId(contractId: number): Promise<Report | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(reports).where(eq(reports.contractId, contractId)).limit(1);
+  return result[0];
+}
+
+export async function updateReport(id: number, data: Partial<Pick<Report, "summary" | "riskSummary" | "recommendation" | "isSigned" | "signedAt" | "lawyerName" | "lawyerId">>): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(reports).set(data).where(eq(reports.id, id));
+}
