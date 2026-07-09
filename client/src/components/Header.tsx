@@ -3,6 +3,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
 import { Link, useLocation } from "wouter";
 import { Menu, X, Globe } from "lucide-react";
+import NotificationBell from "@/components/NotificationBell";
 import { useState } from "react";
 import {
   DropdownMenu,
@@ -56,6 +57,7 @@ export default function Header() {
 
           {isAuthenticated ? (
             <>
+              <NotificationBell />
               <Link href="/dashboard">
                 <Button variant="ghost" size="sm" className="font-sans text-[13px] uppercase tracking-wide">Moje zmluvy</Button>
               </Link>

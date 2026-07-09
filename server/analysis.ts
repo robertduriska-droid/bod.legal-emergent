@@ -1,5 +1,5 @@
 import { ENV } from "./_core/env";
-import { getContractById, createClauses, createReport, updateContractStatus } from "./db";
+import { getContractById, createClauses, createReport, updateContractStatus, createNotification } from "./db";
 import { storageGetSignedUrl } from "./storage";
 import { LEGAL_SOURCES, RISK_CATEGORIES } from "@shared/types";
 import type { ClauseAnalysis, AnalysisResult } from "@shared/types";
@@ -322,6 +322,17 @@ export async function analyzeContract(contractId: number): Promise<void> {
     }
 
     console.log(`[Analysis] Contract ${contractId} analysis complete. Status: ${plan === "basic" ? "completed" : "in_review"}`);
+
+    // Create in-app notification for the user
+    await createNotification({
+      userId: contract.userId,
+      title: plan === "basic" ? "Analýza dokončená" : "Analýza dokončená — čaká na kontrolu",
+      message: plan === "basic"
+        ? `Vaša zmluva "${contract.fileName}" bola analyzovaná. Pozrite si report.`
+        : `Vaša zmluva "${contract.fileName}" bola analyzovaná. Čaká na kontrolu advokátom.`,
+      type: "contract_completed",
+      contractId: contractId,
+    }).catch(err => console.error("[Notification] Failed to create:", err));
   } catch (error: any) {
     console.error(`[Analysis] Failed for contract ${contractId}:`, error.message || error);
     await updateContractStatus(contractId, "pending");

@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import Stripe from "stripe";
 import { ENV } from "./_core/env";
-import { updateContractStatus, getContractById } from "./db";
+import { updateContractStatus, getContractById, createNotification } from "./db";
 import { analyzeContract } from "./analysis";
 import { notifyOwner } from "./_core/notification";
 
@@ -54,6 +54,15 @@ export function registerStripeWebhook(app: express.Express) {
                   title: "Platba prijatá - nová zmluva",
                   content: `Platba za zmluvu "${contract.fileName}" (plán: ${contract.plan}) bola úspešne prijatá. Analýza sa spúšťa automaticky.`,
                 }).catch(err => console.error("[Notification] Failed:", err));
+
+                // Notify user about payment received
+                await createNotification({
+                  userId: contract.userId,
+                  title: "Platba prijatá",
+                  message: `Platba za analýzu zmluvy "${contract.fileName}" bola úspešne spracovaná. Analýza sa začína.`,
+                  type: "payment_received",
+                  contractId: contract.id,
+                }).catch(err => console.error("[Notification] Failed to create:", err));
 
                 // Start AI analysis
                 analyzeContract(parseInt(contractId)).catch(err =>

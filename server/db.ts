@@ -1,6 +1,6 @@
 import { eq, desc, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, contracts, clauses, reports, InsertContract, InsertClause, InsertReport, Contract, Clause, Report } from "../drizzle/schema";
+import { InsertUser, users, contracts, clauses, reports, notifications, InsertContract, InsertClause, InsertReport, InsertNotification, Contract, Clause, Report, Notification } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -175,4 +175,49 @@ export async function updateReport(id: number, data: Partial<Pick<Report, "summa
   if (!db) throw new Error("Database not available");
 
   await db.update(reports).set(data).where(eq(reports.id, id));
+}
+
+// ─── Notification Helpers ──────────────────────────────────────────────────
+
+export async function createNotification(data: InsertNotification): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(notifications).values(data);
+  return Number(result[0].insertId);
+}
+
+export async function getNotificationsByUserId(userId: number, limit = 20): Promise<Notification[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db.select().from(notifications)
+    .where(eq(notifications.userId, userId))
+    .orderBy(desc(notifications.createdAt))
+    .limit(limit);
+}
+
+export async function getUnreadNotificationCount(userId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const result = await db.select().from(notifications)
+    .where(and(eq(notifications.userId, userId), eq(notifications.isRead, 0)));
+  return result.length;
+}
+
+export async function markNotificationRead(id: number, userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(notifications).set({ isRead: 1 })
+    .where(and(eq(notifications.id, id), eq(notifications.userId, userId)));
+}
+
+export async function markAllNotificationsRead(userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(notifications).set({ isRead: 1 })
+    .where(eq(notifications.userId, userId));
 }

@@ -15,6 +15,11 @@ import {
   createReport,
   getReportByContractId,
   updateReport,
+  createNotification,
+  getNotificationsByUserId,
+  getUnreadNotificationCount,
+  markNotificationRead,
+  markAllNotificationsRead,
 } from "./db";
 import { storagePut } from "./storage";
 import { analyzeContract } from "./analysis";
@@ -77,6 +82,15 @@ export const appRouter = router({
           title: "Nová zmluva na kontrolu",
           content: `Používateľ ${ctx.user.name || ctx.user.email || "ID:" + ctx.user.id} nahral zmluvu "${input.fileName}" (plán: ${input.plan}). Zmluva čaká na spracovanie.`,
         }).catch(err => console.error("[Notification] Failed:", err));
+
+        // In-app notification for user
+        await createNotification({
+          userId: ctx.user.id,
+          title: "Zmluva odoslaná",
+          message: `Vaša zmluva "${input.fileName}" bola úspešne nahraná a čaká na spracovanie.`,
+          type: "contract_submitted",
+          contractId: contractId,
+        }).catch(err => console.error("[Notification] Failed to create:", err));
 
         // Start AI analysis in background (non-blocking)
         analyzeContract(contractId).catch(err =>
@@ -196,6 +210,18 @@ export const appRouter = router({
         // Mark contract as completed
         await updateContractStatus(input.contractId, "completed");
 
+        // Notify user that their report is finalized and lawyer-signed
+        const signedContract = await getContractById(input.contractId);
+        if (signedContract) {
+          await createNotification({
+            userId: signedContract.userId,
+            title: "Report podpísaný advokátom",
+            message: `Vaša zmluva "${signedContract.fileName}" bola skontrolovaná a podpísaná advokátom. Report je pripravený na stiahnutie.`,
+            type: "contract_completed",
+            contractId: input.contractId,
+          }).catch(err => console.error("[Notification] Failed to create:", err));
+        }
+
         return { success: true };
       }),
 
@@ -291,6 +317,33 @@ export const appRouter = router({
 
         return { paid: false };
       }),
+  }),
+
+  // ─── Notifications ──────────────────────────────────────────────────────
+  notifications: router({
+    /** Get user's notifications */
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return getNotificationsByUserId(ctx.user.id);
+    }),
+
+    /** Get unread count */
+    unreadCount: protectedProcedure.query(async ({ ctx }) => {
+      return getUnreadNotificationCount(ctx.user.id);
+    }),
+
+    /** Mark a single notification as read */
+    markRead: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await markNotificationRead(input.id, ctx.user.id);
+        return { success: true };
+      }),
+
+    /** Mark all notifications as read */
+    markAllRead: protectedProcedure.mutation(async ({ ctx }) => {
+      await markAllNotificationsRead(ctx.user.id);
+      return { success: true };
+    }),
   }),
 
   // ─── Reference Data ─────────────────────────────────────────────────────

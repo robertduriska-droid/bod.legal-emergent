@@ -81,9 +81,11 @@
 - [x] Payment status display on dashboard
 
 ## Custom Notifications
-- [ ] In-app notification system (bell icon in nav)
-- [ ] Notify user when report is completed
-- [ ] Notify owner/lawyer when new contract submitted
+- [x] In-app notification system (bell icon in nav)
+- [x] Notify user when report is completed
+- [x] Notify owner/lawyer when new contract submitted
+- [x] Notify user when payment is received
+- [x] Notify user when contract is submitted
 
 ## Contact Info Update
 - [x] Update email to robert.duriska@bod.legal

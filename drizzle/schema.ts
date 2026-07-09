@@ -110,3 +110,25 @@ export const reports = mysqlTable("reports", {
 
 export type Report = typeof reports.$inferSelect;
 export type InsertReport = typeof reports.$inferInsert;
+
+/**
+ * Notifications table - in-app notifications for users
+ */
+export const notifications = mysqlTable("notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  /** Notification title */
+  title: varchar("title", { length: 512 }).notNull(),
+  /** Notification message body */
+  message: text("message").notNull(),
+  /** Type: contract_completed, contract_submitted, payment_received, system */
+  type: varchar("type", { length: 64 }).default("system").notNull(),
+  /** Related contract ID (if applicable) */
+  contractId: int("contractId"),
+  /** Whether the user has read this notification */
+  isRead: int("isRead").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;
