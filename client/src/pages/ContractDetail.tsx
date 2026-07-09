@@ -6,7 +6,8 @@ import { trpc } from "@/lib/trpc";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Link, useParams } from "wouter";
-import { FileText, ArrowLeft, Loader2, AlertTriangle, AlertCircle, CheckCircle, ExternalLink } from "lucide-react";
+import { FileText, ArrowLeft, Loader2, AlertTriangle, AlertCircle, CheckCircle, ExternalLink, CreditCard } from "lucide-react";
+import { toast } from "sonner";
 
 const RISK_COLORS = {
   high: "bg-red-100 text-red-800 border-red-200",
@@ -28,6 +29,23 @@ export default function ContractDetail() {
 
   const retryMutation = trpc.contracts.retryAnalysis.useMutation({
     onSuccess: () => refetch(),
+  });
+
+  const paymentStatus = trpc.payments.getStatus.useQuery(
+    { contractId },
+    { enabled: isAuthenticated && contractId > 0 }
+  );
+
+  const createCheckout = trpc.payments.createCheckout.useMutation({
+    onSuccess: (data) => {
+      if (data.checkoutUrl) {
+        toast.success("Presmerovávame na platbu...");
+        window.open(data.checkoutUrl, "_blank");
+      }
+    },
+    onError: (error) => {
+      toast.error("Chyba pri vytváraní platby: " + error.message);
+    },
   });
 
   if (isLoading) {
@@ -85,8 +103,29 @@ export default function ContractDetail() {
             )}
           </div>
 
-          {/* Status */}
-          {(contract.status === "pending" || contract.status === "analyzing") && (
+          {/* Payment Required */}
+          {contract.status === "pending" && paymentStatus.data && !paymentStatus.data.paid && !paymentStatus.data?.isAudit && (
+            <Card className="mb-8 border-primary/20 bg-primary/[0.02]">
+              <CardContent className="p-6 text-center">
+                <CreditCard className="h-8 w-8 text-primary mx-auto mb-3" />
+                <h3 className="font-sans text-lg font-semibold mb-1">Čaká na platbu</h3>
+                <p className="text-sm text-muted-foreground font-sans mb-4">
+                  Analýza sa spustí automaticky po úspešnej platbe.
+                </p>
+                <Button
+                  className="font-sans"
+                  onClick={() => createCheckout.mutate({ contractId: contract.id })}
+                  disabled={createCheckout.isPending}
+                >
+                  {createCheckout.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CreditCard className="h-4 w-4 mr-2" />}
+                  Zaplatiť a spustiť analýzu
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Status - analyzing or paid pending */}
+          {(contract.status === "analyzing" || (contract.status === "pending" && paymentStatus.data?.paid)) && (
             <Card className="mb-8 border-primary/20 bg-primary/[0.02]">
               <CardContent className="p-6 text-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-3" />

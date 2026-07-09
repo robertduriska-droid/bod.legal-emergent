@@ -20,6 +20,9 @@ import { storagePut } from "./storage";
 import { analyzeContract } from "./analysis";
 import { notifyOwner } from "./_core/notification";
 import { LEGAL_SOURCES, RISK_CATEGORIES, PRICING_PLANS } from "@shared/types";
+import Stripe from "stripe";
+import { ENV } from "./_core/env";
+import { STRIPE_PRODUCTS } from "./stripe-products";
 
 export const appRouter = router({
   system: systemRouter,
@@ -205,6 +208,88 @@ export const appRouter = router({
           console.error(`[Analysis] Re-analysis failed for contract ${input.contractId}:`, err)
         );
         return { success: true };
+      }),
+  }),
+
+  // ─── Stripe Payment Procedures ─────────────────────────────────────────
+  payments: router({
+    /** Create a Stripe checkout session for a contract */
+    createCheckout: protectedProcedure
+      .input(z.object({
+        contractId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const contract = await getContractById(input.contractId);
+        if (!contract || contract.userId !== ctx.user.id) {
+          throw new Error("Contract not found");
+        }
+
+        // Audit plan is custom-priced, not available for online checkout
+        if (contract.plan === "audit") {
+          throw new Error("Audit plan requires individual pricing. Please contact us.");
+        }
+
+        const product = STRIPE_PRODUCTS[contract.plan as keyof typeof STRIPE_PRODUCTS];
+        if (!product) {
+          throw new Error(`Invalid plan: ${contract.plan}`);
+        }
+
+        const stripe = new Stripe(ENV.stripeSecretKey);
+        const origin = ctx.req.headers.origin || "https://bodlegal-mqcbxxfs.manus.space";
+
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ["card"],
+          mode: "payment",
+          allow_promotion_codes: true,
+          customer_email: ctx.user.email || undefined,
+          client_reference_id: ctx.user.id.toString(),
+          metadata: {
+            user_id: ctx.user.id.toString(),
+            contract_id: input.contractId.toString(),
+            plan: contract.plan,
+            customer_email: ctx.user.email || "",
+            customer_name: ctx.user.name || "",
+          },
+          line_items: [
+            {
+              price_data: {
+                currency: product.currency,
+                unit_amount: product.priceAmount,
+                product_data: {
+                  name: product.name,
+                  description: product.description,
+                },
+              },
+              quantity: 1,
+            },
+          ],
+          success_url: `${origin}/contract/${input.contractId}?payment=success`,
+          cancel_url: `${origin}/contract/${input.contractId}?payment=cancelled`,
+        });
+
+        return { checkoutUrl: session.url };
+      }),
+
+    /** Get payment status for a contract (checks Stripe directly) */
+    getStatus: protectedProcedure
+      .input(z.object({ contractId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const contract = await getContractById(input.contractId);
+        if (!contract || contract.userId !== ctx.user.id) {
+          return { paid: false };
+        }
+
+        // If contract is already analyzing or completed, it was paid
+        if (contract.status !== "pending") {
+          return { paid: true };
+        }
+
+        // For audit plan, payment is handled offline
+        if (contract.plan === "audit") {
+          return { paid: false, isAudit: true };
+        }
+
+        return { paid: false };
       }),
   }),
 

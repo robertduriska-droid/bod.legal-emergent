@@ -41,7 +41,9 @@ export default function Footer() {
               <li><Link href="/about" className="hover:text-hero-text transition-colors">O nás</Link></li>
               <li>Kilian Legal s.r.o.</li>
               <li>IČO: 56 153 406</li>
-              <li>info@bod.legal</li>
+              <li><a href="mailto:robert.duriska@bod.legal" className="hover:text-hero-text transition-colors">robert.duriska@bod.legal</a></li>
+              <li><a href="tel:+421917333692" className="hover:text-hero-text transition-colors">+421 917 333 692</a></li>
+              <li><a href="https://wa.me/421905329200" target="_blank" rel="noopener noreferrer" className="hover:text-hero-text transition-colors">WhatsApp: +421 905 329 200</a></li>
             </ul>
           </div>
         </div>

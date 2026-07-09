@@ -5,9 +5,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useLocation, useSearch } from "wouter";
-import { Upload as UploadIcon, FileText, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { Upload as UploadIcon, FileText, CheckCircle, AlertCircle, Loader2, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { PRICING_PLANS } from "@shared/types";
 
@@ -25,11 +25,37 @@ export default function Upload() {
 
   const uploadMutation = trpc.contracts.upload.useMutation({
     onSuccess: (data) => {
-      toast.success("Zmluva bola úspešne nahratá!");
-      navigate(`/contract/${data.contractId}`);
+      // After upload, redirect to Stripe checkout for paid plans
+      if (selectedPlan === "audit") {
+        toast.success("Zmluva bola nahratá! Budeme vás kontaktovať ohľadom ceny.");
+        navigate(`/contract/${data.contractId}`);
+      } else {
+        // Create Stripe checkout session
+        toast.info("Zmluva nahratá. Presmerovávame na platbu...");
+        createCheckout.mutate({ contractId: data.contractId });
+      }
     },
     onError: (error) => {
       toast.error("Chyba pri nahrávaní: " + error.message);
+      setUploading(false);
+    },
+  });
+
+  const createCheckout = trpc.payments.createCheckout.useMutation({
+    onSuccess: (data) => {
+      if (data.checkoutUrl) {
+        toast.success("Presmerovávame na platbu...");
+        window.open(data.checkoutUrl, "_blank");
+        // Also navigate to the contract page so user can see status
+        const contractId = uploadMutation.data?.contractId;
+        if (contractId) {
+          navigate(`/contract/${contractId}`);
+        }
+      }
+      setUploading(false);
+    },
+    onError: (error) => {
+      toast.error("Chyba pri vytváraní platby: " + error.message);
       setUploading(false);
     },
   });
@@ -88,6 +114,10 @@ export default function Upload() {
       </div>
     );
   }
+
+  // Get price for selected plan
+  const selectedPlanData = PRICING_PLANS.find(p => p.id === selectedPlan);
+  const isAuditPlan = selectedPlan === "audit";
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -185,28 +215,45 @@ export default function Upload() {
           </div>
 
           {/* Submit */}
-          <div className="flex items-center gap-4">
-            <Button
-              size="lg"
-              className="font-sans"
-              disabled={!file || !selectedPlan || uploading}
-              onClick={handleSubmit}
-            >
-              {uploading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Nahrávam...
-                </>
-              ) : (
-                <>
-                  <UploadIcon className="mr-2 h-4 w-4" />
-                  Odoslať na kontrolu
-                </>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-4">
+              <Button
+                size="lg"
+                className="font-sans"
+                disabled={!file || !selectedPlan || uploading}
+                onClick={handleSubmit}
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {createCheckout.isPending ? "Vytváram platbu..." : "Nahrávam..."}
+                  </>
+                ) : isAuditPlan ? (
+                  <>
+                    <UploadIcon className="mr-2 h-4 w-4" />
+                    Odoslať na posúdenie
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    Nahrať a zaplatiť {selectedPlanData?.price}
+                  </>
+                )}
+              </Button>
+              {!file && (
+                <p className="text-sm text-muted-foreground font-sans flex items-center gap-1">
+                  <AlertCircle className="h-4 w-4" /> Najprv nahrajte súbor
+                </p>
               )}
-            </Button>
-            {!file && (
-              <p className="text-sm text-muted-foreground font-sans flex items-center gap-1">
-                <AlertCircle className="h-4 w-4" /> Najprv nahrajte súbor
+            </div>
+            {!isAuditPlan && (
+              <p className="text-xs text-muted-foreground font-sans">
+                Po nahratí budete presmerovaní na bezpečnú platobnú bránu Stripe. Analýza sa spustí automaticky po úspešnej platbe.
+              </p>
+            )}
+            {isAuditPlan && (
+              <p className="text-xs text-muted-foreground font-sans">
+                Legal Audit je individuálne nacenený. Po nahratí vás budeme kontaktovať s cenovou ponukou.
               </p>
             )}
           </div>

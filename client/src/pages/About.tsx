@@ -72,11 +72,19 @@ export default function About() {
                   </tr>
                   <tr className="border-b">
                     <td className="py-2 font-medium">E-mail</td>
-                    <td className="py-2 text-muted-foreground">info@bod.legal</td>
+                    <td className="py-2 text-muted-foreground"><a href="mailto:robert.duriska@bod.legal" className="text-primary hover:underline">robert.duriska@bod.legal</a></td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-2 font-medium">Telefón</td>
+                    <td className="py-2 text-muted-foreground"><a href="tel:+421917333692" className="text-primary hover:underline">+421 917 333 692</a></td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-2 font-medium">WhatsApp</td>
+                    <td className="py-2 text-muted-foreground"><a href="https://wa.me/421905329200" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">+421 905 329 200</a></td>
                   </tr>
                   <tr>
                     <td className="py-2 font-medium">Web</td>
-                    <td className="py-2 text-muted-foreground">bod.legal</td>
+                    <td className="py-2 text-muted-foreground"><a href="https://bod.legal" className="text-primary hover:underline">bod.legal</a></td>
                   </tr>
                 </tbody>
               </table>

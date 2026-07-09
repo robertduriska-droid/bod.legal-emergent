@@ -1,13 +1,68 @@
-import { invokeLLM } from "./_core/llm";
-import { getContractById, createClauses, createReport, updateContractStatus, getClausesByContractId } from "./db";
+import { ENV } from "./_core/env";
+import { getContractById, createClauses, createReport, updateContractStatus } from "./db";
 import { storageGetSignedUrl } from "./storage";
 import { LEGAL_SOURCES, RISK_CATEGORIES } from "@shared/types";
 import type { ClauseAnalysis, AnalysisResult } from "@shared/types";
 import axios from "axios";
 
 /**
+ * Raw LLM call that supports max_completion_tokens for GPT models.
+ * The built-in invokeLLM uses max_tokens which causes issues with GPT reasoning models.
+ */
+async function callLLM(params: {
+  model: string;
+  max_completion_tokens: number;
+  messages: any[];
+  response_format?: any;
+  reasoning?: any;
+}) {
+  const url = `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`;
+  const payload: Record<string, unknown> = {
+    model: params.model,
+    max_completion_tokens: params.max_completion_tokens,
+    messages: params.messages,
+  };
+  if (params.response_format) payload.response_format = params.response_format;
+  if (params.reasoning) payload.reasoning = params.reasoning;
+
+  const MAX_RETRIES = 3;
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${ENV.forgeApiKey}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        if (attempt < MAX_RETRIES) {
+          console.warn(`[Analysis] LLM retry ${attempt + 1}/${MAX_RETRIES} after status ${response.status}: ${errText.substring(0, 200)}`);
+          await new Promise(r => setTimeout(r, 3000 * (attempt + 1)));
+          continue;
+        }
+        throw new Error(`LLM request failed: ${response.status} - ${errText.substring(0, 500)}`);
+      }
+
+      return await response.json() as any;
+    } catch (err: any) {
+      lastError = err;
+      if (attempt < MAX_RETRIES) {
+        console.warn(`[Analysis] LLM retry ${attempt + 1}/${MAX_RETRIES} after error: ${err.message}`);
+        await new Promise(r => setTimeout(r, 3000 * (attempt + 1)));
+        continue;
+      }
+    }
+  }
+  throw lastError || new Error("LLM request failed after retries");
+}
+
+/**
  * Extract text from a DOCX file by downloading and parsing the XML content.
- * DOCX is a ZIP archive containing word/document.xml with the main text.
  */
 async function extractDocxText(fileUrl: string): Promise<string> {
   const { default: JSZip } = await import("jszip");
@@ -15,134 +70,103 @@ async function extractDocxText(fileUrl: string): Promise<string> {
   const zip = await JSZip.loadAsync(response.data);
   const docXml = await zip.file("word/document.xml")?.async("string");
   if (!docXml) throw new Error("Invalid DOCX: no word/document.xml found");
-  // Strip XML tags and extract text content
   const text = docXml
-    .replace(/<w:p[^>]*>/g, "\n") // paragraph breaks
-    .replace(/<w:tab\/>/g, "\t") // tabs
-    .replace(/<[^>]+>/g, "") // strip all XML tags
+    .replace(/<w:p[^>]*>/g, "\n")
+    .replace(/<w:tab\/>/g, "\t")
+    .replace(/<[^>]+>/g, "")
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
     .replace(/&apos;/g, "'")
-    .replace(/\n{3,}/g, "\n\n") // collapse multiple newlines
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
   return text;
 }
 
 /**
  * System prompt for Slovak contract analysis grounded in Slov-Lex legal norms.
- * The AI must cite specific legal instruments and sections.
  */
 const SYSTEM_PROMPT = `Si právny AI asistent pre bod.legal. Analyzuješ zmluvy podľa slovenského a európskeho práva.
 
-TVOJE ÚLOHY:
-1. Identifikuj typ zmluvy (public_crz, framework_services, lease_real_estate, financing_debt, corporate_governance, data_privacy_security, purchase_supply, works_services, advisory_consulting, settlement_coordination, employment_hr, other).
-2. Analyzuj zmluvu klauzulu po klauzule.
-3. Pre každú klauzulu urči úroveň rizika (high, medium, low).
-4. Cituj konkrétny právny predpis a paragraf (napr. "§ 536 Obchodného zákonníka").
-5. Navrhni konkrétne úpravy textu (redline).
-6. Identifikuj chýbajúce ustanovenia.
+ÚLOHY:
+1. Identifikuj typ zmluvy.
+2. Analyzuj max 8 najdôležitejších klauzúl (zameraj sa na riziká).
+3. Pre každú klauzulu urči riziko (high/medium/low), nález, a právny základ.
+4. Cituj konkrétny zákon a paragraf.
 
-PRÁVNE ZDROJE (VŽDY CITUJ):
-- Občiansky zákonník (zákon č. 40/1964 Zb.) - https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/1964/40/
-- Obchodný zákonník (zákon č. 513/1991 Zb.) - https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/1991/513/
-- Zákon o verejnom obstarávaní (zákon č. 343/2015 Z. z.) - https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/2015/343/
-- Zákon o ochrane osobných údajov (zákon č. 18/2018 Z. z.) - https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/2018/18/
-- Zákon o ochrane spotrebiteľa (zákon č. 108/2024 Z. z.) - https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/2024/108/
-- GDPR (nariadenie (EÚ) 2016/679) - https://eur-lex.europa.eu/eli/reg/2016/679/oj/eng
-- AI Act (nariadenie (EÚ) 2024/1689) - https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng
-- eIDAS (nariadenie (EÚ) č. 910/2014) - https://eur-lex.europa.eu/eli/reg/2014/910/oj/eng
-
-KATEGÓRIE RIZÍK:
-${RISK_CATEGORIES.map(c => `- ${c.id} (${c.severity}): ${c.labelSk} — kontroly: ${c.checks.join(", ")}`).join("\n")}
+PRÁVNE ZDROJE:
+- Občiansky zákonník (40/1964 Zb.) - https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/1964/40/
+- Obchodný zákonník (513/1991 Zb.) - https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/1991/513/
+- Zákon o verejnom obstarávaní (343/2015 Z.z.) - https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/2015/343/
+- Zákon o ochrane osobných údajov (18/2018 Z.z.) - https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/2018/18/
+- GDPR (2016/679) - https://eur-lex.europa.eu/eli/reg/2016/679/oj/eng
 
 PRAVIDLÁ:
-- Vždy cituj konkrétny právny predpis a paragraf.
-- Ak nie je k dispozícii oficiálny zdroj, uveď to.
-- Nikdy nevymýšľaj judikatúru ani zákonné ustanovenia.
-- Preferuj oficiálny slovenský text pre slovenské zákony.
 - Odpovede píš v slovenčine.
-- Každý nález musí obsahovať konkrétny odkaz na Slov-Lex alebo EUR-Lex.`;
+- Vždy cituj konkrétny paragraf.
+- Max 8 klauzúl v odpovedi.
+- Buď stručný ale presný.`;
 
 /**
  * Run AI-powered contract analysis with Slov-Lex legal grounding.
- * This function is called asynchronously after contract upload.
  */
 export async function analyzeContract(contractId: number): Promise<void> {
   const contract = await getContractById(contractId);
   if (!contract) throw new Error(`Contract ${contractId} not found`);
 
-  // Update status to analyzing
   await updateContractStatus(contractId, "analyzing");
+  console.log(`[Analysis] Starting analysis for contract ${contractId} (${contract.fileName})`);
 
   try {
     // Get signed URL for the file
     const fileUrl = await storageGetSignedUrl(contract.fileKey);
 
-    // Build user content based on file type
+    // Extract text from the document
     const isPdf = contract.mimeType.includes("pdf");
-    let userContent: any[];
+    let contractText: string = "";
 
+    if (!isPdf) {
+      contractText = await extractDocxText(fileUrl);
+      console.log(`[Analysis] Extracted ${contractText.length} chars from DOCX`);
+    }
+
+    // Build user message content
+    let userContent: any[];
     if (isPdf) {
-      // PDF: send file URL directly to LLM
+      // For PDF, use file_url
       userContent = [
         {
           type: "file_url",
-          file_url: {
-            url: fileUrl,
-            mime_type: "application/pdf" as any,
-          },
+          file_url: { url: fileUrl, mime_type: "application/pdf" },
         },
         {
           type: "text",
-          text: `Analyzuj túto zmluvu klauzulu po klauzule.`,
+          text: "Analyzuj túto zmluvu. Identifikuj max 8 najrizikovejších klauzúl. Vráť JSON.",
         },
       ];
     } else {
-      // DOCX: extract text and send as text content
-      const docxText = await extractDocxText(fileUrl);
+      // For DOCX, send extracted text (truncated to prevent token overflow)
+      const maxChars = 8000;
+      const truncated = contractText.length > maxChars
+        ? contractText.substring(0, maxChars) + "\n\n[... zvyšok textu skrátený ...]"
+        : contractText;
       userContent = [
         {
           type: "text",
-          text: `Nasleduje text zmluvy extrahovaný z DOCX súboru:\n\n---\n${docxText}\n---\n\nAnalyzuj túto zmluvu klauzulu po klauzule.`,
+          text: `Text zmluvy:\n\n${truncated}\n\nAnalyzuj túto zmluvu. Identifikuj max 8 najrizikovejších klauzúl. Vráť JSON.`,
         },
       ];
     }
 
-    // Call LLM with the contract content and structured output
-    const response = await invokeLLM({
-      model: "claude-sonnet-4-6",
-      max_tokens: 16000,
+    // Call LLM with structured output
+    const response = await callLLM({
+      model: "gpt-5-mini",
+      max_completion_tokens: 8000,
+      reasoning: { effort: "low" },
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
-        {
-          role: "user",
-          content: [
-            ...userContent,
-            {
-              type: "text",
-              text: ` Pre každú klauzulu identifikuj:
-1. Názov klauzuly
-2. Výňatok z textu
-3. Úroveň rizika (high/medium/low)
-4. Nález a odporúčanie
-5. Navrhovanú úpravu textu (redline)
-6. Právny základ (konkrétny paragraf a zákon zo Slov-Lex)
-7. URL na Slov-Lex alebo EUR-Lex
-8. Kategóriu rizika z taxonómie
-
-Na záver uveď:
-- Typ zmluvy
-- Celkové zhrnutie
-- Odporúčanie
-- Počet rizík podľa úrovne
-- Aplikovateľné právne predpisy
-
-Odpoveď vráť ako JSON.`,
-            },
-          ],
-        },
+        { role: "user", content: userContent },
       ],
       response_format: {
         type: "json_schema",
@@ -152,10 +176,7 @@ Odpoveď vráť ako JSON.`,
           schema: {
             type: "object",
             properties: {
-              contractType: {
-                type: "string",
-                description: "Type of contract from taxonomy",
-              },
+              contractType: { type: "string", description: "Typ zmluvy" },
               clauses: {
                 type: "array",
                 items: {
@@ -209,73 +230,79 @@ Odpoveď vráť ako JSON.`,
       },
     });
 
-    // Parse the structured response with robust JSON extraction
+    // Parse the response
     const rawContent = response.choices?.[0]?.message?.content;
-    if (!rawContent) throw new Error("Empty LLM response");
+    const finishReason = response.choices?.[0]?.finish_reason;
+    
+    console.log(`[Analysis] LLM response received. finish_reason: ${finishReason}, content length: ${rawContent?.length || 0}`);
+    
+    if (!rawContent) {
+      throw new Error(`Empty LLM response. finish_reason: ${finishReason}. Usage: ${JSON.stringify(response.usage)}`);
+    }
 
     const content = typeof rawContent === "string" ? rawContent : JSON.stringify(rawContent);
     let analysis: AnalysisResult;
+    
     try {
       analysis = JSON.parse(content);
     } catch (parseErr) {
-      // Try to extract JSON from markdown code blocks or partial responses
+      // Try to extract JSON from the response
       const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) || content.match(/(\{[\s\S]*\})/);
       if (jsonMatch && jsonMatch[1]) {
         try {
           analysis = JSON.parse(jsonMatch[1].trim());
         } catch {
-          // Last resort: try to repair truncated JSON by closing open structures
+          // Try to repair truncated JSON
           let repaired = jsonMatch[1].trim();
-          const openBraces = (repaired.match(/\{/g) || []).length;
-          const closeBraces = (repaired.match(/\}/g) || []).length;
-          const openBrackets = (repaired.match(/\[/g) || []).length;
-          const closeBrackets = (repaired.match(/\]/g) || []).length;
-          // Remove trailing incomplete string/value
+          // Remove trailing incomplete entries
+          repaired = repaired.replace(/,\s*\{[^}]*$/, "");
           repaired = repaired.replace(/,\s*"[^"]*$/, "");
           repaired = repaired.replace(/,\s*$/, "");
-          // Close open arrays and objects
-          for (let i = 0; i < openBrackets - closeBrackets; i++) repaired += "]";
-          for (let i = 0; i < openBraces - closeBraces; i++) repaired += "}";
+          // Close open structures
+          const openBrackets = (repaired.match(/\[/g) || []).length - (repaired.match(/\]/g) || []).length;
+          const openBraces = (repaired.match(/\{/g) || []).length - (repaired.match(/\}/g) || []).length;
+          for (let i = 0; i < openBrackets; i++) repaired += "]";
+          for (let i = 0; i < openBraces; i++) repaired += "}";
           try {
             analysis = JSON.parse(repaired);
           } catch (finalErr) {
-            console.error("[Analysis] JSON repair failed. Raw content (first 500 chars):", content.substring(0, 500));
-            throw new Error(`Failed to parse LLM response as JSON: ${(parseErr as Error).message}`);
+            console.error("[Analysis] JSON repair failed. Content (first 300):", content.substring(0, 300));
+            throw new Error(`JSON parse failed: ${(parseErr as Error).message}`);
           }
         }
       } else {
-        console.error("[Analysis] No JSON found in response. Raw content (first 500 chars):", content.substring(0, 500));
-        throw new Error(`Failed to parse LLM response as JSON: ${(parseErr as Error).message}`);
+        console.error("[Analysis] No JSON in response. Content (first 300):", content.substring(0, 300));
+        throw new Error(`JSON parse failed: ${(parseErr as Error).message}`);
       }
     }
 
-    // Validate required fields exist
-    if (!analysis.clauses || !Array.isArray(analysis.clauses)) {
-      analysis.clauses = [];
-    }
-    if (!analysis.riskSummary) {
-      analysis.riskSummary = { high: 0, medium: 0, low: 0 };
-    }
+    // Validate and fill defaults
+    if (!analysis.clauses || !Array.isArray(analysis.clauses)) analysis.clauses = [];
+    if (!analysis.riskSummary) analysis.riskSummary = { high: 0, medium: 0, low: 0 };
     if (!analysis.summary) analysis.summary = "Analýza dokončená.";
     if (!analysis.recommendation) analysis.recommendation = "Odporúčame konzultáciu s advokátom.";
     if (!analysis.contractType) analysis.contractType = "other";
     if (!analysis.applicableLegalSources) analysis.applicableLegalSources = [];
 
+    console.log(`[Analysis] Parsed ${analysis.clauses.length} clauses. Risk: H=${analysis.riskSummary.high} M=${analysis.riskSummary.medium} L=${analysis.riskSummary.low}`);
+
     // Save clauses to database
     const clauseRecords = analysis.clauses.map((c: ClauseAnalysis) => ({
       contractId,
-      clauseNumber: c.clauseNumber,
-      title: c.title,
+      clauseNumber: c.clauseNumber || 0,
+      title: c.title || "Bez názvu",
       excerpt: c.excerpt || "",
-      riskLevel: c.riskLevel as "high" | "medium" | "low",
-      finding: c.finding,
+      riskLevel: (c.riskLevel || "low") as "high" | "medium" | "low",
+      finding: c.finding || "",
       suggestedEdit: c.suggestedEdit || null,
       legalBasis: c.legalBasis || null,
       legalSourceUrl: c.legalSourceUrl || null,
       riskCategory: c.riskCategory || null,
     }));
 
-    await createClauses(clauseRecords);
+    if (clauseRecords.length > 0) {
+      await createClauses(clauseRecords);
+    }
 
     // Create report record
     await createReport({
@@ -286,18 +313,17 @@ Odpoveď vráť ako JSON.`,
       isSigned: 0,
     });
 
-    // Update contract status
+    // Update contract status based on plan
     const plan = contract.plan;
     if (plan === "basic") {
-      // Basic plan: AI only, mark as completed immediately
       await updateContractStatus(contractId, "completed");
     } else {
-      // Standard/Premium/Audit: needs lawyer review
       await updateContractStatus(contractId, "in_review");
     }
+
+    console.log(`[Analysis] Contract ${contractId} analysis complete. Status: ${plan === "basic" ? "completed" : "in_review"}`);
   } catch (error: any) {
-    console.error(`[Analysis] Error analyzing contract ${contractId}:`, error);
-    // Keep status as pending so it can be retried
+    console.error(`[Analysis] Failed for contract ${contractId}:`, error.message || error);
     await updateContractStatus(contractId, "pending");
     throw error;
   }

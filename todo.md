@@ -72,3 +72,25 @@
 ## Testing
 - [x] Vitest tests for contract procedures
 - [x] Vitest tests for analysis flow
+
+## Stripe Payment Integration
+- [x] Set up Stripe feature via webdev_add_feature
+- [x] Create Stripe checkout session for each pricing plan
+- [x] Payment flow: upload → select plan → pay → then start analysis
+- [x] Webhook to confirm payment and trigger analysis
+- [x] Payment status display on dashboard
+
+## Custom Notifications
+- [ ] In-app notification system (bell icon in nav)
+- [ ] Notify user when report is completed
+- [ ] Notify owner/lawyer when new contract submitted
+
+## Contact Info Update
+- [x] Update email to robert.duriska@bod.legal
+- [x] Update WhatsApp to +421905329200
+- [x] Update phone to +421917333692
+
+## AI Analysis Fix
+- [x] Fix GPT model max_completion_tokens issue
+- [x] Ensure DOCX text extraction works properly
+- [x] Test full analysis flow end-to-end
