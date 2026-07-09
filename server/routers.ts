@@ -47,7 +47,13 @@ export const appRouter = router({
         // Decode file and upload to S3
         const fileBuffer = Buffer.from(input.fileBase64, "base64");
         const ext = input.mimeType.includes("pdf") ? "pdf" : "docx";
-        const storageKey = `contracts/${ctx.user.id}/${Date.now()}_${input.fileName}`;
+        // Sanitize filename to ASCII-only for S3 storage
+        const safeFileName = input.fileName
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-zA-Z0-9._-]/g, "_")
+          .replace(/_+/g, "_");
+        const storageKey = `contracts/${ctx.user.id}/${Date.now()}_${safeFileName}`;
 
         const { key, url } = await storagePut(storageKey, fileBuffer, input.mimeType);
 
