@@ -55,7 +55,7 @@ export default function Dashboard() {
             <Card>
               <CardContent className="py-16 text-center">
                 <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="font-serif text-xl mb-2">Zatiaľ žiadne zmluvy</h3>
+                <h3 className="font-sans text-xl font-semibold mb-2">Zatiaľ žiadne zmluvy</h3>
                 <p className="text-muted-foreground font-sans mb-4">Nahrajte svoju prvú zmluvu a získajte analýzu rizík.</p>
                 <Link href="/upload">
                   <Button className="font-sans">

@@ -15,7 +15,7 @@ export default function Footer() {
 
           {/* Product */}
           <div>
-            <h4 className="font-sans font-semibold text-hero-text mb-3 text-sm uppercase tracking-wider">Produkt</h4>
+            <h4 className="font-sans font-medium text-hero-text mb-3 text-[13px] uppercase tracking-[0.05em]">Produkt</h4>
             <ul className="space-y-2 text-sm font-sans">
               <li><a href="/#how-it-works" className="hover:text-hero-text transition-colors">Ako to funguje</a></li>
               <li><a href="/#pricing" className="hover:text-hero-text transition-colors">Cenník</a></li>
@@ -25,7 +25,7 @@ export default function Footer() {
 
           {/* Legal */}
           <div>
-            <h4 className="font-sans font-semibold text-hero-text mb-3 text-sm uppercase tracking-wider">Právne informácie</h4>
+            <h4 className="font-sans font-medium text-hero-text mb-3 text-[13px] uppercase tracking-[0.05em]">Právne informácie</h4>
             <ul className="space-y-2 text-sm font-sans">
               <li><Link href="/vop" className="hover:text-hero-text transition-colors">VOP</Link></li>
               <li><Link href="/gdpr" className="hover:text-hero-text transition-colors">Ochrana osobných údajov</Link></li>
@@ -36,7 +36,7 @@ export default function Footer() {
 
           {/* Company */}
           <div>
-            <h4 className="font-sans font-semibold text-hero-text mb-3 text-sm uppercase tracking-wider">Spoločnosť</h4>
+            <h4 className="font-sans font-medium text-hero-text mb-3 text-[13px] uppercase tracking-[0.05em]">Spoločnosť</h4>
             <ul className="space-y-2 text-sm font-sans">
               <li><Link href="/about" className="hover:text-hero-text transition-colors">O nás</Link></li>
               <li>Kilian Legal s.r.o.</li>

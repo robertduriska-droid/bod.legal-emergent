@@ -28,7 +28,7 @@ export default function Header() {
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-6 font-sans text-sm">
+        <nav className="hidden md:flex items-center gap-6 font-sans text-[13px] uppercase tracking-wide">
           <a href="/#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">Ako to funguje</a>
           <a href="/#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Cenník</a>
           <a href="/#faq" className="text-muted-foreground hover:text-foreground transition-colors">FAQ</a>
@@ -57,21 +57,21 @@ export default function Header() {
           {isAuthenticated ? (
             <>
               <Link href="/dashboard">
-                <Button variant="ghost" size="sm" className="font-sans">Moje zmluvy</Button>
+                <Button variant="ghost" size="sm" className="font-sans text-[13px] uppercase tracking-wide">Moje zmluvy</Button>
               </Link>
               {isAdmin && (
                 <Link href="/admin">
-                  <Button variant="ghost" size="sm" className="font-sans">Admin</Button>
+                  <Button variant="ghost" size="sm" className="font-sans text-[13px] uppercase tracking-wide">Admin</Button>
                 </Link>
               )}
               <Link href="/upload">
-                <Button size="sm" className="font-sans">Nahrať zmluvu</Button>
+                <Button size="sm" className="font-sans text-[13px] uppercase tracking-wide">Nahrať zmluvu</Button>
               </Link>
             </>
           ) : (
             <>
-              <Button variant="ghost" size="sm" className="font-sans" onClick={() => startLogin()}>Prihlásiť sa</Button>
-              <Button size="sm" className="font-sans" onClick={() => startLogin()}>Registrácia</Button>
+              <Button variant="ghost" size="sm" className="font-sans text-[13px] uppercase tracking-wide" onClick={() => startLogin()}>Prihlásiť sa</Button>
+              <Button size="sm" className="font-sans text-[13px] uppercase tracking-wide" onClick={() => startLogin()}>Registrácia</Button>
             </>
           )}
         </div>

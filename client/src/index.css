@@ -67,8 +67,16 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
   }
-  h1, h2, h3, h4, h5, h6 {
+  /* DM Serif Display for h1 and h2 only (weight 400, normal style) */
+  h1, h2 {
     font-family: var(--font-serif);
+    font-weight: 400;
+    font-style: normal;
+  }
+  /* DM Sans for h3+ (weight 600) */
+  h3, h4, h5, h6 {
+    font-family: var(--font-sans);
+    font-weight: 600;
   }
 }
 

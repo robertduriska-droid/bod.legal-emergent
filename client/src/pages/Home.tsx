@@ -19,7 +19,7 @@ export default function Home() {
       <section className="bg-hero-bg text-hero-text py-24 md:py-32 relative overflow-hidden">
         <div className="container relative z-10">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-serif mb-6 leading-tight">
+            <h1 className="text-4xl md:text-6xl font-serif font-normal mb-6 leading-tight">
               AI kontrola zmlúv<br />
               <span className="text-muted-foreground/70">overená advokátom</span>
             </h1>
@@ -56,16 +56,16 @@ export default function Home() {
         <div className="container">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             <div>
-              <p className="text-3xl font-serif text-foreground">24h</p>
-              <p className="text-muted-foreground font-sans mt-1">Dodanie analýzy</p>
+              <p className="text-3xl font-serif font-normal text-foreground">24h</p>
+              <p className="text-xs text-muted-foreground font-sans mt-1 uppercase tracking-wider">Dodanie analýzy</p>
             </div>
             <div>
-              <p className="text-3xl font-serif text-foreground">10 000+</p>
-              <p className="text-muted-foreground font-sans mt-1">Analyzovaných klauzúl</p>
+              <p className="text-3xl font-serif font-normal text-foreground">10 000+</p>
+              <p className="text-xs text-muted-foreground font-sans mt-1 uppercase tracking-wider">Analyzovaných klauzúl</p>
             </div>
             <div>
-              <p className="text-3xl font-serif text-foreground">od 149 €</p>
-              <p className="text-muted-foreground font-sans mt-1">Za kompletnú kontrolu</p>
+              <p className="text-3xl font-serif font-normal text-foreground">od 149 €</p>
+              <p className="text-xs text-muted-foreground font-sans mt-1 uppercase tracking-wider">Za kompletnú kontrolu</p>
             </div>
           </div>
         </div>
@@ -84,7 +84,7 @@ export default function Home() {
                 <div className="w-14 h-14 rounded-full bg-primary/5 flex items-center justify-center mx-auto mb-4">
                   <Upload className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="font-serif text-xl mb-2">1. Nahrajte zmluvu</h3>
+                <h3 className="font-sans text-xl font-semibold mb-2">1. Nahrajte zmluvu</h3>
                 <p className="text-muted-foreground font-sans text-sm">
                   Nahrajte PDF alebo DOCX súbor a vyberte si cenový plán podľa rozsahu zmluvy.
                 </p>
@@ -95,7 +95,7 @@ export default function Home() {
                 <div className="w-14 h-14 rounded-full bg-primary/5 flex items-center justify-center mx-auto mb-4">
                   <Brain className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="font-serif text-xl mb-2">2. AI analýza</h3>
+                <h3 className="font-sans text-xl font-semibold mb-2">2. AI analýza</h3>
                 <p className="text-muted-foreground font-sans text-sm">
                   Naša AI analyzuje každú klauzulu a identifikuje riziká s odkazmi na Slov-Lex a EUR-Lex.
                 </p>
@@ -106,7 +106,7 @@ export default function Home() {
                 <div className="w-14 h-14 rounded-full bg-primary/5 flex items-center justify-center mx-auto mb-4">
                   <UserCheck className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="font-serif text-xl mb-2">3. Overenie advokátom</h3>
+                <h3 className="font-sans text-xl font-semibold mb-2">3. Overenie advokátom</h3>
                 <p className="text-muted-foreground font-sans text-sm">
                   Advokát skontroluje AI nálezy, doplní anotácie a podpíše finálny report.
                 </p>
@@ -211,8 +211,8 @@ export default function Home() {
             {/* Basic */}
             <Card className="border shadow-sm hover:shadow-md transition-shadow">
               <CardContent className="pt-6 pb-6 px-6">
-                <h3 className="font-serif text-xl mb-1">Základná kontrola</h3>
-                <p className="text-3xl font-serif mb-4">149 €</p>
+                <h3 className="font-sans text-xl font-semibold mb-1">Základná kontrola</h3>
+                <p className="text-3xl font-serif font-normal mb-4">149 €</p>
                 <p className="text-sm text-muted-foreground mb-4 font-sans">Dodanie do 24h</p>
                 <ul className="space-y-2 text-sm font-sans mb-6">
                   <li className="flex items-start gap-2"><CheckCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" /> AI analýza rizík</li>
@@ -232,8 +232,8 @@ export default function Home() {
                 Najpopulárnejší
               </div>
               <CardContent className="pt-6 pb-6 px-6">
-                <h3 className="font-serif text-xl mb-1">Štandardná kontrola</h3>
-                <p className="text-3xl font-serif mb-4">349 €</p>
+                <h3 className="font-sans text-xl font-semibold mb-1">Štandardná kontrola</h3>
+                <p className="text-3xl font-serif font-normal mb-4">349 €</p>
                 <p className="text-sm text-muted-foreground mb-4 font-sans">Dodanie do 48h</p>
                 <ul className="space-y-2 text-sm font-sans mb-6">
                   <li className="flex items-start gap-2"><CheckCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" /> Všetko zo Základnej</li>
@@ -251,8 +251,8 @@ export default function Home() {
             {/* Premium */}
             <Card className="border shadow-sm hover:shadow-md transition-shadow">
               <CardContent className="pt-6 pb-6 px-6">
-                <h3 className="font-serif text-xl mb-1">Prémiová kontrola</h3>
-                <p className="text-3xl font-serif mb-4">749 €</p>
+                <h3 className="font-sans text-xl font-semibold mb-1">Prémiová kontrola</h3>
+                <p className="text-3xl font-serif font-normal mb-4">749 €</p>
                 <p className="text-sm text-muted-foreground mb-4 font-sans">Dodanie do 72h</p>
                 <ul className="space-y-2 text-sm font-sans mb-6">
                   <li className="flex items-start gap-2"><CheckCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" /> Všetko zo Štandardnej</li>
@@ -271,8 +271,8 @@ export default function Home() {
             {/* Legal Audit */}
             <Card className="border shadow-sm hover:shadow-md transition-shadow bg-primary/[0.02]">
               <CardContent className="pt-6 pb-6 px-6">
-                <h3 className="font-serif text-xl mb-1">Legal Audit</h3>
-                <p className="text-3xl font-serif mb-4">Na mieru</p>
+                <h3 className="font-sans text-xl font-semibold mb-1">Legal Audit</h3>
+                <p className="text-3xl font-serif font-normal mb-4">Na mieru</p>
                 <p className="text-sm text-muted-foreground mb-4 font-sans">Individuálne</p>
                 <ul className="space-y-2 text-sm font-sans mb-6">
                   <li className="flex items-start gap-2"><CheckCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" /> Všetky zmluvy skontrolované</li>

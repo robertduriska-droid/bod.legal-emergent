@@ -19,7 +19,7 @@ export default function Cookies() {
             <section>
               <h2 className="text-xl font-serif text-foreground">Typy cookies, ktoré používame</h2>
               
-              <h3 className="text-lg font-serif text-foreground mt-4">Nevyhnutné cookies</h3>
+              <h3 className="text-lg font-sans font-semibold text-foreground mt-4">Nevyhnutné cookies</h3>
               <p>Tieto cookies sú potrebné pre základné fungovanie stránky. Zahŕňajú:</p>
               <ul className="list-disc pl-6 space-y-1">
                 <li>Autentifikačné cookies (prihlásenie používateľa)</li>
@@ -27,7 +27,7 @@ export default function Cookies() {
                 <li>Cookies relácie (session cookies)</li>
               </ul>
 
-              <h3 className="text-lg font-serif text-foreground mt-4">Analytické cookies</h3>
+              <h3 className="text-lg font-sans font-semibold text-foreground mt-4">Analytické cookies</h3>
               <p>Používame analytické nástroje na pochopenie, ako návštevníci používajú našu stránku. Tieto cookies zbierajú anonymizované údaje o:</p>
               <ul className="list-disc pl-6 space-y-1">
                 <li>Počte návštev stránky</li>
