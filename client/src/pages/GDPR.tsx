@@ -13,8 +13,8 @@ export default function GDPR() {
           <div className="prose prose-sm font-sans max-w-none text-muted-foreground space-y-6">
             <section>
               <h2 className="text-xl font-serif text-foreground">1. Prevádzkovateľ</h2>
-              <p>Prevádzkovateľom osobných údajov je Kilian Legal s.r.o., IČO: 56 153 406, so sídlom v Bratislave, Slovenská republika (ďalej len „Prevádzkovateľ").</p>
-              <p>Kontakt: info@bod.legal</p>
+              <p>Prevádzkovateľom osobných údajov je KILIAN LEGAL s.r.o., IČO: 53 957 008, so sídlom Hrudky 1401/46A, Chorvátsky Grob 900 25, Slovenská republika (ďalej len „Prevádzkovateľ").</p>
+              <p>Kontakt: robert.duriska@bod.legal | Tel: +421 917 333 692</p>
             </section>
 
             <section>

@@ -51,24 +51,44 @@ export default function About() {
               </div>
             </div>
 
-            <h2 className="text-2xl font-serif mt-12 mb-4">Kilian Legal s.r.o.</h2>
+            <h2 className="text-2xl font-serif mt-12 mb-4">KILIAN LEGAL s.r.o.</h2>
             <div className="bg-muted/30 rounded-lg p-6 border">
               <p className="text-sm text-muted-foreground mb-4">
-                Kilian Legal s.r.o. je advokátska kancelária zapísaná v Obchodnom registri Slovenskej republiky.
+                KILIAN LEGAL s.r.o. je advokátska kancelária zapísaná v Obchodnom registri Mestského súdu Bratislava III, oddiel Sro, vložka číslo 154082/B.
               </p>
               <table className="text-sm font-sans w-full">
                 <tbody>
                   <tr className="border-b">
                     <td className="py-2 font-medium w-40">Obchodné meno</td>
-                    <td className="py-2 text-muted-foreground">Kilian Legal s.r.o.</td>
+                    <td className="py-2 text-muted-foreground">KILIAN LEGAL s.r.o.</td>
                   </tr>
                   <tr className="border-b">
                     <td className="py-2 font-medium">IČO</td>
-                    <td className="py-2 text-muted-foreground">56 153 406</td>
+                    <td className="py-2 text-muted-foreground">53 957 008</td>
                   </tr>
                   <tr className="border-b">
                     <td className="py-2 font-medium">Sídlo</td>
-                    <td className="py-2 text-muted-foreground">Bratislava, Slovenská republika</td>
+                    <td className="py-2 text-muted-foreground">Hrudky 1401/46A, Chorvátsky Grob 900 25</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-2 font-medium">Deň zápisu</td>
+                    <td className="py-2 text-muted-foreground">20.07.2021</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-2 font-medium">Právna forma</td>
+                    <td className="py-2 text-muted-foreground">Spoločnosť s ručením obmedzeným</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-2 font-medium">Predmet podnikania</td>
+                    <td className="py-2 text-muted-foreground">Poskytovanie právnych služieb</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-2 font-medium">Konateľ</td>
+                    <td className="py-2 text-muted-foreground">Michal Kilian</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-2 font-medium">Základné imanie</td>
+                    <td className="py-2 text-muted-foreground">5 000 EUR (splatené: 5 000 EUR)</td>
                   </tr>
                   <tr className="border-b">
                     <td className="py-2 font-medium">E-mail</td>

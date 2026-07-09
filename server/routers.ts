@@ -315,7 +315,10 @@ export const appRouter = router({
           return { paid: false, isAudit: true };
         }
 
-        return { paid: false };
+        // TEST MODE: Skip payment gate while Stripe sandbox is not claimed
+        // Analysis is triggered immediately on upload, so mark as paid
+        // TODO: Remove this when Stripe is fully active
+        return { paid: true };
       }),
   }),
 

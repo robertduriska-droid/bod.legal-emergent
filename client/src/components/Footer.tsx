@@ -39,8 +39,8 @@ export default function Footer() {
             <h4 className="font-sans font-medium text-hero-text mb-3 text-[13px] uppercase tracking-[0.05em]">Spoločnosť</h4>
             <ul className="space-y-2 text-sm font-sans">
               <li><Link href="/about" className="hover:text-hero-text transition-colors">O nás</Link></li>
-              <li>Kilian Legal s.r.o.</li>
-              <li>IČO: 56 153 406</li>
+              <li>KILIAN LEGAL s.r.o.</li>
+              <li>IČO: 53 957 008</li>
               <li><a href="mailto:robert.duriska@bod.legal" className="hover:text-hero-text transition-colors">robert.duriska@bod.legal</a></li>
               <li><a href="tel:+421917333692" className="hover:text-hero-text transition-colors">+421 917 333 692</a></li>
               <li><a href="https://wa.me/421905329200" target="_blank" rel="noopener noreferrer" className="hover:text-hero-text transition-colors">WhatsApp: +421 905 329 200</a></li>
@@ -49,7 +49,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-hero-text/10 mt-8 pt-8 text-center text-xs font-sans">
-          <p>&copy; {new Date().getFullYear()} Kilian Legal s.r.o. Všetky práva vyhradené.</p>
+          <p>&copy; {new Date().getFullYear()} KILIAN LEGAL s.r.o. Všetky práva vyhradené.</p>
           <p className="mt-1">
             Právne zdroje:{" "}
             <a href="https://www.slov-lex.sk" target="_blank" rel="noopener noreferrer" className="underline hover:text-hero-text">Slov-Lex</a>

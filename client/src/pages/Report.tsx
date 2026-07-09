@@ -219,7 +219,7 @@ export default function Report() {
           {/* Disclaimer */}
           <div className="text-center text-xs text-muted-foreground font-sans p-4 border rounded bg-muted/30">
             <p>Tento report bol vygenerovaný systémom bod.legal s využitím AI a overený advokátom.</p>
-            <p className="mt-1">Prevádzkované Kilian Legal s.r.o. · IČO: 56 153 406</p>
+            <p className="mt-1">Prevádzkované KILIAN LEGAL s.r.o. · IČO: 53 957 008</p>
           </div>
         </div>
       </main>

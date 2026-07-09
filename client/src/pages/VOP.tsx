@@ -13,7 +13,7 @@ export default function VOP() {
           <div className="prose prose-sm font-sans max-w-none text-muted-foreground space-y-6">
             <section>
               <h2 className="text-xl font-serif text-foreground">1. Úvodné ustanovenia</h2>
-              <p>Tieto Všeobecné obchodné podmienky (ďalej len „VOP") upravujú práva a povinnosti medzi poskytovateľom služby bod.legal — spoločnosťou Kilian Legal s.r.o., IČO: 56 153 406, so sídlom v Bratislave (ďalej len „Poskytovateľ") a používateľom služby (ďalej len „Klient").</p>
+              <p>Tieto Všeobecné obchodné podmienky (ďalej len „VOP") upravujú práva a povinnosti medzi poskytovateľom služby bod.legal — spoločnosťou KILIAN LEGAL s.r.o., IČO: 53 957 008, so sídlom Hrudky 1401/46A, Chorvátsky Grob 900 25 (ďalej len „Poskytovateľ") a používateľom služby (ďalej len „Klient").</p>
             </section>
 
             <section>
@@ -60,7 +60,7 @@ export default function VOP() {
 
             <section>
               <h2 className="text-xl font-serif text-foreground">7. Reklamácie</h2>
-              <p>Klient má právo reklamovať poskytnutú službu do 14 dní od jej dodania. Reklamáciu je možné podať elektronicky na adrese info@bod.legal.</p>
+              <p>Klient má právo reklamovať poskytnutú službu do 14 dní od jej dodania. Reklamáciu je možné podať elektronicky na adrese robert.duriska@bod.legal.</p>
             </section>
 
             <section>

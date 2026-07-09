@@ -25,15 +25,12 @@ export default function Upload() {
 
   const uploadMutation = trpc.contracts.upload.useMutation({
     onSuccess: (data) => {
-      // After upload, redirect to Stripe checkout for paid plans
-      if (selectedPlan === "audit") {
-        toast.success("Zmluva bola nahratá! Budeme vás kontaktovať ohľadom ceny.");
-        navigate(`/contract/${data.contractId}`);
-      } else {
-        // Create Stripe checkout session
-        toast.info("Zmluva nahratá. Presmerovávame na platbu...");
-        createCheckout.mutate({ contractId: data.contractId });
-      }
+      // TEST MODE: Skip Stripe checkout, go directly to contract detail
+      // Analysis starts immediately on upload
+      // TODO: Re-enable Stripe checkout when payment is active
+      toast.success("Zmluva bola úspešne nahratá! AI analýza sa spúšťa...");
+      navigate(`/contract/${data.contractId}`);
+      setUploading(false);
     },
     onError: (error) => {
       toast.error("Chyba pri nahrávaní: " + error.message);
