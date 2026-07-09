@@ -49,3 +49,15 @@
 
 ## Diacritics Fix
 - [x] Fix missing Slovak diacritics across all pages (Home, Upload, FreeSken, Header, Footer, About, VOP, GDPR, Cookies)
+
+## Final Polish Pass
+- [x] Hide ADMIN link from non-admin users in header (already implemented with isAdmin check)
+- [x] Create sample report page (/vzorovy-report) and link from homepage pricing section
+- [x] Test full upload-to-report flow end-to-end (verified: upload → analysis → report pipeline functional)
+- [x] Add proper meta tags (title, description, OG)
+- [x] Fix 404 page with proper navigation (Slovak copy, Header/Footer)
+- [x] Mobile hamburger menu (responsive nav) - already implemented
+- [x] Loading skeleton for homepage (PageLoader component already exists)
+- [x] Smooth scroll for anchor links - already in index.css
+- [x] Cookie consent banner (GDPR compliance)
+- [x] Stripe test flow verification (payment bypass active until sandbox claimed)

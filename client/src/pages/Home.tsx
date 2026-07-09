@@ -246,11 +246,16 @@ export default function Home() {
           </div>
 
           {/* Guarantee */}
-          <div className="max-w-4xl mx-auto mt-6 text-center">
+          <div className="max-w-4xl mx-auto mt-6 text-center space-y-2">
             <p className="text-sm text-muted-foreground font-sans">
               <Clock className="h-4 w-4 inline mr-1" />
               Garancia: Ak report nedodáme v sľúbenom čase, neplatíte nič.
             </p>
+            <Link href="/vzorovy-report">
+              <button className="text-sm text-primary hover:underline font-sans inline-flex items-center gap-1 mt-2">
+                <Eye className="h-4 w-4" /> Pozrieť vzorový report
+              </button>
+            </Link>
           </div>
         </div>
       </section>

@@ -6,7 +6,28 @@
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <title>bod.legal | AI kontrola zmlúv</title>
+    <title>bod.legal | AI kontrola zmlúv s overením advokátom</title>
+    <meta name="description" content="Nahrajte zmluvu a do 24 hodín dostanete report s identifikovanými rizikami, odkazmi na právne predpisy a návrhmi úprav. Každý report overuje advokát." />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://bodlegal-mqcbxxfs.manus.space/" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="bod.legal | AI kontrola zmlúv s overením advokátom" />
+    <meta property="og:description" content="Nahrajte zmluvu a do 24 hodín dostanete report s identifikovanými rizikami, odkazmi na právne predpisy a návrhmi úprav." />
+    <meta property="og:url" content="https://bodlegal-mqcbxxfs.manus.space/" />
+    <meta property="og:site_name" content="bod.legal" />
+    <meta property="og:locale" content="sk_SK" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="bod.legal | AI kontrola zmlúv" />
+    <meta name="twitter:description" content="Nahrajte zmluvu a do 24 hodín dostanete report s identifikovanými rizikami a návrhmi úprav." />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
@@ -15,10 +36,16 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script
-      defer
-      src="%VITE_ANALYTICS_ENDPOINT%/umami"
-      data-website-id="%VITE_ANALYTICS_WEBSITE_ID%"></script>
+    <script>
+      // Only load analytics if user accepted cookies
+      if (localStorage.getItem('bod_cookie_consent') === 'accepted') {
+        var s = document.createElement('script');
+        s.defer = true;
+        s.src = '%VITE_ANALYTICS_ENDPOINT%/umami';
+        s.setAttribute('data-website-id', '%VITE_ANALYTICS_WEBSITE_ID%');
+        document.body.appendChild(s);
+      }
+    </script>
   </body>
 
 </html>

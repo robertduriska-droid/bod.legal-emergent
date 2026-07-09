@@ -6,6 +6,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import { lazy, Suspense } from "react";
+import CookieConsent from "./components/CookieConsent";
 
 // Lazy load pages for better performance
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -19,6 +20,7 @@ const VOP = lazy(() => import("./pages/VOP"));
 const GDPR = lazy(() => import("./pages/GDPR"));
 const Cookies = lazy(() => import("./pages/Cookies"));
 const FreeSken = lazy(() => import("./pages/FreeSken"));
+const SampleReport = lazy(() => import("./pages/SampleReport"));
 
 function PageLoader() {
   return (
@@ -44,6 +46,7 @@ function Router() {
         <Route path="/gdpr" component={GDPR} />
         <Route path="/cookies" component={Cookies} />
         <Route path="/preview/:id" component={FreeSken} />
+        <Route path="/vzorovy-report" component={SampleReport} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>
@@ -58,6 +61,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Router />
+          <CookieConsent />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
