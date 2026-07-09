@@ -34,8 +34,10 @@ export const contracts = mysqlTable("contracts", {
   fileUrl: varchar("fileUrl", { length: 512 }).notNull(),
   /** Number of pages (if detected) */
   pageCount: int("pageCount"),
-  /** Selected pricing plan: basic, standard, premium, audit */
+  /** Selected pricing plan: basic, standard, premium */
   plan: mysqlEnum("plan", ["basic", "standard", "premium", "audit"]).notNull(),
+  /** Express add-on: priority delivery within 4 hours */
+  expressAddon: int("expressAddon").default(0).notNull(),
   /** Workflow status */
   status: mysqlEnum("status", ["pending", "analyzing", "in_review", "completed"]).default("pending").notNull(),
   /** Language for analysis output */

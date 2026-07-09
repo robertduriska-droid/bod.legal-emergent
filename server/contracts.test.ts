@@ -51,16 +51,15 @@ function createUnauthenticatedContext(): TrpcContext {
 }
 
 describe("Shared types and reference data", () => {
-  it("PRICING_PLANS has 4 plans with correct IDs", () => {
-    expect(PRICING_PLANS).toHaveLength(4);
-    expect(PRICING_PLANS.map(p => p.id)).toEqual(["basic", "standard", "premium", "audit"]);
+  it("PRICING_PLANS has 3 plans with correct IDs", () => {
+    expect(PRICING_PLANS).toHaveLength(3);
+    expect(PRICING_PLANS.map(p => p.id)).toEqual(["basic", "standard", "premium"]);
   });
 
   it("PRICING_PLANS has correct prices", () => {
-    expect(PRICING_PLANS[0].price).toBe("€149");
-    expect(PRICING_PLANS[1].price).toBe("€349");
-    expect(PRICING_PLANS[2].price).toBe("€749");
-    expect(PRICING_PLANS[3].price).toBe("Na mieru");
+    expect(PRICING_PLANS[0].price).toBe(149);
+    expect(PRICING_PLANS[1].price).toBe(249);
+    expect(PRICING_PLANS[2].price).toBe(399);
   });
 
   it("LEGAL_SOURCES contains Slov-Lex and EUR-Lex sources", () => {

@@ -1,6 +1,6 @@
 // ─── Contract Types ─────────────────────────────────────────────────────────
 
-export type ContractPlan = "basic" | "standard" | "premium" | "audit";
+export type ContractPlan = "basic" | "standard" | "premium";
 export type ContractStatus = "pending" | "analyzing" | "in_review" | "completed";
 export type RiskLevel = "high" | "medium" | "low";
 
@@ -45,9 +45,9 @@ export interface ClauseAnalysis {
   riskLevel: RiskLevel;
   finding: string;
   suggestedEdit?: string;
-  legalBasis?: string; // e.g. "§ 536 Obchodného zákonníka"
-  legalSourceUrl?: string; // Slov-Lex or EUR-Lex URL
-  riskCategory?: string; // from risk taxonomy
+  legalBasis?: string;
+  legalSourceUrl?: string;
+  riskCategory?: string;
 }
 
 export interface AnalysisResult {
@@ -65,11 +65,13 @@ export interface PricingPlan {
   id: ContractPlan;
   name: string;
   nameSk: string;
-  price: string;
+  price: number; // in EUR (not cents)
+  priceLabel: string; // display string e.g. "149 eur"
   delivery: string;
-  maxPages: number | null;
+  maxPages: number;
   features: string[];
   includesLawyer: boolean;
+  includesRedline: boolean;
 }
 
 export const PRICING_PLANS: PricingPlan[] = [
@@ -77,43 +79,64 @@ export const PRICING_PLANS: PricingPlan[] = [
     id: "basic",
     name: "Basic Review",
     nameSk: "Základná kontrola",
-    price: "€149",
-    delivery: "24h",
-    maxPages: 20,
-    features: ["AI analýza rizík", "Kontrola klauzula po klauzule", "Report rizík", "Do 20 strán"],
+    price: 149,
+    priceLabel: "149 eur",
+    delivery: "do 24 hodín",
+    maxPages: 30,
+    features: [
+      "AI analýza každej klauzuly",
+      "Identifikácia rizík (vysoké / stredné / nízke)",
+      "Odkazy na Slov-Lex a EUR-Lex",
+      "Prehľadný report vo formáte PDF",
+      "Do 30 strán",
+    ],
     includesLawyer: false,
+    includesRedline: false,
   },
   {
     id: "standard",
     name: "Standard Review",
     nameSk: "Štandardná kontrola",
-    price: "€349",
-    delivery: "48h",
+    price: 249,
+    priceLabel: "249 eur",
+    delivery: "do 24 hodín",
     maxPages: 50,
-    features: ["Všetko zo Základnej", "Kontrola advokátom", "Návrhy úprav", "Do 50 strán", "Prioritná podpora"],
+    features: [
+      "Všetko zo Základnej kontroly",
+      "Overenie advokátom (SAK)",
+      "Návrhy konkrétnych úprav",
+      "Prioritná podpora",
+      "Do 50 strán",
+    ],
     includesLawyer: true,
+    includesRedline: false,
   },
   {
     id: "premium",
     name: "Premium Review",
     nameSk: "Prémiová kontrola",
-    price: "€749",
-    delivery: "72h",
+    price: 399,
+    priceLabel: "399 eur",
+    delivery: "do 24 hodín",
     maxPages: 100,
-    features: ["Všetko zo Štandardnej", "Plná právna analýza", "30min konzultácia", "Do 100 strán", "Redline dokument", "Dedikovaný advokát"],
+    features: [
+      "Všetko zo Štandardnej kontroly",
+      "Redline dokument s navrhovanými úpravami",
+      "Analýza pozície oboch strán",
+      "Do 100 strán",
+    ],
     includesLawyer: true,
-  },
-  {
-    id: "audit",
-    name: "Legal Audit",
-    nameSk: "Legal Audit",
-    price: "Na mieru",
-    delivery: "Individuálne",
-    maxPages: null,
-    features: ["Všetky zmluvy skontrolované", "Riziková matica a dashboard", "Compliance kontrola", "Priradený tím advokátov", "60min strategický call", "Priebežná podpora"],
-    includesLawyer: true,
+    includesRedline: true,
   },
 ];
+
+// Express add-on (not a standalone plan)
+export const EXPRESS_ADDON = {
+  price: 99,
+  priceLabel: "+99 eur",
+  delivery: "do 4 hodín",
+  description: "Prioritné spracovanie do 4 hodín namiesto 24",
+};
 
 // ─── Legal Sources Reference Data ───────────────────────────────────────────
 

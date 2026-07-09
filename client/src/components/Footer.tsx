@@ -9,7 +9,7 @@ export default function Footer() {
           <div>
             <p className="font-serif text-xl text-hero-text mb-2">bod.legal</p>
             <p className="text-sm font-sans">
-              AI kontrola zmlúv overená advokátom. Prevádzkované Kilian Legal s.r.o.
+              Kontrola zmlúv s AI a overením advokátom. Prevádzkované KILIAN LEGAL s.r.o.
             </p>
           </div>
 
@@ -18,44 +18,42 @@ export default function Footer() {
             <h4 className="font-sans font-medium text-hero-text mb-3 text-[13px] uppercase tracking-[0.05em]">Produkt</h4>
             <ul className="space-y-2 text-sm font-sans">
               <li><a href="/#how-it-works" className="hover:text-hero-text transition-colors">Ako to funguje</a></li>
-              <li><a href="/#pricing" className="hover:text-hero-text transition-colors">Cenník</a></li>
+              <li><a href="/#pricing" className="hover:text-hero-text transition-colors">Cennik</a></li>
               <li><a href="/#faq" className="hover:text-hero-text transition-colors">FAQ</a></li>
             </ul>
           </div>
 
           {/* Legal */}
           <div>
-            <h4 className="font-sans font-medium text-hero-text mb-3 text-[13px] uppercase tracking-[0.05em]">Právne informácie</h4>
+            <h4 className="font-sans font-medium text-hero-text mb-3 text-[13px] uppercase tracking-[0.05em]">Pravne informacie</h4>
             <ul className="space-y-2 text-sm font-sans">
               <li><Link href="/vop" className="hover:text-hero-text transition-colors">VOP</Link></li>
-              <li><Link href="/gdpr" className="hover:text-hero-text transition-colors">Ochrana osobných údajov</Link></li>
+              <li><Link href="/gdpr" className="hover:text-hero-text transition-colors">Ochrana osobnych udajov</Link></li>
               <li><Link href="/cookies" className="hover:text-hero-text transition-colors">Cookies</Link></li>
-              <li><Link href="/ai-act" className="hover:text-hero-text transition-colors">AI Act</Link></li>
             </ul>
           </div>
 
           {/* Company */}
           <div>
-            <h4 className="font-sans font-medium text-hero-text mb-3 text-[13px] uppercase tracking-[0.05em]">Spoločnosť</h4>
+            <h4 className="font-sans font-medium text-hero-text mb-3 text-[13px] uppercase tracking-[0.05em]">Spolocnost</h4>
             <ul className="space-y-2 text-sm font-sans">
-              <li><Link href="/about" className="hover:text-hero-text transition-colors">O nás</Link></li>
+              <li><Link href="/about" className="hover:text-hero-text transition-colors">O nas</Link></li>
               <li>KILIAN LEGAL s.r.o.</li>
-              <li>IČO: 53 957 008</li>
+              <li>ICO: 53 957 008</li>
               <li><a href="mailto:robert.duriska@bod.legal" className="hover:text-hero-text transition-colors">robert.duriska@bod.legal</a></li>
               <li><a href="tel:+421917333692" className="hover:text-hero-text transition-colors">+421 917 333 692</a></li>
-              <li><a href="https://wa.me/421905329200" target="_blank" rel="noopener noreferrer" className="hover:text-hero-text transition-colors">WhatsApp: +421 905 329 200</a></li>
             </ul>
           </div>
         </div>
 
         <div className="border-t border-hero-text/10 mt-8 pt-8 text-center text-xs font-sans">
-          <p>&copy; {new Date().getFullYear()} KILIAN LEGAL s.r.o. Všetky práva vyhradené.</p>
+          <p>&copy; {new Date().getFullYear()} KILIAN LEGAL s.r.o. Vsetky prava vyhradene.</p>
           <p className="mt-1">
-            Právne zdroje:{" "}
+            Pravne zdroje:{" "}
             <a href="https://www.slov-lex.sk" target="_blank" rel="noopener noreferrer" className="underline hover:text-hero-text">Slov-Lex</a>
-            {" · "}
+            {" | "}
             <a href="https://eur-lex.europa.eu" target="_blank" rel="noopener noreferrer" className="underline hover:text-hero-text">EUR-Lex</a>
-            {" · "}
+            {" | "}
             <a href="https://www.crz.gov.sk" target="_blank" rel="noopener noreferrer" className="underline hover:text-hero-text">CRZ</a>
           </p>
         </div>

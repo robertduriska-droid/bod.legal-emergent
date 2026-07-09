@@ -104,7 +104,7 @@ export default function ContractDetail() {
           </div>
 
           {/* Payment Required */}
-          {contract.status === "pending" && paymentStatus.data && !paymentStatus.data.paid && !paymentStatus.data?.isAudit && (
+          {contract.status === "pending" && paymentStatus.data && !paymentStatus.data.paid && (
             <Card className="mb-8 border-primary/20 bg-primary/[0.02]">
               <CardContent className="p-6 text-center">
                 <CreditCard className="h-8 w-8 text-primary mx-auto mb-3" />
@@ -133,7 +133,7 @@ export default function ContractDetail() {
                   {contract.status === "pending" ? "Čaká na spracovanie" : "Prebieha AI analýza"}
                 </h3>
                 <p className="text-sm text-muted-foreground font-sans">
-                  Analýza zmluvy zvyčajne trvá 1–3 minúty. Stránka sa automaticky aktualizuje.
+                  Analyza zmluvy zvycajne trva 1-3 minuty. Stránka sa automaticky aktualizuje.
                 </p>
                 {contract.status === "pending" && (
                   <Button

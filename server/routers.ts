@@ -48,7 +48,8 @@ export const appRouter = router({
         fileName: z.string(),
         mimeType: z.string(),
         fileBase64: z.string(),
-        plan: z.enum(["basic", "standard", "premium", "audit"]),
+        plan: z.enum(["basic", "standard", "premium"]),
+        expressAddon: z.boolean().default(false),
         language: z.string().default("sk"),
       }))
       .mutation(async ({ ctx, input }) => {
@@ -73,6 +74,7 @@ export const appRouter = router({
           fileKey: key,
           fileUrl: url,
           plan: input.plan,
+          expressAddon: input.expressAddon ? 1 : 0,
           language: input.language,
           status: "pending",
         });
@@ -250,11 +252,6 @@ export const appRouter = router({
           throw new Error("Contract not found");
         }
 
-        // Audit plan is custom-priced, not available for online checkout
-        if (contract.plan === "audit") {
-          throw new Error("Audit plan requires individual pricing. Please contact us.");
-        }
-
         const product = STRIPE_PRODUCTS[contract.plan as keyof typeof STRIPE_PRODUCTS];
         if (!product) {
           throw new Error(`Invalid plan: ${contract.plan}`);
@@ -262,6 +259,36 @@ export const appRouter = router({
 
         const stripe = new Stripe(ENV.stripeSecretKey);
         const origin = ctx.req.headers.origin || "https://bodlegal-mqcbxxfs.manus.space";
+
+        // Build line items - plan + optional express add-on
+        const lineItems: any[] = [
+          {
+            price_data: {
+              currency: product.currency,
+              unit_amount: product.priceAmount,
+              product_data: {
+                name: product.name,
+                description: product.description,
+              },
+            },
+            quantity: 1,
+          },
+        ];
+
+        // Add express add-on if selected
+        if (contract.expressAddon) {
+          lineItems.push({
+            price_data: {
+              currency: STRIPE_PRODUCTS.express.currency,
+              unit_amount: STRIPE_PRODUCTS.express.priceAmount,
+              product_data: {
+                name: STRIPE_PRODUCTS.express.name,
+                description: STRIPE_PRODUCTS.express.description,
+              },
+            },
+            quantity: 1,
+          });
+        }
 
         const session = await stripe.checkout.sessions.create({
           payment_method_types: ["card"],
@@ -273,22 +300,11 @@ export const appRouter = router({
             user_id: ctx.user.id.toString(),
             contract_id: input.contractId.toString(),
             plan: contract.plan,
+            express: contract.expressAddon ? "true" : "false",
             customer_email: ctx.user.email || "",
             customer_name: ctx.user.name || "",
           },
-          line_items: [
-            {
-              price_data: {
-                currency: product.currency,
-                unit_amount: product.priceAmount,
-                product_data: {
-                  name: product.name,
-                  description: product.description,
-                },
-              },
-              quantity: 1,
-            },
-          ],
+          line_items: lineItems,
           success_url: `${origin}/contract/${input.contractId}?payment=success`,
           cancel_url: `${origin}/contract/${input.contractId}?payment=cancelled`,
         });
@@ -308,11 +324,6 @@ export const appRouter = router({
         // If contract is already analyzing or completed, it was paid
         if (contract.status !== "pending") {
           return { paid: true };
-        }
-
-        // For audit plan, payment is handled offline
-        if (contract.plan === "audit") {
-          return { paid: false, isAudit: true };
         }
 
         // TEST MODE: Skip payment gate while Stripe sandbox is not claimed

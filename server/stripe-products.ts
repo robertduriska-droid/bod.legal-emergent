@@ -1,27 +1,32 @@
 /**
  * Stripe product/price configuration for bod.legal pricing plans.
- * Prices are in EUR cents.
+ * Prices are in EUR cents. Single source of truth for checkout amounts.
  */
 export const STRIPE_PRODUCTS = {
   basic: {
     name: "Základná kontrola",
-    description: "AI analýza rizík, kontrola klauzula po klauzule, report rizík (do 20 strán)",
-    priceAmount: 14900, // €149.00
+    description: "AI analýza rizík s odkazmi na Slov-Lex a EUR-Lex (do 30 strán, do 24h)",
+    priceAmount: 14900, // 149 eur
     currency: "eur",
   },
   standard: {
     name: "Štandardná kontrola",
-    description: "Všetko zo Základnej + kontrola advokátom, návrhy úprav (do 50 strán)",
-    priceAmount: 34900, // €349.00
+    description: "AI analýza + overenie advokátom, návrhy úprav (do 50 strán, do 24h)",
+    priceAmount: 24900, // 249 eur
     currency: "eur",
   },
   premium: {
     name: "Prémiová kontrola",
-    description: "Plná právna analýza, 30min konzultácia, redline dokument (do 100 strán)",
-    priceAmount: 74900, // €749.00
+    description: "AI analýza + advokát + redline dokument s navrhovanými úpravami (do 100 strán, do 24h)",
+    priceAmount: 39900, // 399 eur
     currency: "eur",
   },
-  // Audit plan is custom-priced, handled separately via contact form
+  express: {
+    name: "Express dodanie",
+    description: "Prioritné spracovanie do 4 hodín",
+    priceAmount: 9900, // 99 eur add-on
+    currency: "eur",
+  },
 } as const;
 
 export type StripePlanId = keyof typeof STRIPE_PRODUCTS;
