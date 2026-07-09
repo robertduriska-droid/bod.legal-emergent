@@ -105,6 +105,23 @@ export const appRouter = router({
 
         return { contract, clauses: contractClauses, report };
       }),
+    /** Retry analysis for a pending contract (user-facing) */
+    retryAnalysis: protectedProcedure
+      .input(z.object({ contractId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const contract = await getContractById(input.contractId);
+        if (!contract || contract.userId !== ctx.user.id) {
+          throw new Error("Contract not found");
+        }
+        if (contract.status !== "pending") {
+          throw new Error("Contract is not in pending state");
+        }
+        // Re-trigger analysis
+        analyzeContract(input.contractId).catch(err =>
+          console.error(`[Analysis] Retry failed for contract ${input.contractId}:`, err)
+        );
+        return { success: true };
+      }),
   }),
 
   // ─── Admin / Lawyer Procedures ──────────────────────────────────────────

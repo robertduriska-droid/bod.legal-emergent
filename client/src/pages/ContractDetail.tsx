@@ -26,6 +26,10 @@ export default function ContractDetail() {
     { enabled: isAuthenticated && contractId > 0, refetchInterval: 5000 }
   );
 
+  const retryMutation = trpc.contracts.retryAnalysis.useMutation({
+    onSuccess: () => refetch(),
+  });
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -92,6 +96,18 @@ export default function ContractDetail() {
                 <p className="text-sm text-muted-foreground font-sans">
                   Analýza zmluvy zvyčajne trvá 1–3 minúty. Stránka sa automaticky aktualizuje.
                 </p>
+                {contract.status === "pending" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-4 font-sans"
+                    onClick={() => retryMutation.mutate({ contractId: contract.id })}
+                    disabled={retryMutation.isPending}
+                  >
+                    {retryMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    Spustiť analýzu znova
+                  </Button>
+                )}
               </CardContent>
             </Card>
           )}

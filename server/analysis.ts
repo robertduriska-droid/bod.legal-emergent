@@ -112,6 +112,8 @@ export async function analyzeContract(contractId: number): Promise<void> {
 
     // Call LLM with the contract content and structured output
     const response = await invokeLLM({
+      model: "claude-sonnet-4-6",
+      max_tokens: 16000,
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         {
@@ -207,12 +209,57 @@ Odpoveď vráť ako JSON.`,
       },
     });
 
-    // Parse the structured response
+    // Parse the structured response with robust JSON extraction
     const rawContent = response.choices?.[0]?.message?.content;
     if (!rawContent) throw new Error("Empty LLM response");
 
     const content = typeof rawContent === "string" ? rawContent : JSON.stringify(rawContent);
-    const analysis: AnalysisResult = JSON.parse(content);
+    let analysis: AnalysisResult;
+    try {
+      analysis = JSON.parse(content);
+    } catch (parseErr) {
+      // Try to extract JSON from markdown code blocks or partial responses
+      const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) || content.match(/(\{[\s\S]*\})/);
+      if (jsonMatch && jsonMatch[1]) {
+        try {
+          analysis = JSON.parse(jsonMatch[1].trim());
+        } catch {
+          // Last resort: try to repair truncated JSON by closing open structures
+          let repaired = jsonMatch[1].trim();
+          const openBraces = (repaired.match(/\{/g) || []).length;
+          const closeBraces = (repaired.match(/\}/g) || []).length;
+          const openBrackets = (repaired.match(/\[/g) || []).length;
+          const closeBrackets = (repaired.match(/\]/g) || []).length;
+          // Remove trailing incomplete string/value
+          repaired = repaired.replace(/,\s*"[^"]*$/, "");
+          repaired = repaired.replace(/,\s*$/, "");
+          // Close open arrays and objects
+          for (let i = 0; i < openBrackets - closeBrackets; i++) repaired += "]";
+          for (let i = 0; i < openBraces - closeBraces; i++) repaired += "}";
+          try {
+            analysis = JSON.parse(repaired);
+          } catch (finalErr) {
+            console.error("[Analysis] JSON repair failed. Raw content (first 500 chars):", content.substring(0, 500));
+            throw new Error(`Failed to parse LLM response as JSON: ${(parseErr as Error).message}`);
+          }
+        }
+      } else {
+        console.error("[Analysis] No JSON found in response. Raw content (first 500 chars):", content.substring(0, 500));
+        throw new Error(`Failed to parse LLM response as JSON: ${(parseErr as Error).message}`);
+      }
+    }
+
+    // Validate required fields exist
+    if (!analysis.clauses || !Array.isArray(analysis.clauses)) {
+      analysis.clauses = [];
+    }
+    if (!analysis.riskSummary) {
+      analysis.riskSummary = { high: 0, medium: 0, low: 0 };
+    }
+    if (!analysis.summary) analysis.summary = "Analýza dokončená.";
+    if (!analysis.recommendation) analysis.recommendation = "Odporúčame konzultáciu s advokátom.";
+    if (!analysis.contractType) analysis.contractType = "other";
+    if (!analysis.applicableLegalSources) analysis.applicableLegalSources = [];
 
     // Save clauses to database
     const clauseRecords = analysis.clauses.map((c: ClauseAnalysis) => ({
