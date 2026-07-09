@@ -18,6 +18,7 @@ const About = lazy(() => import("./pages/About"));
 const VOP = lazy(() => import("./pages/VOP"));
 const GDPR = lazy(() => import("./pages/GDPR"));
 const Cookies = lazy(() => import("./pages/Cookies"));
+const FreeSken = lazy(() => import("./pages/FreeSken"));
 
 function PageLoader() {
   return (
@@ -42,6 +43,7 @@ function Router() {
         <Route path="/vop" component={VOP} />
         <Route path="/gdpr" component={GDPR} />
         <Route path="/cookies" component={Cookies} />
+        <Route path="/preview/:id" component={FreeSken} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>

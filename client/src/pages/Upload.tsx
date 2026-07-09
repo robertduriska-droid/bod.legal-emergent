@@ -26,8 +26,8 @@ export default function Upload() {
 
   const uploadMutation = trpc.contracts.upload.useMutation({
     onSuccess: (data) => {
-      toast.success("Zmluva bola uspesne nahrata! AI analyza sa spusta...");
-      navigate(`/contract/${data.contractId}`);
+      toast.success("Zmluva bola uspesne nahrata! Pripravujeme preview...");
+      navigate(`/preview/${data.contractId}`);
       setUploading(false);
     },
     onError: (error) => {

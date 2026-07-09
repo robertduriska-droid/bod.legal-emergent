@@ -27,8 +27,8 @@
 
 ## Phase 3: Upload-First Flow + Free Sken
 - [x] Upload without login (anonymous session, login at checkout)
-- [ ] Free sken results page (3 biggest risks, severity badges)
-- [ ] Bridge CTA from free results to paid tiers
+- [x] Free sken results page (3 biggest risks, severity badges)
+- [x] Bridge CTA from free results to paid tiers
 - [x] Express toggle (+99 eur) at checkout
 
 ## Phase 4: Legal Pages & Navigation
