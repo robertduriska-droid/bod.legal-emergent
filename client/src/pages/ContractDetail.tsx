@@ -93,7 +93,7 @@ export default function ContractDetail() {
             <div>
               <h1 className="text-2xl font-serif mb-1">{contract.fileName}</h1>
               <p className="text-sm text-muted-foreground font-sans">
-                Nahrané {new Date(contract.createdAt).toLocaleDateString("sk-SK")} · Plán: {contract.plan === "basic" ? "Základná" : contract.plan === "standard" ? "Štandardná" : contract.plan === "premium" ? "Prémiová" : "Legal Audit"}
+                Nahrané {new Date(contract.createdAt).toLocaleDateString("sk-SK")} · Plán: {contract.plan === "basic" ? "Základná" : contract.plan === "standard" ? "Štandardná" : "Prémiová"}
               </p>
             </div>
             {contract.status === "completed" && (

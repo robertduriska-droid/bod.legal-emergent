@@ -26,8 +26,13 @@ export default function Upload() {
 
   const uploadMutation = trpc.contracts.upload.useMutation({
     onSuccess: (data) => {
-      toast.success("Zmluva bola úspešne nahratá! Pripravujeme preview...");
-      navigate(`/preview/${data.contractId}`);
+      if (selectedPlan === "basic") {
+        toast.success("Zmluva bola úspešne nahratá! Pripravujeme bezplatný náhľad...");
+        navigate(`/preview/${data.contractId}`);
+      } else {
+        toast.success("Zmluva bola úspešne nahratá! Pokračujte k platbe.");
+        navigate(`/contract/${data.contractId}`);
+      }
       setUploading(false);
     },
     onError: (error) => {
@@ -228,8 +233,11 @@ export default function Upload() {
                   </>
                 ) : (
                   <>
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    {isAuthenticated ? `Nahrať a zaplatiť ${totalPrice} eur` : `Pokračovať (${totalPrice} eur)`}
+                    {selectedPlan === "basic" ? (
+                      <><UploadIcon className="mr-2 h-4 w-4" />Nahrať a získať bezplatný náhľad</>
+                    ) : (
+                      <><CreditCard className="mr-2 h-4 w-4" />{isAuthenticated ? `Nahrať a pokračovať k platbe (${totalPrice} eur)` : `Pokračovať (${totalPrice} eur)`}</>
+                    )}
                   </>
                 )}
               </Button>
@@ -240,9 +248,11 @@ export default function Upload() {
               )}
             </div>
             <p className="text-xs text-muted-foreground font-sans">
-              {isAuthenticated
-                ? "Po nahratí budete presmerovaní na bezpečnú platobnú bránu Stripe. Analýza sa spustí automaticky po úspešnej platbe."
-                : "Po kliknutí sa najprv prihláste a následne budete presmerovaní na platbu."
+              {selectedPlan === "basic"
+                ? "Základná kontrola: AI analyzuje vašu zmluvu a zobrazí top 3 riziká zadarmo. Pre plný report s právnymi základmi si môžete vybrať vyšší plán."
+                : isAuthenticated
+                  ? "Po nahratí budete presmerovaní na bezpečnú platobnú bránu Stripe. Analýza sa spustí automaticky po úspešnej platbe."
+                  : "Po kliknutí sa najprv prihláste a následne budete presmerovaní na platbu."
               }
             </p>
           </div>

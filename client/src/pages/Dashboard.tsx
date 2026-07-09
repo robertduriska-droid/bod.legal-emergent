@@ -81,7 +81,7 @@ export default function Dashboard() {
                           <div className="min-w-0">
                             <p className="font-sans font-medium truncate">{contract.fileName}</p>
                             <p className="text-xs text-muted-foreground font-sans">
-                              {new Date(contract.createdAt).toLocaleDateString("sk-SK")} · {contract.plan === "basic" ? "Základná" : contract.plan === "standard" ? "Štandardná" : contract.plan === "premium" ? "Prémiová" : "Legal Audit"}
+                              {new Date(contract.createdAt).toLocaleDateString("sk-SK")} · {contract.plan === "basic" ? "Základná" : contract.plan === "standard" ? "Štandardná" : "Prémiová"}
                             </p>
                           </div>
                         </div>
@@ -90,7 +90,7 @@ export default function Dashboard() {
                             <StatusIcon className={`h-3 w-3 mr-1 ${contract.status === "analyzing" ? "animate-spin" : ""}`} />
                             {status.label}
                           </Badge>
-                          <Link href={contract.status === "completed" ? `/report/${contract.id}` : `/contract/${contract.id}`}>
+                          <Link href={contract.status === "completed" && contract.plan !== "basic" ? `/report/${contract.id}` : contract.plan === "basic" && contract.status !== "pending" ? `/preview/${contract.id}` : `/contract/${contract.id}`}>
                             <Button variant="ghost" size="sm" className="font-sans">
                               Zobraziť
                             </Button>

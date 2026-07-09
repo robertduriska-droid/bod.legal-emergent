@@ -94,10 +94,13 @@ export const appRouter = router({
           contractId: contractId,
         }).catch(err => console.error("[Notification] Failed to create:", err));
 
-        // Start AI analysis in background (non-blocking)
-        analyzeContract(contractId).catch(err =>
-          console.error(`[Analysis] Failed for contract ${contractId}:`, err)
-        );
+        // Analysis will be triggered by Stripe webhook after payment
+        // For basic plan: also runs free preview (top 3 risks) immediately
+        if (input.plan === "basic") {
+          analyzeContract(contractId).catch(err =>
+            console.error(`[Analysis] Failed for contract ${contractId}:`, err)
+          );
+        }
 
         return { contractId, status: "pending" as const };
       }),
@@ -122,7 +125,28 @@ export const appRouter = router({
         const contractClauses = await getClausesByContractId(input.id);
         const report = await getReportByContractId(input.id);
 
-        return { contract, clauses: contractClauses, report };
+        // For basic plan: only show top 3 high-risk clauses (free preview)
+        // Redact full report data - only expose riskSummary counts
+        if (contract.plan === "basic") {
+          const limitedClauses = contractClauses
+            .sort((a, b) => {
+              const riskOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
+              return (riskOrder[a.riskLevel] ?? 2) - (riskOrder[b.riskLevel] ?? 2);
+            })
+            .slice(0, 3)
+            .map(c => ({ ...c, suggestedEdit: null, lawyerAnnotation: null }));
+          const limitedReport = report ? {
+            ...report,
+            summary: null,
+            recommendation: null,
+            isSigned: 0,
+            lawyerName: null,
+            signedAt: null,
+          } : null;
+          return { contract, clauses: limitedClauses, report: limitedReport, isLimited: true };
+        }
+
+        return { contract, clauses: contractClauses, report, isLimited: false };
       }),
     /** Retry analysis for a pending contract (user-facing) */
     retryAnalysis: protectedProcedure
@@ -326,10 +350,9 @@ export const appRouter = router({
           return { paid: true };
         }
 
-        // TEST MODE: Skip payment gate while Stripe sandbox is not claimed
-        // Analysis is triggered immediately on upload, so mark as paid
-        // TODO: Remove this when Stripe is fully active
-        return { paid: true };
+        // Contract is pending - check if basic plan (free preview available)
+        // For standard/premium: payment required before full analysis
+        return { paid: false };
       }),
   }),
 

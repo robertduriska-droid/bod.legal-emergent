@@ -35,7 +35,7 @@ export const contracts = mysqlTable("contracts", {
   /** Number of pages (if detected) */
   pageCount: int("pageCount"),
   /** Selected pricing plan: basic, standard, premium */
-  plan: mysqlEnum("plan", ["basic", "standard", "premium", "audit"]).notNull(),
+  plan: mysqlEnum("plan", ["basic", "standard", "premium"]).notNull(),
   /** Express add-on: priority delivery within 4 hours */
   expressAddon: int("expressAddon").default(0).notNull(),
   /** Workflow status */

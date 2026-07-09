@@ -51,7 +51,7 @@ export default function Report() {
     );
   }
 
-  const { contract, clauses, report } = data;
+  const { contract, clauses, report, isLimited } = data;
   const riskSummary = report.riskSummary as { high: number; medium: number; low: number } | null;
 
   return (
@@ -109,8 +109,8 @@ export default function Report() {
             </div>
           )}
 
-          {/* Summary */}
-          {report.summary && (
+          {/* Summary - hidden for basic plan */}
+          {!isLimited && report.summary && (
             <Card className="mb-8">
               <CardContent className="p-6">
                 <h2 className="font-serif text-xl mb-3">Zhrnutie</h2>
@@ -119,8 +119,8 @@ export default function Report() {
             </Card>
           )}
 
-          {/* Recommendation */}
-          {report.recommendation && (
+          {/* Recommendation - hidden for basic plan */}
+          {!isLimited && report.recommendation && (
             <Card className="mb-8 border-primary/20 bg-primary/[0.02]">
               <CardContent className="p-6">
                 <h2 className="font-serif text-xl mb-3">Odporúčanie</h2>
@@ -184,37 +184,57 @@ export default function Report() {
             </div>
           )}
 
-          {/* Legal Sources */}
-          <Card className="mb-8">
-            <CardContent className="p-6">
-              <h2 className="font-serif text-xl mb-4">Použité právne zdroje</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {LEGAL_SOURCES.map((source) => (
-                  <a
-                    key={source.id}
-                    href={source.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 p-3 rounded border hover:border-primary/30 transition-colors"
-                  >
-                    <ExternalLink className="h-4 w-4 text-primary shrink-0" />
-                    <div className="min-w-0">
-                      <p className="font-sans text-sm font-medium truncate">{source.name}</p>
-                      <p className="text-xs text-muted-foreground font-sans">{source.instrument}</p>
-                    </div>
-                    <Badge variant="outline" className="text-xs font-sans shrink-0">{source.source}</Badge>
-                  </a>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          {/* Upgrade CTA for basic plan */}
+          {isLimited && (
+            <Card className="mb-8 border-primary/30 bg-primary/[0.03]">
+              <CardContent className="p-6 text-center">
+                <h3 className="font-serif text-lg mb-2">Toto je bezplatný náhľad</h3>
+                <p className="text-sm text-muted-foreground font-sans mb-4">
+                  Vidíte iba 3 najzávažnejšie riziká. Plný report obsahuje analýzu všetkých klauzúl,
+                  právne základy, navrhované úpravy a overenie advokátom.
+                </p>
+                <Link href="/upload">
+                  <Button className="font-sans">Objednať plný report od 249 eur</Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
 
-          {/* Download */}
-          <div className="text-center mb-8">
-            <Button className="font-sans" onClick={() => window.print()}>
-              <Download className="mr-2 h-4 w-4" /> Stiahnuť report (PDF)
-            </Button>
-          </div>
+          {/* Legal Sources */}
+          {!isLimited && (
+            <Card className="mb-8">
+              <CardContent className="p-6">
+                <h2 className="font-serif text-xl mb-4">Použité právne zdroje</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {LEGAL_SOURCES.map((source) => (
+                    <a
+                      key={source.id}
+                      href={source.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 p-3 rounded border hover:border-primary/30 transition-colors"
+                    >
+                      <ExternalLink className="h-4 w-4 text-primary shrink-0" />
+                      <div className="min-w-0">
+                        <p className="font-sans text-sm font-medium truncate">{source.name}</p>
+                        <p className="text-xs text-muted-foreground font-sans">{source.instrument}</p>
+                      </div>
+                      <Badge variant="outline" className="text-xs font-sans shrink-0">{source.source}</Badge>
+                    </a>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Download - only for paid plans */}
+          {!isLimited && (
+            <div className="text-center mb-8">
+              <Button className="font-sans" onClick={() => window.print()}>
+                <Download className="mr-2 h-4 w-4" /> Stiahnuť report (PDF)
+              </Button>
+            </div>
+          )}
 
           {/* Disclaimer */}
           <div className="text-center text-xs text-muted-foreground font-sans p-4 border rounded bg-muted/30">

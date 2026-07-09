@@ -61,3 +61,17 @@
 - [x] Smooth scroll for anchor links - already in index.css
 - [x] Cookie consent banner (GDPR compliance)
 - [x] Stripe test flow verification (payment bypass active until sandbox claimed)
+
+## Final Production Pass
+- [x] Fix payment flow: basic plan runs free preview immediately, standard/premium wait for Stripe webhook
+- [x] Fix getStatus: return paid=false for pending contracts (test bypass removed)
+- [x] Remove "audit" from drizzle schema plan enum (migration applied)
+- [x] Add "basic" plan free sken: run analysis immediately for basic (free preview), gate full report behind payment
+- [x] Verify ContractDetail payment gate works correctly
+- [x] Add proper error boundaries and fallbacks (ErrorBoundary already exists in template)
+- [x] Final vitest run (15/15 passing)
+- [x] Remove IMPLEMENTATION_NOTES.md
+- [x] Gate full report access for basic plan (server-side: return only 3 clauses, isLimited flag)
+- [x] Report.tsx: show upgrade CTA for basic plan users
+- [x] Dashboard: fix link routing (basic completed -> preview, not full report)
+- [x] Dashboard: remove stale 'Legal Audit' label

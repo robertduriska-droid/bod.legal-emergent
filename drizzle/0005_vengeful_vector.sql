@@ -1,0 +1,1 @@
+ALTER TABLE `contracts` MODIFY COLUMN `plan` enum('basic','standard','premium') NOT NULL;
