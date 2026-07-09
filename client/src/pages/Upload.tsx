@@ -26,12 +26,12 @@ export default function Upload() {
 
   const uploadMutation = trpc.contracts.upload.useMutation({
     onSuccess: (data) => {
-      toast.success("Zmluva bola uspesne nahrata! Pripravujeme preview...");
+      toast.success("Zmluva bola úspešne nahratá! Pripravujeme preview...");
       navigate(`/preview/${data.contractId}`);
       setUploading(false);
     },
     onError: (error) => {
-      toast.error("Chyba pri nahravani: " + error.message);
+      toast.error("Chyba pri nahrávaní: " + error.message);
       setUploading(false);
     },
   });
@@ -42,11 +42,11 @@ export default function Upload() {
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ];
     if (!validTypes.includes(selectedFile.type)) {
-      toast.error("Podporovane formaty: PDF, DOCX");
+      toast.error("Podporované formáty: PDF, DOCX");
       return;
     }
     if (selectedFile.size > 50 * 1024 * 1024) {
-      toast.error("Maximalna velkost suboru je 50 MB");
+      toast.error("Maximálna veľkosť súboru je 50 MB");
       return;
     }
     setFile(selectedFile);
@@ -64,7 +64,7 @@ export default function Upload() {
 
     // If not authenticated, prompt login first
     if (!isAuthenticated) {
-      toast.info("Pre odoslanie zmluvy sa najprv prihlaste.");
+      toast.info("Pre odoslanie zmluvy sa najprv prihláste.");
       startLogin();
       return;
     }
@@ -86,7 +86,7 @@ export default function Upload() {
       };
       reader.readAsDataURL(file);
     } catch {
-      toast.error("Chyba pri citani suboru");
+      toast.error("Chyba pri čítaní súboru");
       setUploading(false);
     }
   };
@@ -100,9 +100,9 @@ export default function Upload() {
       <Header />
       <main className="flex-1 py-12">
         <div className="container max-w-3xl">
-          <h1 className="text-3xl font-serif mb-2">Nahrat zmluvu</h1>
+          <h1 className="text-3xl font-serif mb-2">Nahrať zmluvu</h1>
           <p className="text-muted-foreground font-sans mb-8">
-            Nahrajte zmluvu vo formate PDF alebo DOCX a vyberte si plan kontroly.
+            Nahrajte zmluvu vo formáte PDF alebo DOCX a vyberte si plán kontroly.
           </p>
 
           {/* File Upload Area */}
@@ -127,15 +127,15 @@ export default function Upload() {
                       </p>
                     </div>
                     <Button variant="ghost" size="sm" className="font-sans" onClick={(e) => { e.stopPropagation(); setFile(null); }}>
-                      Zmenit subor
+                      Zmeniť súbor
                     </Button>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-3">
                     <UploadIcon className="h-12 w-12 text-muted-foreground" />
                     <div>
-                      <p className="font-sans font-medium">Pretiahnite subor sem</p>
-                      <p className="text-sm text-muted-foreground font-sans">alebo kliknite pre vyber. PDF, DOCX. Max 50 MB</p>
+                      <p className="font-sans font-medium">Pretiahnite súbor sem</p>
+                      <p className="text-sm text-muted-foreground font-sans">alebo kliknite pre výber. PDF, DOCX. Max 50 MB</p>
                     </div>
                   </div>
                 )}
@@ -154,7 +154,7 @@ export default function Upload() {
           </Card>
 
           {/* Plan Selection */}
-          <h2 className="text-xl font-serif mb-4">Vyberte plan</h2>
+          <h2 className="text-xl font-serif mb-4">Vyberte plán</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             {PRICING_PLANS.map((plan, index) => (
               <Card
@@ -182,7 +182,7 @@ export default function Upload() {
                       </li>
                     ))}
                     {plan.features.length > 3 && (
-                      <li className="text-muted-foreground">+{plan.features.length - 3} dalsie</li>
+                      <li className="text-muted-foreground">+{plan.features.length - 3} ďalšie</li>
                     )}
                   </ul>
                 </CardContent>
@@ -202,7 +202,7 @@ export default function Upload() {
                 <Zap className={`h-5 w-5 ${expressAddon ? "text-primary" : "text-muted-foreground"}`} />
                 <div>
                   <p className="font-sans font-semibold text-sm">Express dodanie</p>
-                  <p className="text-xs text-muted-foreground font-sans">{EXPRESS_ADDON.delivery} namiesto 24 hodin</p>
+                  <p className="text-xs text-muted-foreground font-sans">{EXPRESS_ADDON.delivery} namiesto 24 hodín</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -224,25 +224,25 @@ export default function Upload() {
                 {uploading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Nahravame...
+                    Nahrávame...
                   </>
                 ) : (
                   <>
                     <CreditCard className="mr-2 h-4 w-4" />
-                    {isAuthenticated ? `Nahrat a zaplatit ${totalPrice} eur` : `Pokracovat (${totalPrice} eur)`}
+                    {isAuthenticated ? `Nahrať a zaplatiť ${totalPrice} eur` : `Pokračovať (${totalPrice} eur)`}
                   </>
                 )}
               </Button>
               {!file && (
                 <p className="text-sm text-muted-foreground font-sans flex items-center gap-1">
-                  <AlertCircle className="h-4 w-4" /> Najprv nahrajte subor
+                  <AlertCircle className="h-4 w-4" /> Najprv nahrajte súbor
                 </p>
               )}
             </div>
             <p className="text-xs text-muted-foreground font-sans">
               {isAuthenticated
-                ? "Po nahrati budete presmerovani na bezpecnu platobnu branu Stripe. Analyza sa spusti automaticky po uspesnej platbe."
-                : "Po kliknuti sa najprv prihlaste a nasledne budete presmerovani na platbu."
+                ? "Po nahratí budete presmerovaní na bezpečnú platobnú bránu Stripe. Analýza sa spustí automaticky po úspešnej platbe."
+                : "Po kliknutí sa najprv prihláste a následne budete presmerovaní na platbu."
               }
             </p>
           </div>

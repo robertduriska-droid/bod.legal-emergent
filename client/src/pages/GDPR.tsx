@@ -8,12 +8,12 @@ export default function GDPR() {
       <main className="flex-1 py-16">
         <div className="container max-w-3xl">
           <h1 className="text-4xl font-serif mb-2">Ochrana osobných údajov</h1>
-          <p className="text-sm text-muted-foreground font-sans mb-4">V sulade s nariadenim (EU) 2016/679 (GDPR)</p>
+          <p className="text-sm text-muted-foreground font-sans mb-4">V súlade s nariadením (EÚ) 2016/679 (GDPR)</p>
 
           {/* Disclaimer Banner */}
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-8">
             <p className="text-sm font-sans text-amber-800">
-              <strong>[NA SCHVALENIE ADVOKATOM]</strong> - Tento dokument je pracovny navrh. Finalna verzia bude zverejnena po pravnom audite.
+              <strong>[NA SCHVÁLENIE ADVOKÁTOM]</strong> - Tento dokument je pracovný návrh. Finálna verzia bude zverejnená po právnom audite.
             </p>
           </div>
           
@@ -85,8 +85,8 @@ export default function GDPR() {
               <h2 className="text-xl font-serif text-foreground">7. Sprostredkovatelia</h2>
               <p>Na spracúvanie osobných údajov využívame nasledujúcich sprostredkovateľov:</p>
               <ul className="list-disc pl-6 space-y-1">
-                <li>Poskytovatelia cloudovych sluzieb (ulozisko dokumentov) - EU region</li>
-                <li>Poskytovatelia AI modelov - spracuvanie v sulade s cl. 28 GDPR</li>
+                <li>Poskytovatelia cloudových služieb (úložisko dokumentov) - EÚ región</li>
+                <li>Poskytovatelia AI modelov - spracúvanie v súlade s čl. 28 GDPR</li>
               </ul>
             </section>
           </div>

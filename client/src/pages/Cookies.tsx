@@ -8,12 +8,12 @@ export default function Cookies() {
       <main className="flex-1 py-16">
         <div className="container max-w-3xl">
           <h1 className="text-4xl font-serif mb-2">Zásady používania cookies</h1>
-          <p className="text-sm text-muted-foreground font-sans mb-4">Platne od 1. julá 2025</p>
+          <p className="text-sm text-muted-foreground font-sans mb-4">Platné od 1. júla 2025</p>
 
           {/* Disclaimer Banner */}
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-8">
             <p className="text-sm font-sans text-amber-800">
-              <strong>[NA SCHVALENIE ADVOKATOM]</strong> - Tento dokument je pracovny navrh. Finalna verzia bude zverejnena po pravnom audite.
+              <strong>[NA SCHVÁLENIE ADVOKÁTOM]</strong> - Tento dokument je pracovný návrh. Finálna verzia bude zverejnená po právnom audite.
             </p>
           </div>
           
@@ -62,7 +62,7 @@ export default function Cookies() {
 
             <section>
               <h2 className="text-xl font-serif text-foreground">Kontakt</h2>
-              <p>V pripade otazok tykajucich sa cookies nas kontaktujte na <a href="mailto:robert.duriska@bod.legal" className="text-primary hover:underline">robert.duriska@bod.legal</a>.</p>
+              <p>V prípade otázok týkajúcich sa cookies nás kontaktujte na <a href="mailto:robert.duriska@bod.legal" className="text-primary hover:underline">robert.duriska@bod.legal</a>.</p>
             </section>
           </div>
         </div>

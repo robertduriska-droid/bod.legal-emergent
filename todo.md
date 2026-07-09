@@ -46,3 +46,6 @@
 - [x] No superlatives, no outcome guarantees
 - [x] Tier names/prices identical across all surfaces
 - [x] Vitest tests pass
+
+## Diacritics Fix
+- [x] Fix missing Slovak diacritics across all pages (Home, Upload, FreeSken, Header, Footer, About, VOP, GDPR, Cookies)

@@ -133,7 +133,7 @@ export default function ContractDetail() {
                   {contract.status === "pending" ? "Čaká na spracovanie" : "Prebieha AI analýza"}
                 </h3>
                 <p className="text-sm text-muted-foreground font-sans">
-                  Analyza zmluvy zvycajne trva 1-3 minuty. Stránka sa automaticky aktualizuje.
+                  Analýza zmluvy zvyčajne trvá 1-3 minúty. Stránka sa automaticky aktualizuje.
                 </p>
                 {contract.status === "pending" && (
                   <Button

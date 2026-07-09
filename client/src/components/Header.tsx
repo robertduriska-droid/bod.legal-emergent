@@ -23,9 +23,9 @@ export default function Header() {
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-6 font-sans text-[13px] uppercase tracking-wide">
           <a href="/#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">Ako to funguje</a>
-          <a href="/#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Cennik</a>
+          <a href="/#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Cenník</a>
           <a href="/#faq" className="text-muted-foreground hover:text-foreground transition-colors">FAQ</a>
-          <Link href="/about" className="text-muted-foreground hover:text-foreground transition-colors">O nas</Link>
+          <Link href="/about" className="text-muted-foreground hover:text-foreground transition-colors">O nás</Link>
         </nav>
 
         {/* Right side */}
@@ -42,14 +42,14 @@ export default function Header() {
                 </Link>
               )}
               <Link href="/upload">
-                <Button size="sm" className="font-sans text-[13px] uppercase tracking-wide">Nahrat zmluvu</Button>
+                <Button size="sm" className="font-sans text-[13px] uppercase tracking-wide">Nahrať zmluvu</Button>
               </Link>
             </>
           ) : (
             <>
-              <Button variant="ghost" size="sm" className="font-sans text-[13px] uppercase tracking-wide" onClick={() => startLogin()}>Prihlasit sa</Button>
+              <Button variant="ghost" size="sm" className="font-sans text-[13px] uppercase tracking-wide" onClick={() => startLogin()}>Prihlásiť sa</Button>
               <Link href="/upload">
-                <Button size="sm" className="font-sans text-[13px] uppercase tracking-wide">Nahrat zmluvu</Button>
+                <Button size="sm" className="font-sans text-[13px] uppercase tracking-wide">Nahrať zmluvu</Button>
               </Link>
             </>
           )}
@@ -65,23 +65,23 @@ export default function Header() {
       {mobileOpen && (
         <div className="md:hidden border-t bg-white py-4 px-4 space-y-3 font-sans">
           <a href="/#how-it-works" className="block text-muted-foreground" onClick={() => setMobileOpen(false)}>Ako to funguje</a>
-          <a href="/#pricing" className="block text-muted-foreground" onClick={() => setMobileOpen(false)}>Cennik</a>
+          <a href="/#pricing" className="block text-muted-foreground" onClick={() => setMobileOpen(false)}>Cenník</a>
           <a href="/#faq" className="block text-muted-foreground" onClick={() => setMobileOpen(false)}>FAQ</a>
-          <Link href="/about" className="block text-muted-foreground" onClick={() => setMobileOpen(false)}>O nas</Link>
+          <Link href="/about" className="block text-muted-foreground" onClick={() => setMobileOpen(false)}>O nás</Link>
           <hr />
           {isAuthenticated ? (
             <>
               <Link href="/dashboard" className="block" onClick={() => setMobileOpen(false)}>Moje zmluvy</Link>
               {isAdmin && <Link href="/admin" className="block" onClick={() => setMobileOpen(false)}>Admin panel</Link>}
               <Link href="/upload" onClick={() => setMobileOpen(false)}>
-                <Button className="w-full font-sans mt-2">Nahrat zmluvu</Button>
+                <Button className="w-full font-sans mt-2">Nahrať zmluvu</Button>
               </Link>
             </>
           ) : (
             <>
-              <Button variant="ghost" className="w-full font-sans" onClick={() => startLogin()}>Prihlasit sa</Button>
+              <Button variant="ghost" className="w-full font-sans" onClick={() => startLogin()}>Prihlásiť sa</Button>
               <Link href="/upload" onClick={() => setMobileOpen(false)}>
-                <Button className="w-full font-sans mt-2">Nahrat zmluvu</Button>
+                <Button className="w-full font-sans mt-2">Nahrať zmluvu</Button>
               </Link>
             </>
           )}
