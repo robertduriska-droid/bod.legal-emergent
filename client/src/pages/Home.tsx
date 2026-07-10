@@ -7,6 +7,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import DemoAnimation from "@/components/DemoAnimation";
 import { PRICING_PLANS, EXPRESS_ADDON } from "@shared/types";
 
 export default function Home() {
@@ -65,8 +66,19 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Demo Animation */}
+      <section className="py-16 md:py-20 bg-warm-bg">
+        <div className="container">
+          <h2 className="text-2xl md:text-3xl font-serif text-center mb-3">Pozrite sa, ako to vyzerá</h2>
+          <p className="text-muted-foreground text-center mb-10 max-w-lg mx-auto font-sans text-sm">
+            Od nahratia zmluvy po hotový report za pár minút
+          </p>
+          <DemoAnimation />
+        </div>
+      </section>
+
       {/* How It Works */}
-      <section className="py-20 bg-warm-bg" id="how-it-works">
+      <section className="py-20 bg-white" id="how-it-works">
         <div className="container">
           <h2 className="text-3xl md:text-4xl font-serif text-center mb-4">Ako to funguje</h2>
           <p className="text-muted-foreground text-center mb-12 max-w-xl mx-auto font-sans">

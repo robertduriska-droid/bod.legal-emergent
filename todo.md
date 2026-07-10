@@ -87,3 +87,7 @@
 
 ## Visual Upgrade
 - [x] Replace placeholder icons in "Ako to funguje" section with realistic report visuals (upload mockup, analysis preview, final report preview)
+
+## Demo Video
+- [x] Create animated demo (CSS/JS looping animation) showing the full upload-to-report flow
+- [x] Add it below the hero section on the homepage
