@@ -75,3 +75,12 @@
 - [x] Report.tsx: show upgrade CTA for basic plan users
 - [x] Dashboard: fix link routing (basic completed -> preview, not full report)
 - [x] Dashboard: remove stale 'Legal Audit' label
+
+## Final All-In-One Pass
+- [x] Add Google Reviews section to homepage (70 reviews, 5.0 rating from KILIAN LEGAL)
+- [x] Remove VOP disclaimer banners (all 3 pages: VOP, GDPR, Cookies)
+- [x] Upgrade sample report page with more realistic content (already has 5 detailed clauses)
+- [x] Add structured data (JSON-LD) for LegalService + AggregateRating
+- [x] Add WhatsApp/phone contact floating button
+- [x] Add robots.txt and sitemap.xml
+- [x] Final visual QA and tests (15/15 passing, 0 TS errors)

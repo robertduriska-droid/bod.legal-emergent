@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Shield, Clock, FileText, CheckCircle, ArrowRight, Upload, Brain, UserCheck, Lock, Eye, Server, Award, Zap } from "lucide-react";
+import { Shield, Clock, FileText, CheckCircle, ArrowRight, Upload, Brain, UserCheck, Lock, Eye, Server, Award, Zap, Star, Quote } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
@@ -303,6 +303,70 @@ export default function Home() {
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
+          </div>
+        </div>
+      </section>
+
+      {/* Google Reviews */}
+      <section className="py-20 bg-white">
+        <div className="container">
+          <div className="text-center mb-12">
+            <div className="flex items-center justify-center gap-1 mb-3">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
+              ))}
+              <span className="ml-2 font-sans text-lg font-semibold">5.0</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-serif mb-2">70 hodnotení na Google</h2>
+            <p className="text-muted-foreground font-sans">KILIAN LEGAL s.r.o. - prevádzkovateľ bod.legal</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <Card className="border shadow-sm">
+              <CardContent className="p-6">
+                <Quote className="h-5 w-5 text-primary/30 mb-3" />
+                <p className="text-sm font-sans text-foreground mb-4 leading-relaxed">
+                  Veľmi efektívna spolupráca, promptné reakcie, profesionalita, kreativita pri hľadaní riešení.
+                </p>
+                <div className="flex items-center gap-1 mb-1">
+                  {[...Array(5)].map((_, i) => <Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />)}
+                </div>
+                <p className="text-xs text-muted-foreground font-sans">Dominika H.</p>
+              </CardContent>
+            </Card>
+            <Card className="border shadow-sm">
+              <CardContent className="p-6">
+                <Quote className="h-5 w-5 text-primary/30 mb-3" />
+                <p className="text-sm font-sans text-foreground mb-4 leading-relaxed">
+                  Proaktívny a profesionálny prístup, promptné riešenie. Je vidno, že sa vo svojej oblasti vyznajú a majú bohaté skúsenosti.
+                </p>
+                <div className="flex items-center gap-1 mb-1">
+                  {[...Array(5)].map((_, i) => <Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />)}
+                </div>
+                <p className="text-xs text-muted-foreground font-sans">Dominik G.</p>
+              </CardContent>
+            </Card>
+            <Card className="border shadow-sm">
+              <CardContent className="p-6">
+                <Quote className="h-5 w-5 text-primary/30 mb-3" />
+                <p className="text-sm font-sans text-foreground mb-4 leading-relaxed">
+                  Spolupráca s Robertom sa niesla vo veľmi príjemnej atmosfére, bolo to ľudské a profesionálne. Odporúčam.
+                </p>
+                <div className="flex items-center gap-1 mb-1">
+                  {[...Array(5)].map((_, i) => <Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />)}
+                </div>
+                <p className="text-xs text-muted-foreground font-sans">Tamara K. B.</p>
+              </CardContent>
+            </Card>
+          </div>
+          <div className="text-center mt-8">
+            <a
+              href="https://www.google.com/maps/place/KILIAN+LEGAL+s.r.o./"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-primary hover:underline font-sans inline-flex items-center gap-1"
+            >
+              Zobraziť všetkých 70 hodnotení na Google <ArrowRight className="h-3 w-3" />
+            </a>
           </div>
         </div>
       </section>

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://bodlegal-mqcbxxfs.manus.space/sitemap.xml

@@ -7,6 +7,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import { lazy, Suspense } from "react";
 import CookieConsent from "./components/CookieConsent";
+import FloatingContact from "./components/FloatingContact";
 
 // Lazy load pages for better performance
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -62,6 +63,7 @@ function App() {
           <Toaster />
           <Router />
           <CookieConsent />
+          <FloatingContact />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

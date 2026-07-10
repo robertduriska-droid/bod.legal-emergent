@@ -10,12 +10,7 @@ export default function GDPR() {
           <h1 className="text-4xl font-serif mb-2">Ochrana osobných údajov</h1>
           <p className="text-sm text-muted-foreground font-sans mb-4">V súlade s nariadením (EÚ) 2016/679 (GDPR)</p>
 
-          {/* Disclaimer Banner */}
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-8">
-            <p className="text-sm font-sans text-amber-800">
-              <strong>[NA SCHVÁLENIE ADVOKÁTOM]</strong> - Tento dokument je pracovný návrh. Finálna verzia bude zverejnená po právnom audite.
-            </p>
-          </div>
+
           
           <div className="prose prose-sm font-sans max-w-none text-muted-foreground space-y-6">
             <section>
