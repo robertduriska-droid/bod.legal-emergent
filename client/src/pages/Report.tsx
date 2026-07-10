@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import { Link, useParams } from "wouter";
 import { ArrowLeft, Loader2, CheckCircle, Download, ExternalLink, Shield, FileDown } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { LEGAL_SOURCES } from "@shared/types";
 
 const RISK_COLORS = {
@@ -43,8 +44,15 @@ function DownloadPdfButton({ contractId }: { contractId: number }) {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      toast.success("PDF bol úspešne vygenerovaný", {
+        description: "Súbor sa stiahol do vašich súborov.",
+      });
     } catch (err: any) {
-      setError(err.message || "Nepodarilo sa stiahnuť PDF");
+      const msg = err.message || "Nepodarilo sa stiahnuť PDF";
+      setError(msg);
+      toast.error("Chyba pri sťahovaní PDF", {
+        description: msg,
+      });
     } finally {
       setDownloading(false);
     }

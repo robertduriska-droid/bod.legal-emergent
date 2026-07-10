@@ -100,3 +100,4 @@
 ## PDF Export
 - [x] Server-side PDF generation endpoint (/api/contracts/:id/report.pdf)
 - [x] Download PDF button on Report page (replaces window.print())
+- [x] Success/error toast notifications on PDF download button
