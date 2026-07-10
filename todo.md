@@ -96,3 +96,7 @@
 - [x] Hover zoom effect (scale 110%) + magnifier icon overlay on "Ako to funguje" image cards
 - [x] Lightbox overlay: click any card to open full-screen image view with X close button
 - [x] Play/pause controls and step navigation for DemoAnimation
+
+## PDF Export
+- [x] Server-side PDF generation endpoint (/api/contracts/:id/report.pdf)
+- [x] Download PDF button on Report page (replaces window.print())

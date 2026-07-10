@@ -6,7 +6,8 @@ import { trpc } from "@/lib/trpc";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Link, useParams } from "wouter";
-import { ArrowLeft, Loader2, CheckCircle, Download, ExternalLink, Shield } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle, Download, ExternalLink, Shield, FileDown } from "lucide-react";
+import { useState } from "react";
 import { LEGAL_SOURCES } from "@shared/types";
 
 const RISK_COLORS = {
@@ -15,6 +16,53 @@ const RISK_COLORS = {
   low: "bg-green-100 text-green-800 border-green-200",
 };
 const RISK_LABELS = { high: "Vysoké riziko", medium: "Stredné riziko", low: "Nízke riziko" };
+
+function DownloadPdfButton({ contractId }: { contractId: number }) {
+  const [downloading, setDownloading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/contracts/${contractId}/report.pdf`, {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({ error: "Chyba pri generovaní PDF" }));
+        throw new Error(errData.error || "Chyba pri generovaní PDF");
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const disposition = response.headers.get("Content-Disposition");
+      const filenameMatch = disposition?.match(/filename="(.+?)"/);
+      a.download = filenameMatch?.[1] || `bod-legal_report_${contractId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      setError(err.message || "Nepodarilo sa stiahnuť PDF");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  return (
+    <div className="text-center mb-8">
+      <Button className="font-sans" onClick={handleDownload} disabled={downloading}>
+        {downloading ? (
+          <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generujem PDF...</>
+        ) : (
+          <><FileDown className="mr-2 h-4 w-4" /> Stiahnuť report (PDF)</>
+        )}
+      </Button>
+      {error && <p className="text-sm text-red-600 font-sans mt-2">{error}</p>}
+    </div>
+  );
+}
 
 export default function Report() {
   const { isAuthenticated } = useAuth({ redirectOnUnauthenticated: true });
@@ -227,14 +275,8 @@ export default function Report() {
             </Card>
           )}
 
-          {/* Download - only for paid plans */}
-          {!isLimited && (
-            <div className="text-center mb-8">
-              <Button className="font-sans" onClick={() => window.print()}>
-                <Download className="mr-2 h-4 w-4" /> Stiahnuť report (PDF)
-              </Button>
-            </div>
-          )}
+          {/* Download PDF - only for paid plans */}
+          {!isLimited && <DownloadPdfButton contractId={contractId} />}
 
           {/* Disclaimer */}
           <div className="text-center text-xs text-muted-foreground font-sans p-4 border rounded bg-muted/30">
