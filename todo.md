@@ -101,3 +101,5 @@
 - [x] Server-side PDF generation endpoint (/api/contracts/:id/report.pdf)
 - [x] Download PDF button on Report page (replaces window.print())
 - [x] Success/error toast notifications on PDF download button
+- [x] Add bod.legal diagonal watermark to every PDF page
+- [x] Add QR code linking to online report on last page of PDF

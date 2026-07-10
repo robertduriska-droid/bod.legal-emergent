@@ -171,4 +171,48 @@ describe("PDF Export Endpoint", () => {
     expect(res.status).toBe(200);
     expect(res.headers["content-type"]).toBe("application/pdf");
   });
+
+  it("should include QR code and watermark in the generated PDF", async () => {
+    const { registerPdfExport } = await import("./pdf-export");
+    const express = await import("express");
+    const app = express.default();
+    app.use(express.default.json());
+    registerPdfExport(app);
+
+    (sdk.authenticateRequest as any).mockResolvedValue({ id: 1, role: "user" });
+    (getContractById as any).mockResolvedValue({
+      id: 42,
+      userId: 1,
+      plan: "premium",
+      fileName: "Test-QR.pdf",
+      createdAt: new Date("2026-06-01"),
+    });
+    (getClausesByContractId as any).mockResolvedValue([]);
+    (getReportByContractId as any).mockResolvedValue({
+      id: 1,
+      contractId: 42,
+      summary: "Test summary for QR verification.",
+      recommendation: "Test recommendation.",
+      riskSummary: { high: 0, medium: 0, low: 1 },
+      isSigned: 0,
+      lawyerName: null,
+      signedAt: null,
+    });
+
+    const request = await import("supertest").then(m => m.default);
+    const res = await request(app).get("/api/contracts/42/report.pdf");
+    expect(res.status).toBe(200);
+
+    // With custom fonts, jsPDF encodes text as CID glyph IDs (hex), not plain text.
+    // Verify the PDF structure contains evidence of QR code and watermark.
+    const pdfContent = res.body.toString("latin1");
+    // The PDF should contain an embedded image (the QR code PNG)
+    expect(pdfContent).toContain("/Subtype /Image");
+    // The PDF should contain a graphics state with low opacity (watermark at 0.04)
+    expect(pdfContent).toContain("/ca 0.04");
+    // The PDF should reference the Inter font (used for watermark text)
+    expect(pdfContent).toContain("Inter");
+    // The PDF should have ExtGState (used by saveGraphicsState/setGState)
+    expect(pdfContent).toContain("/ExtGState");
+  });
 });

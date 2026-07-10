@@ -1,5 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { jsPDF } from "jspdf";
+import QRCode from "qrcode";
 import { sdk } from "./_core/sdk";
 import { getContractById, getClausesByContractId, getReportByContractId } from "./db";
 import { getInterRegularBase64, getInterBoldBase64 } from "./fonts/font-data";
@@ -52,8 +53,10 @@ export function registerPdfExport(app: Express) {
         return;
       }
 
-      // Generate PDF
-      const pdf = generateReportPdf(contract, clauses, report);
+      // Generate PDF with online report URL for QR code
+      const origin = req.headers.origin || `${req.protocol}://${req.headers.host}`;
+      const reportUrl = `${origin}/report/${contractId}`;
+      const pdf = await generateReportPdf(contract, clauses, report, reportUrl);
       const pdfBuffer = Buffer.from(pdf.output("arraybuffer"));
 
       // Send PDF response
@@ -83,7 +86,7 @@ const RISK_LABELS: Record<string, string> = {
   low: "Nízke riziko",
 };
 
-function generateReportPdf(contract: any, clauses: any[], report: any): jsPDF {
+async function generateReportPdf(contract: any, clauses: any[], report: any, reportUrl: string): Promise<jsPDF> {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -394,10 +397,77 @@ function generateReportPdf(contract: any, clauses: any[], report: any): jsPDF {
     { align: "center" }
   );
 
-  // Add footer to all pages
+  // ─── QR Code Page ──────────────────────────────────────────────────────────
+  checkPage(60);
+  y += 10;
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.3);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 12;
+
+  doc.setFontSize(11);
+  doc.setFont("Inter", "bold");
+  doc.setTextColor(0, 0, 0);
+  doc.text("Overenie reportu online", pageWidth / 2, y, { align: "center" });
+  y += 6;
+
+  doc.setFontSize(9);
+  doc.setFont("Inter", "normal");
+  doc.setTextColor(80, 80, 80);
+  doc.text(
+    "Naskenujte QR kód pre prístup k interaktívnej verzii tohto reportu.",
+    pageWidth / 2,
+    y,
+    { align: "center" }
+  );
+  y += 10;
+
+  // Generate QR code as data URL and embed it
+  try {
+    const qrDataUrl = await QRCode.toDataURL(reportUrl, {
+      width: 200,
+      margin: 1,
+      color: { dark: "#1a1a1a", light: "#ffffff" },
+    });
+    const qrSize = 35;
+    const qrX = (pageWidth - qrSize) / 2;
+    doc.addImage(qrDataUrl, "PNG", qrX, y, qrSize, qrSize);
+    y += qrSize + 6;
+  } catch (qrErr) {
+    // Fallback: log error and print URL text instead of QR image
+    console.warn("[PDF Export] QR code generation failed:", qrErr);
+    y += 5;
+  }
+
+  doc.setFontSize(8);
+  doc.setTextColor(100, 100, 100);
+  doc.text(reportUrl, pageWidth / 2, y, { align: "center" });
+  doc.setTextColor(0, 0, 0);
+
+  // ─── Add watermark and footer to all pages ─────────────────────────────────
   const totalPages = doc.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
+
+    // Diagonal watermark
+    doc.saveGraphicsState();
+    // @ts-ignore - setGState is available in jsPDF
+    const gState = new (doc as any).GState({ opacity: 0.04 });
+    // @ts-ignore
+    doc.setGState(gState);
+    doc.setFontSize(60);
+    doc.setFont("Inter", "bold");
+    doc.setTextColor(0, 0, 0);
+    // Rotate text diagonally across the page
+    const centerX = pageWidth / 2;
+    const centerY = pageHeight / 2;
+    doc.text("bod.legal", centerX, centerY, {
+      align: "center",
+      angle: 45,
+    });
+    doc.restoreGraphicsState();
+
+    // Page footer
     doc.setFontSize(8);
     doc.setFont("Inter", "normal");
     doc.setTextColor(150, 150, 150);
