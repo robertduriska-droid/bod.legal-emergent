@@ -103,3 +103,5 @@
 - [x] Success/error toast notifications on PDF download button
 - [x] Add bod.legal diagonal watermark to every PDF page
 - [x] Add QR code linking to online report on last page of PDF
+- [ ] AI-generated executive summary section at top of PDF report
+- [x] Splash/intro animation with large bod.legal logo on dark background before scroll

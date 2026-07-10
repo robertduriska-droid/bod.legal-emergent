@@ -9,14 +9,26 @@ import { startLogin } from "@/const";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import DemoAnimation from "@/components/DemoAnimation";
+import SplashIntro from "@/components/SplashIntro";
 import { PRICING_PLANS, EXPRESS_ADDON } from "@shared/types";
 
 export default function Home() {
   const { isAuthenticated } = useAuth();
   const [lightboxImg, setLightboxImg] = useLocalState<string | null>(null);
 
+  // Splash intro - show once per session
+  const [showSplash, setShowSplash] = useLocalState(() => {
+    if (typeof window === "undefined") return false;
+    return !sessionStorage.getItem("bod_splash_seen");
+  });
+  const handleSplashComplete = () => {
+    sessionStorage.setItem("bod_splash_seen", "1");
+    setShowSplash(false);
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
+      {showSplash && <SplashIntro onComplete={handleSplashComplete} />}
       <Header />
 
       {/* Hero Section */}
