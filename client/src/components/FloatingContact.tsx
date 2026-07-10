@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { MessageCircle, Phone, X } from "lucide-react";
+import { useT } from "@/i18n";
 
 export default function FloatingContact() {
   const [open, setOpen] = useState(false);
+  const { locale } = useT();
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
@@ -29,7 +31,7 @@ export default function FloatingContact() {
       <button
         onClick={() => setOpen(!open)}
         className="w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all flex items-center justify-center active:scale-95"
-        aria-label={open ? "Zavrieť kontakt" : "Kontaktovať nás"}
+        aria-label={open ? (locale === "en" ? "Close contact" : "Zavrieť kontakt") : (locale === "en" ? "Contact us" : "Kontaktovať nás")}
       >
         {open ? <X className="h-5 w-5" /> : <MessageCircle className="h-5 w-5" />}
       </button>

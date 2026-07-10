@@ -1,6 +1,13 @@
 import { Link } from "wouter";
+import { useT } from "@/i18n";
 
 export default function Footer() {
+  const { t, locale, localePath } = useT();
+
+  const vopPath = locale === "en" ? "/en/terms" : "/vop";
+  const privacyPath = locale === "en" ? "/en/privacy" : "/gdpr";
+  const cookiesPath = locale === "en" ? "/en/cookies" : "/cookies";
+
   return (
     <footer className="bg-hero-bg text-hero-text/70 py-12">
       <div className="container">
@@ -8,36 +15,34 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <p className="font-serif text-xl text-hero-text mb-2">bod.legal</p>
-            <p className="text-sm font-sans">
-              Kontrola zmlúv s AI a overením advokátom. Prevádzkované KILIAN LEGAL s.r.o.
-            </p>
+            <p className="text-sm font-sans">{t.footer.description}</p>
           </div>
 
           {/* Product */}
           <div>
-            <h4 className="font-sans font-medium text-hero-text mb-3 text-[13px] uppercase tracking-[0.05em]">Produkt</h4>
+            <h4 className="font-sans font-medium text-hero-text mb-3 text-[13px] uppercase tracking-[0.05em]">{t.footer.product}</h4>
             <ul className="space-y-2 text-sm font-sans">
-              <li><a href="/#how-it-works" className="hover:text-hero-text transition-colors">Ako to funguje</a></li>
-              <li><a href="/#pricing" className="hover:text-hero-text transition-colors">Cenník</a></li>
-              <li><a href="/#faq" className="hover:text-hero-text transition-colors">FAQ</a></li>
+              <li><a href={`${localePath("/")}#how-it-works`} className="hover:text-hero-text transition-colors">{t.header.howItWorks}</a></li>
+              <li><a href={`${localePath("/")}#pricing`} className="hover:text-hero-text transition-colors">{t.header.pricing}</a></li>
+              <li><a href={`${localePath("/")}#faq`} className="hover:text-hero-text transition-colors">{t.header.faq}</a></li>
             </ul>
           </div>
 
           {/* Legal */}
           <div>
-            <h4 className="font-sans font-medium text-hero-text mb-3 text-[13px] uppercase tracking-[0.05em]">Právne informácie</h4>
+            <h4 className="font-sans font-medium text-hero-text mb-3 text-[13px] uppercase tracking-[0.05em]">{t.footer.legalInfo}</h4>
             <ul className="space-y-2 text-sm font-sans">
-              <li><Link href="/vop" className="hover:text-hero-text transition-colors">VOP</Link></li>
-              <li><Link href="/gdpr" className="hover:text-hero-text transition-colors">Ochrana osobných údajov</Link></li>
-              <li><Link href="/cookies" className="hover:text-hero-text transition-colors">Cookies</Link></li>
+              <li><Link href={vopPath} className="hover:text-hero-text transition-colors">{t.footer.vop}</Link></li>
+              <li><Link href={privacyPath} className="hover:text-hero-text transition-colors">{t.footer.privacy}</Link></li>
+              <li><Link href={cookiesPath} className="hover:text-hero-text transition-colors">{t.footer.cookies}</Link></li>
             </ul>
           </div>
 
           {/* Company */}
           <div>
-            <h4 className="font-sans font-medium text-hero-text mb-3 text-[13px] uppercase tracking-[0.05em]">Spoločnosť</h4>
+            <h4 className="font-sans font-medium text-hero-text mb-3 text-[13px] uppercase tracking-[0.05em]">{t.footer.company}</h4>
             <ul className="space-y-2 text-sm font-sans">
-              <li><Link href="/about" className="hover:text-hero-text transition-colors">O nás</Link></li>
+              <li><Link href={localePath("/about")} className="hover:text-hero-text transition-colors">{t.header.about}</Link></li>
               <li>KILIAN LEGAL s.r.o.</li>
               <li>IČO: 53 957 008</li>
               <li><a href="mailto:robert.duriska@bod.legal" className="hover:text-hero-text transition-colors">robert.duriska@bod.legal</a></li>
@@ -47,9 +52,9 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-hero-text/10 mt-8 pt-8 text-center text-xs font-sans">
-          <p>&copy; {new Date().getFullYear()} KILIAN LEGAL s.r.o. Všetky práva vyhradené.</p>
+          <p>&copy; {new Date().getFullYear()} KILIAN LEGAL s.r.o. {t.footer.allRights}</p>
           <p className="mt-1">
-            Právne zdroje:{" "}
+            {t.footer.legalSources}{" "}
             <a href="https://www.slov-lex.sk" target="_blank" rel="noopener noreferrer" className="underline hover:text-hero-text">Slov-Lex</a>
             {" | "}
             <a href="https://eur-lex.europa.eu" target="_blank" rel="noopener noreferrer" className="underline hover:text-hero-text">EUR-Lex</a>

@@ -7,19 +7,25 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Link } from "wouter";
 import { FileText, Upload, Clock, CheckCircle, AlertCircle, Loader2, Eye } from "lucide-react";
-
-const STATUS_MAP: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; icon: typeof Clock }> = {
-  pending: { label: "Čaká na spracovanie", variant: "secondary", icon: Clock },
-  analyzing: { label: "AI analýza", variant: "outline", icon: Loader2 },
-  in_review: { label: "Kontrola advokátom", variant: "default", icon: Eye },
-  completed: { label: "Dokončené", variant: "default", icon: CheckCircle },
-};
+import { useT } from "@/i18n";
 
 export default function Dashboard() {
   const { isAuthenticated, loading: authLoading } = useAuth({ redirectOnUnauthenticated: true });
   const { data: contracts, isLoading } = trpc.contracts.myContracts.useQuery(undefined, {
     enabled: isAuthenticated,
   });
+  const { t, locale, localePath } = useT();
+
+  const STATUS_MAP: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; icon: typeof Clock }> = {
+    pending: { label: t.dashboard.status.pending, variant: "secondary", icon: Clock },
+    analyzing: { label: t.dashboard.status.analyzing, variant: "outline", icon: Loader2 },
+    in_review: { label: t.dashboard.status.in_review, variant: "default", icon: Eye },
+    completed: { label: t.dashboard.status.completed, variant: "default", icon: CheckCircle },
+  };
+
+  const planLabels: Record<string, string> = locale === "en"
+    ? { basic: "Basic", standard: "Standard", premium: "Premium" }
+    : { basic: "Základná", standard: "Štandardná", premium: "Prémiová" };
 
   if (authLoading) {
     return (
@@ -36,13 +42,15 @@ export default function Dashboard() {
         <div className="container max-w-4xl">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-serif">Moje zmluvy</h1>
-              <p className="text-muted-foreground font-sans mt-1">Prehľad vašich odoslaných zmlúv a ich stav</p>
+              <h1 className="text-3xl font-serif">{t.dashboard.title}</h1>
+              <p className="text-muted-foreground font-sans mt-1">
+                {locale === "en" ? "Overview of your submitted contracts and their status" : "Prehľad vašich odoslaných zmlúv a ich stav"}
+              </p>
             </div>
-            <Link href="/upload">
+            <Link href={localePath("/upload")}>
               <Button className="font-sans">
                 <Upload className="mr-2 h-4 w-4" />
-                Nahrať zmluvu
+                {t.header.uploadContract}
               </Button>
             </Link>
           </div>
@@ -55,12 +63,14 @@ export default function Dashboard() {
             <Card>
               <CardContent className="py-16 text-center">
                 <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="font-sans text-xl font-semibold mb-2">Zatiaľ žiadne zmluvy</h3>
-                <p className="text-muted-foreground font-sans mb-4">Nahrajte svoju prvú zmluvu a získajte analýzu rizík.</p>
-                <Link href="/upload">
+                <h3 className="font-sans text-xl font-semibold mb-2">
+                  {locale === "en" ? "No contracts yet" : "Zatiaľ žiadne zmluvy"}
+                </h3>
+                <p className="text-muted-foreground font-sans mb-4">{t.dashboard.noContracts}</p>
+                <Link href={localePath("/upload")}>
                   <Button className="font-sans">
                     <Upload className="mr-2 h-4 w-4" />
-                    Nahrať zmluvu
+                    {t.header.uploadContract}
                   </Button>
                 </Link>
               </CardContent>
@@ -81,7 +91,7 @@ export default function Dashboard() {
                           <div className="min-w-0">
                             <p className="font-sans font-medium truncate">{contract.fileName}</p>
                             <p className="text-xs text-muted-foreground font-sans">
-                              {new Date(contract.createdAt).toLocaleDateString("sk-SK")} · {contract.plan === "basic" ? "Základná" : contract.plan === "standard" ? "Štandardná" : "Prémiová"}
+                              {new Date(contract.createdAt).toLocaleDateString(locale === "en" ? "en-GB" : "sk-SK")} · {planLabels[contract.plan] || contract.plan}
                             </p>
                           </div>
                         </div>
@@ -90,9 +100,9 @@ export default function Dashboard() {
                             <StatusIcon className={`h-3 w-3 mr-1 ${contract.status === "analyzing" ? "animate-spin" : ""}`} />
                             {status.label}
                           </Badge>
-                          <Link href={contract.status === "completed" && contract.plan !== "basic" ? `/report/${contract.id}` : contract.plan === "basic" && contract.status !== "pending" ? `/preview/${contract.id}` : `/contract/${contract.id}`}>
+                          <Link href={localePath(contract.status === "completed" && contract.plan !== "basic" ? `/report/${contract.id}` : contract.plan === "basic" && contract.status !== "pending" ? `/preview/${contract.id}` : `/contract/${contract.id}`)}>
                             <Button variant="ghost" size="sm" className="font-sans">
-                              Zobraziť
+                              {locale === "en" ? "View" : "Zobraziť"}
                             </Button>
                           </Link>
                         </div>

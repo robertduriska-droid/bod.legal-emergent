@@ -105,3 +105,12 @@
 - [x] Add QR code linking to online report on last page of PDF
 - [ ] AI-generated executive summary section at top of PDF report
 - [x] Splash/intro animation with large bod.legal logo on dark background before scroll
+
+## English Version (i18n)
+- [x] i18n translation system with sk/en locale files
+- [x] Language routing (/en/* prefix for English)
+- [x] Language switcher in header
+- [x] English translations for main pages (Home, About, Upload, Dashboard) + components (Header, Footer, Splash, Cookies banner, Demo, FloatingContact)
+- [x] English splash intro (tagline via i18n)
+- [ ] English translations for remaining pages (Report, ContractDetail, FreeSken, SampleReport, VOP, GDPR, Cookies, NotFound)
+- [ ] English PDF report generation

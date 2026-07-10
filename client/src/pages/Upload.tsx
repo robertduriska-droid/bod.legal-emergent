@@ -10,6 +10,7 @@ import { useLocation, useSearch } from "wouter";
 import { Upload as UploadIcon, FileText, CheckCircle, AlertCircle, Loader2, CreditCard, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { PRICING_PLANS, EXPRESS_ADDON } from "@shared/types";
+import { useT } from "@/i18n";
 
 export default function Upload() {
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -17,6 +18,7 @@ export default function Upload() {
   const search = useSearch();
   const params = new URLSearchParams(search);
   const preselectedPlan = params.get("plan") as string | null;
+  const { t, locale, localePath } = useT();
 
   const [file, setFile] = useState<File | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<string>(preselectedPlan || "standard");
@@ -27,16 +29,16 @@ export default function Upload() {
   const uploadMutation = trpc.contracts.upload.useMutation({
     onSuccess: (data) => {
       if (selectedPlan === "basic") {
-        toast.success("Zmluva bola úspešne nahratá! Pripravujeme bezplatný náhľad...");
-        navigate(`/preview/${data.contractId}`);
+        toast.success(t.upload.successBasic);
+        navigate(localePath(`/preview/${data.contractId}`));
       } else {
-        toast.success("Zmluva bola úspešne nahratá! Pokračujte k platbe.");
-        navigate(`/contract/${data.contractId}`);
+        toast.success(t.upload.successPaid);
+        navigate(localePath(`/contract/${data.contractId}`));
       }
       setUploading(false);
     },
     onError: (error) => {
-      toast.error("Chyba pri nahrávaní: " + error.message);
+      toast.error(t.upload.errorUpload + error.message);
       setUploading(false);
     },
   });
@@ -47,15 +49,15 @@ export default function Upload() {
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ];
     if (!validTypes.includes(selectedFile.type)) {
-      toast.error("Podporované formáty: PDF, DOCX");
+      toast.error(t.upload.errorFormat);
       return;
     }
     if (selectedFile.size > 50 * 1024 * 1024) {
-      toast.error("Maximálna veľkosť súboru je 50 MB");
+      toast.error(t.upload.errorSize);
       return;
     }
     setFile(selectedFile);
-  }, []);
+  }, [t]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -67,9 +69,8 @@ export default function Upload() {
   const handleSubmit = async () => {
     if (!file || !selectedPlan) return;
 
-    // If not authenticated, prompt login first
     if (!isAuthenticated) {
-      toast.info("Pre odoslanie zmluvy sa najprv prihláste.");
+      toast.info(t.upload.loginFirst);
       startLogin();
       return;
     }
@@ -86,12 +87,12 @@ export default function Upload() {
           fileBase64: base64,
           plan: selectedPlan as "basic" | "standard" | "premium",
           expressAddon: expressAddon,
-          language: "sk",
+          language: locale,
         });
       };
       reader.readAsDataURL(file);
     } catch {
-      toast.error("Chyba pri čítaní súboru");
+      toast.error(t.upload.errorRead);
       setUploading(false);
     }
   };
@@ -100,14 +101,19 @@ export default function Upload() {
   const selectedPlanData = PRICING_PLANS.find(p => p.id === selectedPlan);
   const totalPrice = (selectedPlanData?.price || 0) + (expressAddon ? EXPRESS_ADDON.price : 0);
 
+  // Plan names per locale
+  const planNames = locale === "en"
+    ? [t.pricing.basicTitle, t.pricing.standardTitle, t.pricing.premiumTitle]
+    : PRICING_PLANS.map(p => p.nameSk);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-1 py-12">
         <div className="container max-w-3xl">
-          <h1 className="text-3xl font-serif mb-2">Nahrať zmluvu</h1>
+          <h1 className="text-3xl font-serif mb-2">{t.upload.title}</h1>
           <p className="text-muted-foreground font-sans mb-8">
-            Nahrajte zmluvu vo formáte PDF alebo DOCX a vyberte si plán kontroly.
+            {t.upload.subtitle}
           </p>
 
           {/* File Upload Area */}
@@ -132,15 +138,15 @@ export default function Upload() {
                       </p>
                     </div>
                     <Button variant="ghost" size="sm" className="font-sans" onClick={(e) => { e.stopPropagation(); setFile(null); }}>
-                      Zmeniť súbor
+                      {t.upload.changeFile}
                     </Button>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-3">
                     <UploadIcon className="h-12 w-12 text-muted-foreground" />
                     <div>
-                      <p className="font-sans font-medium">Pretiahnite súbor sem</p>
-                      <p className="text-sm text-muted-foreground font-sans">alebo kliknite pre výber. PDF, DOCX. Max 50 MB</p>
+                      <p className="font-sans font-medium">{t.upload.dragDrop}</p>
+                      <p className="text-sm text-muted-foreground font-sans">{t.upload.dragDropHint}</p>
                     </div>
                   </div>
                 )}
@@ -159,7 +165,7 @@ export default function Upload() {
           </Card>
 
           {/* Plan Selection */}
-          <h2 className="text-xl font-serif mb-4">Vyberte plán</h2>
+          <h2 className="text-xl font-serif mb-4">{t.upload.selectPlan}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             {PRICING_PLANS.map((plan, index) => (
               <Card
@@ -172,7 +178,7 @@ export default function Upload() {
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <h3 className="font-sans font-semibold text-sm">{plan.nameSk}</h3>
+                      <h3 className="font-sans font-semibold text-sm">{planNames[index]}</h3>
                       <p className="text-2xl font-serif">{plan.priceLabel}</p>
                     </div>
                     {selectedPlan === plan.id && (
@@ -187,7 +193,7 @@ export default function Upload() {
                       </li>
                     ))}
                     {plan.features.length > 3 && (
-                      <li className="text-muted-foreground">+{plan.features.length - 3} ďalšie</li>
+                      <li className="text-muted-foreground">+{plan.features.length - 3} {t.upload.moreFeatures}</li>
                     )}
                   </ul>
                 </CardContent>
@@ -206,8 +212,8 @@ export default function Upload() {
               <div className="flex items-center gap-3">
                 <Zap className={`h-5 w-5 ${expressAddon ? "text-primary" : "text-muted-foreground"}`} />
                 <div>
-                  <p className="font-sans font-semibold text-sm">Express dodanie</p>
-                  <p className="text-xs text-muted-foreground font-sans">{EXPRESS_ADDON.delivery} namiesto 24 hodín</p>
+                  <p className="font-sans font-semibold text-sm">{t.pricing.expressTitle}</p>
+                  <p className="text-xs text-muted-foreground font-sans">{t.pricing.expressDesc}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -229,30 +235,30 @@ export default function Upload() {
                 {uploading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Nahrávame...
+                    {t.upload.processing}
                   </>
                 ) : (
                   <>
                     {selectedPlan === "basic" ? (
-                      <><UploadIcon className="mr-2 h-4 w-4" />Nahrať a získať bezplatný náhľad</>
+                      <><UploadIcon className="mr-2 h-4 w-4" />{t.upload.uploadFreePreview}</>
                     ) : (
-                      <><CreditCard className="mr-2 h-4 w-4" />{isAuthenticated ? `Nahrať a pokračovať k platbe (${totalPrice} eur)` : `Pokračovať (${totalPrice} eur)`}</>
+                      <><CreditCard className="mr-2 h-4 w-4" />{isAuthenticated ? `${t.upload.uploadAndPay} (${totalPrice} eur)` : `${t.upload.continueLabel} (${totalPrice} eur)`}</>
                     )}
                   </>
                 )}
               </Button>
               {!file && (
                 <p className="text-sm text-muted-foreground font-sans flex items-center gap-1">
-                  <AlertCircle className="h-4 w-4" /> Najprv nahrajte súbor
+                  <AlertCircle className="h-4 w-4" /> {t.upload.uploadFirst}
                 </p>
               )}
             </div>
             <p className="text-xs text-muted-foreground font-sans">
               {selectedPlan === "basic"
-                ? "Základná kontrola: AI analyzuje vašu zmluvu a zobrazí top 3 riziká zadarmo. Pre plný report s právnymi základmi si môžete vybrať vyšší plán."
+                ? t.upload.basicNote
                 : isAuthenticated
-                  ? "Po nahratí budete presmerovaní na bezpečnú platobnú bránu Stripe. Analýza sa spustí automaticky po úspešnej platbe."
-                  : "Po kliknutí sa najprv prihláste a následne budete presmerovaní na platbu."
+                  ? t.upload.paidNote
+                  : t.upload.loginNote
               }
             </p>
           </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useT } from "@/i18n";
 
 /**
  * SplashIntro - Full-screen intro animation with large bod.legal logo.
@@ -13,23 +14,21 @@ import { useState, useEffect, useCallback } from "react";
  */
 export default function SplashIntro({ onComplete }: { onComplete: () => void }) {
   const [phase, setPhase] = useState<"enter" | "hold" | "exit" | "done">("enter");
+  const { t } = useT();
 
   const stableOnComplete = useCallback(onComplete, []);
 
   useEffect(() => {
-    // Phase 1 → Phase 2: logo enters
     const enterTimer = setTimeout(() => setPhase("hold"), 800);
     return () => clearTimeout(enterTimer);
   }, []);
 
   useEffect(() => {
     if (phase === "hold") {
-      // Phase 2 → Phase 3: hold, then exit
       const holdTimer = setTimeout(() => setPhase("exit"), 1400);
       return () => clearTimeout(holdTimer);
     }
     if (phase === "exit") {
-      // Phase 3 → done: fade out
       const exitTimer = setTimeout(() => {
         setPhase("done");
         stableOnComplete();
@@ -54,7 +53,7 @@ export default function SplashIntro({ onComplete }: { onComplete: () => void }) 
           : "none",
       }}
     >
-      {/* Top trust bar - fades in during hold */}
+      {/* Top trust bar */}
       <div
         className="absolute top-8 left-0 right-0 text-center"
         style={{
@@ -68,11 +67,11 @@ export default function SplashIntro({ onComplete }: { onComplete: () => void }) 
           className="text-xs tracking-[0.25em] uppercase font-sans"
           style={{ color: "rgba(255,255,255,0.45)" }}
         >
-          Bez záväzkov &middot; Paušálna cena &middot; Výsledok do 24h
+          {t.splash.trustBar}
         </p>
       </div>
 
-      {/* Main logo - fades in from scale 0.95 */}
+      {/* Main logo */}
       <div
         style={{
           opacity: phase === "enter" ? 0 : 1,
@@ -88,7 +87,7 @@ export default function SplashIntro({ onComplete }: { onComplete: () => void }) 
         </h1>
       </div>
 
-      {/* Tagline - appears after logo with delay */}
+      {/* Tagline */}
       <div
         className="mt-4"
         style={{
@@ -102,7 +101,7 @@ export default function SplashIntro({ onComplete }: { onComplete: () => void }) 
           className="text-base md:text-lg font-sans tracking-wide"
           style={{ color: "rgba(255,255,255,0.4)" }}
         >
-          bod. kde právo funguje.
+          {t.splash.tagline}
         </p>
       </div>
     </div>
