@@ -84,3 +84,6 @@
 - [x] Add WhatsApp/phone contact floating button
 - [x] Add robots.txt and sitemap.xml
 - [x] Final visual QA and tests (15/15 passing, 0 TS errors)
+
+## Visual Upgrade
+- [x] Replace placeholder icons in "Ako to funguje" section with realistic report visuals (upload mockup, analysis preview, final report preview)

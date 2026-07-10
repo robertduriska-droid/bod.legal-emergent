@@ -73,37 +73,55 @@ export default function Home() {
             Tri kroky od nahratia zmluvy po hotový report
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="border-0 shadow-sm bg-white">
-              <CardContent className="pt-8 pb-6 px-6 text-center">
-                <div className="w-14 h-14 rounded-full bg-primary/5 flex items-center justify-center mx-auto mb-4">
-                  <Upload className="h-6 w-6 text-primary" />
+            <Card className="border-0 shadow-sm bg-white overflow-hidden">
+              <CardContent className="p-0">
+                <div className="aspect-[4/3] overflow-hidden bg-muted">
+                  <img
+                    src="/manus-storage/ako-funguje-1-upload_7a1f5939.png"
+                    alt="Nahratie zmluvy do bod.legal"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-                <h3 className="font-sans text-xl font-semibold mb-2">1. Nahrajte zmluvu</h3>
-                <p className="text-muted-foreground font-sans text-sm">
-                  Nahrajte PDF alebo DOCX. Vyberte si plán podľa rozsahu zmluvy a zaplaťte online.
-                </p>
+                <div className="p-6 text-center">
+                  <h3 className="font-sans text-xl font-semibold mb-2">1. Nahrajte zmluvu</h3>
+                  <p className="text-muted-foreground font-sans text-sm">
+                    Nahrajte PDF alebo DOCX. Vyberte si plán podľa rozsahu zmluvy a zaplaťte online.
+                  </p>
+                </div>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-sm bg-white">
-              <CardContent className="pt-8 pb-6 px-6 text-center">
-                <div className="w-14 h-14 rounded-full bg-primary/5 flex items-center justify-center mx-auto mb-4">
-                  <Brain className="h-6 w-6 text-primary" />
+            <Card className="border-0 shadow-sm bg-white overflow-hidden">
+              <CardContent className="p-0">
+                <div className="aspect-[4/3] overflow-hidden bg-muted">
+                  <img
+                    src="/manus-storage/ako-funguje-2-analyza_a3e6382a.png"
+                    alt="AI analýza klauzúl zmluvy"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-                <h3 className="font-sans text-xl font-semibold mb-2">2. AI analýza</h3>
-                <p className="text-muted-foreground font-sans text-sm">
-                  AI analyzuje každú klauzulu, identifikuje riziká a doplní odkazy na Slov-Lex a EUR-Lex.
-                </p>
+                <div className="p-6 text-center">
+                  <h3 className="font-sans text-xl font-semibold mb-2">2. AI analýza</h3>
+                  <p className="text-muted-foreground font-sans text-sm">
+                    AI analyzuje každú klauzulu, identifikuje riziká a doplní odkazy na Slov-Lex a EUR-Lex.
+                  </p>
+                </div>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-sm bg-white">
-              <CardContent className="pt-8 pb-6 px-6 text-center">
-                <div className="w-14 h-14 rounded-full bg-primary/5 flex items-center justify-center mx-auto mb-4">
-                  <UserCheck className="h-6 w-6 text-primary" />
+            <Card className="border-0 shadow-sm bg-white overflow-hidden">
+              <CardContent className="p-0">
+                <div className="aspect-[4/3] overflow-hidden bg-muted">
+                  <img
+                    src="/manus-storage/ako-funguje-3-report_370ea85b.png"
+                    alt="Finálny report s analýzou rizík"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-                <h3 className="font-sans text-xl font-semibold mb-2">3. Overenie advokátom</h3>
-                <p className="text-muted-foreground font-sans text-sm">
-                  Pri Štandardnej a Prémiovej kontrole advokát overí nálezy, doplní poznámky a podpíše report.
-                </p>
+                <div className="p-6 text-center">
+                  <h3 className="font-sans text-xl font-semibold mb-2">3. Overenie advokátom</h3>
+                  <p className="text-muted-foreground font-sans text-sm">
+                    Pri Štandardnej a Prémiovej kontrole advokát overí nálezy, doplní poznámky a podpíše report.
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </div>
