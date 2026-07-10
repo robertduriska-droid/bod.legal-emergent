@@ -1,21 +1,23 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 /**
  * Animated demo showing the bod.legal workflow:
  * 1. Upload contract → 2. AI analysis → 3. Report ready
- * Pure CSS/JS animation, no video file needed.
+ * With play/pause and step navigation controls.
  */
 export default function DemoAnimation() {
   const [step, setStep] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+
+  const stepLabels = ["Nahratie", "Analýza", "Report"];
 
   useEffect(() => {
+    if (isPaused) return;
+
     const sequence = [
-      // Step 0: Upload (show for 2.5s)
       { duration: 2500, next: 1 },
-      // Step 1: Analyzing (show for 3s with progress)
       { duration: 3000, next: 2 },
-      // Step 2: Report ready (show for 3s)
       { duration: 3000, next: 0 },
     ];
 
@@ -24,7 +26,6 @@ export default function DemoAnimation() {
       setProgress(0);
     }, sequence[step].duration);
 
-    // Progress animation for step 1
     let progressInterval: ReturnType<typeof setInterval> | null = null;
     if (step === 1) {
       progressInterval = setInterval(() => {
@@ -36,7 +37,17 @@ export default function DemoAnimation() {
       clearTimeout(timer);
       if (progressInterval) clearInterval(progressInterval);
     };
-  }, [step]);
+  }, [step, isPaused]);
+
+  const togglePause = useCallback(() => {
+    setIsPaused((p) => !p);
+  }, []);
+
+  const goToStep = useCallback((targetStep: number) => {
+    setStep(targetStep);
+    setProgress(0);
+    setIsPaused(true);
+  }, []);
 
   return (
     <div className="w-full max-w-4xl mx-auto">
@@ -76,7 +87,6 @@ export default function DemoAnimation() {
                 <p className="font-semibold text-sm mb-1">Pretiahnite súbor sem</p>
                 <p className="text-xs text-muted-foreground">PDF, DOCX - max 50 MB</p>
               </div>
-              {/* Animated file dropping in */}
               <div
                 className="mt-4 flex items-center gap-3 bg-gray-50 rounded-lg p-3 border transition-all duration-700"
                 style={{
@@ -138,7 +148,6 @@ export default function DemoAnimation() {
                   <p className="text-sm text-muted-foreground">AI prehľadáva zmluvu klauzulu po klauzule</p>
                 </div>
               </div>
-              {/* Found items appearing */}
               <div className="space-y-2">
                 <div
                   className="flex items-center gap-3 bg-red-50 rounded-lg p-3 border border-red-100 transition-all duration-500"
@@ -195,7 +204,6 @@ export default function DemoAnimation() {
                   <p className="text-sm text-muted-foreground">Analýza dokončená za 18 minút</p>
                 </div>
               </div>
-              {/* Risk summary cards */}
               <div className="grid grid-cols-3 gap-3 mb-5">
                 <div className="bg-red-50 rounded-lg p-3 text-center border border-red-100">
                   <p className="text-2xl font-bold text-red-600">2</p>
@@ -210,7 +218,6 @@ export default function DemoAnimation() {
                   <p className="text-xs text-green-600/80">Nízke riziko</p>
                 </div>
               </div>
-              {/* Download button */}
               <div className="flex items-center justify-between bg-gray-50 rounded-lg p-4 border">
                 <div>
                   <p className="text-sm font-medium">Analýza_Ramcova_zmluva_IT.pdf</p>
@@ -224,18 +231,50 @@ export default function DemoAnimation() {
           </div>
         </div>
 
-        {/* Step indicators */}
-        <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className="h-1.5 rounded-full transition-all duration-300"
-              style={{
-                width: step === i ? "24px" : "8px",
-                backgroundColor: step === i ? "#1a1a1a" : "#d1d5db",
-              }}
-            />
-          ))}
+        {/* Controls bar */}
+        <div className="absolute bottom-0 left-0 right-0 bg-gray-50/90 backdrop-blur-sm border-t px-4 py-2.5 flex items-center justify-between">
+          {/* Play/Pause button */}
+          <button
+            onClick={togglePause}
+            className="w-8 h-8 rounded-full bg-white border shadow-sm flex items-center justify-center hover:bg-gray-100 transition-colors"
+            aria-label={isPaused ? "Spustiť" : "Pozastaviť"}
+          >
+            {isPaused ? (
+              <svg className="w-3.5 h-3.5 text-foreground ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            ) : (
+              <svg className="w-3.5 h-3.5 text-foreground" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+              </svg>
+            )}
+          </button>
+
+          {/* Step navigation */}
+          <div className="flex items-center gap-1">
+            {stepLabels.map((label, i) => (
+              <button
+                key={i}
+                onClick={() => goToStep(i)}
+                className={`px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
+                  step === i
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-gray-200 hover:text-foreground"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Paused indicator */}
+          <div className="w-8 flex justify-end">
+            {isPaused && (
+              <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">
+                Pauza
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </div>
