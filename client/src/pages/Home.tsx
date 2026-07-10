@@ -4,6 +4,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Shield, Clock, FileText, CheckCircle, ArrowRight, Upload, Brain, UserCheck, Lock, Eye, Server, Award, Zap, Star, Quote } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useState as useLocalState } from "react";
 import { startLogin } from "@/const";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -12,6 +13,7 @@ import { PRICING_PLANS, EXPRESS_ADDON } from "@shared/types";
 
 export default function Home() {
   const { isAuthenticated } = useAuth();
+  const [lightboxImg, setLightboxImg] = useLocalState<string | null>(null);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -85,57 +87,34 @@ export default function Home() {
             Tri kroky od nahratia zmluvy po hotový report
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="border-0 shadow-sm bg-white overflow-hidden">
-              <CardContent className="p-0">
-                <div className="aspect-[4/3] overflow-hidden bg-muted">
-                  <img
-                    src="/manus-storage/ako-funguje-1-upload_7a1f5939.png"
-                    alt="Nahratie zmluvy do bod.legal"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="p-6 text-center">
-                  <h3 className="font-sans text-xl font-semibold mb-2">1. Nahrajte zmluvu</h3>
-                  <p className="text-muted-foreground font-sans text-sm">
-                    Nahrajte PDF alebo DOCX. Vyberte si plán podľa rozsahu zmluvy a zaplaťte online.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-sm bg-white overflow-hidden">
-              <CardContent className="p-0">
-                <div className="aspect-[4/3] overflow-hidden bg-muted">
-                  <img
-                    src="/manus-storage/ako-funguje-2-analyza_a3e6382a.png"
-                    alt="AI analýza klauzúl zmluvy"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="p-6 text-center">
-                  <h3 className="font-sans text-xl font-semibold mb-2">2. AI analýza</h3>
-                  <p className="text-muted-foreground font-sans text-sm">
-                    AI analyzuje každú klauzulu, identifikuje riziká a doplní odkazy na Slov-Lex a EUR-Lex.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-sm bg-white overflow-hidden">
-              <CardContent className="p-0">
-                <div className="aspect-[4/3] overflow-hidden bg-muted">
-                  <img
-                    src="/manus-storage/ako-funguje-3-report_370ea85b.png"
-                    alt="Finálny report s analýzou rizík"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="p-6 text-center">
-                  <h3 className="font-sans text-xl font-semibold mb-2">3. Overenie advokátom</h3>
-                  <p className="text-muted-foreground font-sans text-sm">
-                    Pri Štandardnej a Prémiovej kontrole advokát overí nálezy, doplní poznámky a podpíše report.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            {[
+              { src: "/manus-storage/ako-funguje-1-upload_7a1f5939.png", alt: "Nahratie zmluvy do bod.legal", title: "1. Nahrajte zmluvu", desc: "Nahrajte PDF alebo DOCX. Vyberte si plán podľa rozsahu zmluvy a zaplaťte online." },
+              { src: "/manus-storage/ako-funguje-2-analyza_a3e6382a.png", alt: "AI analýza klauzúl zmluvy", title: "2. AI analýza", desc: "AI analyzuje každú klauzulu, identifikuje riziká a doplní odkazy na Slov-Lex a EUR-Lex." },
+              { src: "/manus-storage/ako-funguje-3-report_370ea85b.png", alt: "Finálny report s analýzou rizík", title: "3. Overenie advokátom", desc: "Pri Štandardnej a Prémiovej kontrole advokát overí nálezy, doplní poznámky a podpíše report." },
+            ].map((item, i) => (
+              <Card key={i} className="border-0 shadow-sm bg-white overflow-hidden group cursor-pointer" onClick={() => setLightboxImg(item.src)}>
+                <CardContent className="p-0">
+                  <div className="aspect-[4/3] overflow-hidden bg-muted relative">
+                    <img
+                      src={item.src}
+                      alt={item.alt}
+                      className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg">
+                        <svg className="w-5 h-5 text-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-6 text-center">
+                    <h3 className="font-sans text-xl font-semibold mb-2">{item.title}</h3>
+                    <p className="text-muted-foreground font-sans text-sm">{item.desc}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
@@ -418,6 +397,31 @@ export default function Home() {
       </section>
 
       <Footer />
+
+      {/* Lightbox overlay */}
+      {lightboxImg && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 cursor-pointer"
+          onClick={() => setLightboxImg(null)}
+        >
+          <div className="relative max-w-5xl w-full animate-in fade-in zoom-in-95 duration-200">
+            <img
+              src={lightboxImg}
+              alt="Zväčšený detail"
+              className="w-full h-auto rounded-xl shadow-2xl"
+            />
+            <button
+              onClick={() => setLightboxImg(null)}
+              className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
+              aria-label="Zatvoriť"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

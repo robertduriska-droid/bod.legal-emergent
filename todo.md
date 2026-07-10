@@ -91,3 +91,8 @@
 ## Demo Video
 - [x] Create animated demo (CSS/JS looping animation) showing the full upload-to-report flow
 - [x] Add it below the hero section on the homepage
+
+## Interactivity
+- [x] Hover zoom effect (scale 110%) + magnifier icon overlay on "Ako to funguje" image cards
+- [x] Lightbox overlay: click any card to open full-screen image view with X close button
+- [x] Play/pause controls and step navigation for DemoAnimation
