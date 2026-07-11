@@ -166,3 +166,16 @@
 - [x] Toggle between inline redline view and side-by-side (two-column) comparison
 - [x] Left column: original text, Right column: suggested edit
 - [x] Visual diff highlighting between columns
+
+## Clause-Level Comments
+- [x] DB table: clause_comments (id, contractId, clauseId, userId, userName, content, createdAt)
+- [x] tRPC procedures: comments.getByContract, comments.add, comments.delete
+- [x] Report page UI: comment input per clause, display existing comments with timestamps
+- [x] AdminReview page: display user comments visible to reviewing lawyer
+- [x] Full SK + EN i18n labels for comments feature
+- [x] Tests for comment tRPC procedures
+
+## Copy Updates: File Limits & Language Support
+- [x] Update homepage/upload text: PDF a DOCX do 50 MB, slovenčina a angličtina, slovenské právo
+- [x] Update upload page file validation to reflect 50 MB limit and PDF/DOCX only (already correct)
+- [x] Update any FAQ or info sections with correct file/language parameters

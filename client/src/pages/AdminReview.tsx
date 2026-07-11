@@ -7,7 +7,7 @@ import { trpc } from "@/lib/trpc";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Link, useParams, useLocation } from "wouter";
-import { ArrowLeft, Loader2, CheckCircle, AlertTriangle, PenLine, Shield } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle, AlertTriangle, PenLine, Shield, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -53,6 +53,12 @@ export default function AdminReview() {
 
   const [annotations, setAnnotations] = useState<Record<number, string>>({});
   const [editingClause, setEditingClause] = useState<number | null>(null);
+
+  // Load user comments for this contract
+  const { data: commentsData } = trpc.comments.getByContract.useQuery(
+    { contractId },
+    { enabled: user?.role === "admin" && contractId > 0 }
+  );
 
   if (isLoading) {
     return (
@@ -213,6 +219,32 @@ export default function AdminReview() {
                             <p className="text-sm font-sans">{clause.lawyerAnnotation}</p>
                           </div>
                         )}
+
+                        {/* User comments (read-only for lawyer) */}
+                        {(() => {
+                          const clauseComments = commentsData?.filter((c: any) => c.clauseId === clause.id) || [];
+                          if (clauseComments.length === 0) return null;
+                          return (
+                            <div className="bg-blue-50/50 rounded p-3 mt-2 border border-blue-200">
+                              <p className="text-xs font-sans font-medium text-blue-800 mb-2 flex items-center gap-1">
+                                <MessageCircle className="h-3 w-3" /> Komentáre klienta ({clauseComments.length})
+                              </p>
+                              <div className="space-y-2">
+                                {clauseComments.map((comment: any) => (
+                                  <div key={comment.id} className="bg-white/60 rounded p-2 border border-blue-100">
+                                    <div className="flex items-center justify-between mb-0.5">
+                                      <span className="text-[11px] font-sans font-medium text-blue-900">{comment.userName}</span>
+                                      <span className="text-[10px] font-sans text-blue-600">
+                                        {new Date(comment.createdAt).toLocaleString("sk-SK", { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                      </span>
+                                    </div>
+                                    <p className="text-sm font-sans text-blue-900/80">{comment.content}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })()}
 
                         {/* Annotation editor */}
                         {editingClause === clause.id ? (

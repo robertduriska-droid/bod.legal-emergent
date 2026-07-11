@@ -24,6 +24,9 @@ import {
   upsertDecision,
   bulkUpsertDecisions,
   deleteDecision,
+  getCommentsByContract,
+  createComment,
+  deleteComment,
 } from "./db";
 import { storagePut } from "./storage";
 import { analyzeContract } from "./analysis";
@@ -430,6 +433,51 @@ export const appRouter = router({
       .input(z.object({ clauseId: z.number() }))
       .mutation(async ({ ctx, input }) => {
         await deleteDecision(ctx.user.id, input.clauseId);
+        return { success: true };
+      }),
+  }),
+
+  // ─── Clause Comments ────────────────────────────────────────────────────
+  comments: router({
+    /** Get all comments for a contract (owner or admin) */
+    getByContract: protectedProcedure
+      .input(z.object({ contractId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        // Allow contract owner or admin
+        const contract = await getContractById(input.contractId);
+        if (!contract) return [];
+        if (contract.userId !== ctx.user.id && ctx.user.role !== 'admin') return [];
+        return getCommentsByContract(input.contractId);
+      }),
+
+    /** Add a comment to a clause (contract owner or admin) */
+    add: protectedProcedure
+      .input(z.object({
+        contractId: z.number(),
+        clauseId: z.number(),
+        content: z.string().min(1).max(2000),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Verify user owns the contract or is admin
+        const contract = await getContractById(input.contractId);
+        if (!contract || (contract.userId !== ctx.user.id && ctx.user.role !== 'admin')) {
+          throw new Error('Unauthorized');
+        }
+        const id = await createComment({
+          contractId: input.contractId,
+          clauseId: input.clauseId,
+          userId: ctx.user.id,
+          userName: ctx.user.name || 'User',
+          content: input.content,
+        });
+        return { id, success: true };
+      }),
+
+    /** Delete own comment */
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await deleteComment(input.id, ctx.user.id);
         return { success: true };
       }),
   }),

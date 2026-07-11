@@ -260,3 +260,29 @@ export async function deleteDecision(userId: number, clauseId: number): Promise<
   await db.delete(clauseDecisions)
     .where(and(eq(clauseDecisions.userId, userId), eq(clauseDecisions.clauseId, clauseId)));
 }
+
+// ─── Clause Comments Helpers ────────────────────────────────────────────────
+
+import { clauseComments, ClauseComment, InsertClauseComment } from "../drizzle/schema";
+
+export async function getCommentsByContract(contractId: number): Promise<ClauseComment[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(clauseComments)
+    .where(eq(clauseComments.contractId, contractId))
+    .orderBy(desc(clauseComments.createdAt));
+}
+
+export async function createComment(data: InsertClauseComment): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(clauseComments).values(data);
+  return Number(result[0].insertId);
+}
+
+export async function deleteComment(id: number, userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(clauseComments)
+    .where(and(eq(clauseComments.id, id), eq(clauseComments.userId, userId)));
+}

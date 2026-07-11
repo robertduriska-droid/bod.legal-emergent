@@ -157,7 +157,7 @@ export const en: Translations = {
       },
       {
         question: "What contract formats do you accept?",
-        answer: "PDF and DOCX files up to 50 MB. We support contracts in Slovak and Czech.",
+        answer: "PDF and DOCX files up to 50 MB. We support contracts in Slovak and English, governed by Slovak law.",
       },
       {
         question: "Is the analysis legally binding?",
@@ -211,7 +211,7 @@ export const en: Translations = {
   },
   upload: {
     title: "Upload contract",
-    subtitle: "Upload your contract in PDF or DOCX format and choose a review plan.",
+    subtitle: "Upload your contract in PDF or DOCX format (up to 50 MB). We support contracts in Slovak and English, governed by Slovak law.",
     dragDrop: "Drag & drop file here",
     dragDropHint: "or click to browse. PDF, DOCX. Max 50 MB",
     fileTypes: "PDF, DOCX - max 50 MB",

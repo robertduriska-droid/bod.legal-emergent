@@ -157,7 +157,7 @@ export const sk: Translations = {
       },
       {
         question: "Aké formáty zmlúv akceptujete?",
-        answer: "PDF a DOCX súbory do 50 MB. Podporujeme zmluvy v slovenčine a češtine.",
+        answer: "PDF a DOCX súbory do 50 MB. Podporujeme zmluvy v slovenčine a angličtine podľa slovenského práva.",
       },
       {
         question: "Je analýza právne záväzná?",
@@ -211,7 +211,7 @@ export const sk: Translations = {
   },
   upload: {
     title: "Nahrať zmluvu",
-    subtitle: "Nahrajte zmluvu vo formáte PDF alebo DOCX a vyberte si plán kontroly.",
+    subtitle: "Nahrajte zmluvu vo formáte PDF alebo DOCX (do 50 MB). Podporujeme zmluvy v slovenčine a angličtine podľa slovenského práva.",
     dragDrop: "Pretiahnite súbor sem",
     dragDropHint: "alebo kliknite pre výber. PDF, DOCX. Max 50 MB",
     fileTypes: "PDF, DOCX - max 50 MB",

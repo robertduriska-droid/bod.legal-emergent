@@ -151,3 +151,20 @@ export const clauseDecisions = mysqlTable("clause_decisions", {
 
 export type ClauseDecision = typeof clauseDecisions.$inferSelect;
 export type InsertClauseDecision = typeof clauseDecisions.$inferInsert;
+
+/**
+ * Clause comments table - free-text comments on individual clauses for user-lawyer discussion
+ */
+export const clauseComments = mysqlTable("clause_comments", {
+  id: int("id").autoincrement().primaryKey(),
+  contractId: int("contractId").notNull(),
+  clauseId: int("clauseId").notNull(),
+  userId: int("userId").notNull(),
+  userName: varchar("userName", { length: 256 }).notNull(),
+  /** Comment content */
+  content: text("content").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ClauseComment = typeof clauseComments.$inferSelect;
+export type InsertClauseComment = typeof clauseComments.$inferInsert;
