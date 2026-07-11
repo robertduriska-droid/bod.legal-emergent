@@ -134,3 +134,20 @@ export const notifications = mysqlTable("notifications", {
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = typeof notifications.$inferInsert;
+
+/**
+ * Clause decisions table - stores user accept/reject decisions for clause suggested edits
+ */
+export const clauseDecisions = mysqlTable("clause_decisions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  contractId: int("contractId").notNull(),
+  clauseId: int("clauseId").notNull(),
+  /** Decision: accepted or rejected */
+  decision: mysqlEnum("decision", ["accepted", "rejected"]).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ClauseDecision = typeof clauseDecisions.$inferSelect;
+export type InsertClauseDecision = typeof clauseDecisions.$inferInsert;

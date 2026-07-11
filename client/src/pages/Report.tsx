@@ -6,8 +6,9 @@ import { trpc } from "@/lib/trpc";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Link, useParams } from "wouter";
-import { ArrowLeft, Loader2, CheckCircle, Download, ExternalLink, Shield, FileDown, FileText, Check, X, RotateCcw } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, Loader2, CheckCircle, Download, ExternalLink, Shield, FileDown, FileText, Check, X, RotateCcw, Columns2, EyeOff } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { LEGAL_SOURCES } from "@shared/types";
 import { useT } from "@/i18n";
@@ -35,6 +36,9 @@ const TX = {
     generatingDocx: "Generujem DOCX...",
     showRedline: "Zobraziť navrhované zmeny",
     hideRedline: "Skryť navrhované zmeny",
+    sideBySide: "Porovnanie vedľa seba",
+    inlineView: "Inline redline",
+    viewOff: "Skryť",
     redlineOriginal: "Pôvodné znenie:",
     redlineProposed: "Navrhované znenie:",
     acceptChange: "Prijať",
@@ -91,6 +95,9 @@ const TX = {
     generatingDocx: "Generating DOCX...",
     showRedline: "Show proposed changes",
     hideRedline: "Hide proposed changes",
+    sideBySide: "Side-by-side comparison",
+    inlineView: "Inline redline",
+    viewOff: "Hide",
     redlineOriginal: "Original text:",
     redlineProposed: "Proposed text:",
     acceptChange: "Accept",
@@ -340,8 +347,8 @@ export default function Report() {
 
   const { contract, clauses, report, isLimited } = data;
   const riskSummary = report.riskSummary as { high: number; medium: number; low: number } | null;
-  const [showRedline, setShowRedline] = useState(false);
-  const hasRedlineContent = clauses?.some((c) => c.excerpt && c.suggestedEdit);
+  const [viewMode, setViewMode] = useState<'off' | 'inline' | 'sidebyside'>('off');
+  const hasRedlineContent = clauses?.some((c) => c.suggestedEdit);
 
   // Accept/Reject state: clauseId -> 'accepted' | 'rejected'
   const [decisions, setDecisions] = useState<Record<number, 'accepted' | 'rejected'>>({});
@@ -349,29 +356,64 @@ export default function Report() {
   const totalEditable = clausesWithEdits.length;
   const totalDecided = Object.keys(decisions).length;
 
-  const handleAccept = (clauseId: number) => {
+  // Load saved decisions from DB
+  const { data: savedDecisions } = trpc.decisions.getByContract.useQuery(
+    { contractId },
+    { enabled: isAuthenticated && contractId > 0 }
+  );
+  const initializedRef = useRef(false);
+  useEffect(() => {
+    if (savedDecisions && !initializedRef.current) {
+      const parsed: Record<number, 'accepted' | 'rejected'> = {};
+      for (const [k, v] of Object.entries(savedDecisions)) {
+        parsed[parseInt(k)] = v;
+      }
+      setDecisions(parsed);
+      initializedRef.current = true;
+    }
+  }, [savedDecisions]);
+
+  // Mutations for persisting decisions
+  const saveMutation = trpc.decisions.save.useMutation();
+  const saveAllMutation = trpc.decisions.saveAll.useMutation();
+  const removeMutation = trpc.decisions.remove.useMutation();
+
+  const handleAccept = useCallback((clauseId: number) => {
     setDecisions((prev) => ({ ...prev, [clauseId]: 'accepted' }));
-  };
-  const handleReject = (clauseId: number) => {
+    saveMutation.mutate({ contractId, clauseId, decision: 'accepted' });
+  }, [contractId, saveMutation]);
+
+  const handleReject = useCallback((clauseId: number) => {
     setDecisions((prev) => ({ ...prev, [clauseId]: 'rejected' }));
-  };
-  const handleUndo = (clauseId: number) => {
+    saveMutation.mutate({ contractId, clauseId, decision: 'rejected' });
+  }, [contractId, saveMutation]);
+
+  const handleUndo = useCallback((clauseId: number) => {
     setDecisions((prev) => {
       const next = { ...prev };
       delete next[clauseId];
       return next;
     });
-  };
-  const handleAcceptAll = () => {
+    removeMutation.mutate({ clauseId });
+  }, [removeMutation]);
+
+  const handleAcceptAll = useCallback(() => {
     const all: Record<number, 'accepted' | 'rejected'> = {};
     clausesWithEdits.forEach((c) => { all[c.id] = 'accepted'; });
     setDecisions(all);
-  };
-  const handleRejectAll = () => {
+    const decisionsMap: Record<string, 'accepted' | 'rejected'> = {};
+    clausesWithEdits.forEach((c) => { decisionsMap[c.id.toString()] = 'accepted'; });
+    saveAllMutation.mutate({ contractId, decisions: decisionsMap });
+  }, [clausesWithEdits, contractId, saveAllMutation]);
+
+  const handleRejectAll = useCallback(() => {
     const all: Record<number, 'accepted' | 'rejected'> = {};
     clausesWithEdits.forEach((c) => { all[c.id] = 'rejected'; });
     setDecisions(all);
-  };
+    const decisionsMap: Record<string, 'accepted' | 'rejected'> = {};
+    clausesWithEdits.forEach((c) => { decisionsMap[c.id.toString()] = 'rejected'; });
+    saveAllMutation.mutate({ contractId, decisions: decisionsMap });
+  }, [clausesWithEdits, contractId, saveAllMutation]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -454,21 +496,28 @@ export default function Report() {
               <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                 <h2 className="text-xl font-serif">{tx.detailedFindings(clauses.length)}</h2>
                 {!isLimited && hasRedlineContent && (
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowRedline(!showRedline)}
-                      className={`font-sans text-xs gap-1.5 transition-colors ${showRedline ? 'border-primary/50 bg-primary/5 text-primary' : ''}`}
-                    >
-                      <FileText className="h-3.5 w-3.5" />
-                      {showRedline ? tx.hideRedline : tx.showRedline}
-                    </Button>
-                  </div>
+                  <ToggleGroup
+                    type="single"
+                    value={viewMode}
+                    onValueChange={(v) => { if (v) setViewMode(v as 'off' | 'inline' | 'sidebyside'); }}
+                    variant="outline"
+                    size="sm"
+                    className="font-sans"
+                  >
+                    <ToggleGroupItem value="off" className="text-xs gap-1 px-3">
+                      <EyeOff className="h-3 w-3" /> {tx.viewOff}
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="inline" className="text-xs gap-1 px-3">
+                      <FileText className="h-3 w-3" /> {tx.inlineView}
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="sidebyside" className="text-xs gap-1 px-3">
+                      <Columns2 className="h-3 w-3" /> {tx.sideBySide}
+                    </ToggleGroupItem>
+                  </ToggleGroup>
                 )}
               </div>
               {/* Accept/Reject toolbar */}
-              {!isLimited && showRedline && totalEditable > 0 && (
+              {!isLimited && viewMode !== 'off' && totalEditable > 0 && (
                 <div className="flex items-center justify-between mb-4 p-3 rounded-lg border bg-muted/30">
                   <div className="flex items-center gap-2">
                     <Button size="sm" variant="outline" onClick={handleAcceptAll} className="font-sans text-xs gap-1 text-green-700 border-green-300 hover:bg-green-50">
@@ -514,13 +563,13 @@ export default function Report() {
                             )}
                           </div>
                         )}
-                        {clause.suggestedEdit && !showRedline && (
+                        {clause.suggestedEdit && viewMode === 'off' && (
                           <div className="bg-primary/5 rounded p-3 mt-2">
                             <p className="text-xs font-sans font-medium text-primary mb-1">{tx.suggestedEdit}</p>
                             <p className="text-sm font-sans">{clause.suggestedEdit}</p>
                           </div>
                         )}
-                        {showRedline && clause.suggestedEdit && (() => {
+                        {viewMode === 'inline' && clause.suggestedEdit && (() => {
                           const decision = decisions[clause.id];
                           if (decision === 'accepted') {
                             return (
@@ -566,6 +615,82 @@ export default function Report() {
                               <div className={clause.excerpt ? "border-t border-dashed border-muted-foreground/20 pt-2" : ""}>
                                 <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-green-700/80">{tx.redlineProposed}</span>
                                 <p className="text-sm font-sans mt-1 text-green-800 underline decoration-green-600/50 underline-offset-2">{clause.suggestedEdit}</p>
+                              </div>
+                              <div className="flex items-center gap-2 mt-3 pt-2 border-t border-muted-foreground/10">
+                                <Button size="sm" variant="outline" onClick={() => handleAccept(clause.id)} className="h-7 px-3 text-[11px] font-sans gap-1 text-green-700 border-green-300 hover:bg-green-50">
+                                  <Check className="h-3 w-3" /> {tx.acceptChange}
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => handleReject(clause.id)} className="h-7 px-3 text-[11px] font-sans gap-1 text-red-700 border-red-300 hover:bg-red-50">
+                                  <X className="h-3 w-3" /> {tx.rejectChange}
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                        {viewMode === 'sidebyside' && clause.suggestedEdit && (() => {
+                          const decision = decisions[clause.id];
+                          if (decision === 'accepted') {
+                            return (
+                              <div className="mt-3 rounded-lg border border-green-300 p-4 bg-green-50/50">
+                                <div className="flex items-center justify-between mb-2">
+                                  <Badge className="bg-green-100 text-green-800 border-green-200 text-[10px] font-sans">
+                                    <Check className="h-2.5 w-2.5 mr-0.5" /> {tx.accepted}
+                                  </Badge>
+                                  <Button variant="ghost" size="sm" onClick={() => handleUndo(clause.id)} className="h-6 px-2 text-[10px] font-sans text-muted-foreground hover:text-foreground">
+                                    <RotateCcw className="h-3 w-3 mr-0.5" /> {tx.undoDecision}
+                                  </Button>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div className="rounded-md border border-red-200/50 bg-red-50/20 p-3 opacity-50">
+                                    <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-red-600/60 block mb-1">{tx.redlineOriginal}</span>
+                                    <p className="text-sm font-sans text-red-800/60 line-through decoration-red-400/40">{clause.excerpt || '—'}</p>
+                                  </div>
+                                  <div className="rounded-md border border-green-300 bg-green-50/60 p-3">
+                                    <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-green-700/80 block mb-1">{tx.redlineProposed}</span>
+                                    <p className="text-sm font-sans text-green-900 font-medium">{clause.suggestedEdit}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          }
+                          if (decision === 'rejected') {
+                            return (
+                              <div className="mt-3 rounded-lg border border-red-200 p-4 bg-red-50/30">
+                                <div className="flex items-center justify-between mb-2">
+                                  <Badge className="bg-red-100 text-red-800 border-red-200 text-[10px] font-sans">
+                                    <X className="h-2.5 w-2.5 mr-0.5" /> {tx.rejected}
+                                  </Badge>
+                                  <Button variant="ghost" size="sm" onClick={() => handleUndo(clause.id)} className="h-6 px-2 text-[10px] font-sans text-muted-foreground hover:text-foreground">
+                                    <RotateCcw className="h-3 w-3 mr-0.5" /> {tx.undoDecision}
+                                  </Button>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div className="rounded-md border border-red-200 bg-red-50/40 p-3">
+                                    <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-red-600/80 block mb-1">{tx.redlineOriginal}</span>
+                                    <p className="text-sm font-sans text-red-900 font-medium">{clause.excerpt || '—'}</p>
+                                  </div>
+                                  <div className="rounded-md border border-green-200/50 bg-green-50/20 p-3 opacity-50">
+                                    <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-green-700/60 block mb-1">{tx.redlineProposed}</span>
+                                    <p className="text-sm font-sans text-green-800/60 line-through decoration-green-400/40">{clause.suggestedEdit}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          }
+                          // No decision — side-by-side two-column layout
+                          return (
+                            <div className="mt-3 rounded-lg border border-dashed border-muted-foreground/30 p-4 bg-muted/20">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Left column: original */}
+                                <div className="rounded-md border border-red-200 bg-red-50/40 p-3">
+                                  <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-red-600/80 block mb-1">{tx.redlineOriginal}</span>
+                                  <p className="text-sm font-sans text-red-800 line-through decoration-red-400/60">{clause.excerpt || '—'}</p>
+                                </div>
+                                {/* Right column: proposed */}
+                                <div className="rounded-md border border-green-200 bg-green-50/40 p-3">
+                                  <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-green-700/80 block mb-1">{tx.redlineProposed}</span>
+                                  <p className="text-sm font-sans text-green-800 underline decoration-green-500/50 underline-offset-2">{clause.suggestedEdit}</p>
+                                </div>
                               </div>
                               <div className="flex items-center gap-2 mt-3 pt-2 border-t border-muted-foreground/10">
                                 <Button size="sm" variant="outline" onClick={() => handleAccept(clause.id)} className="h-7 px-3 text-[11px] font-sans gap-1 text-green-700 border-green-300 hover:bg-green-50">
@@ -639,7 +764,7 @@ export default function Report() {
             <div className="flex flex-col sm:flex-row gap-3 justify-center flex-wrap mb-8">
               <DownloadPdfButton contractId={contractId} tx={tx} />
               <DownloadDocxButton contractId={contractId} tx={tx} />
-              {showRedline && totalEditable > 0 && totalDecided === totalEditable && (
+              {viewMode !== 'off' && totalEditable > 0 && totalDecided === totalEditable && (
                 <DownloadFinalButton contractId={contractId} decisions={decisions} tx={tx} />
               )}
             </div>

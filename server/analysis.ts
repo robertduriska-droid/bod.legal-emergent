@@ -1,5 +1,6 @@
 import { ENV } from "./_core/env";
 import { getContractById, createClauses, createReport, updateContractStatus, createNotification } from "./db";
+import { notifyOwner } from "./_core/notification";
 import { storageGetSignedUrl } from "./storage";
 import { LEGAL_SOURCES, RISK_CATEGORIES } from "@shared/types";
 import type { ClauseAnalysis, AnalysisResult } from "@shared/types";
@@ -333,6 +334,15 @@ export async function analyzeContract(contractId: number): Promise<void> {
       type: "contract_completed",
       contractId: contractId,
     }).catch(err => console.error("[Notification] Failed to create:", err));
+
+    // Push notification to owner/admin
+    const riskStr = `H:${analysis.riskSummary.high} M:${analysis.riskSummary.medium} L:${analysis.riskSummary.low}`;
+    await notifyOwner({
+      title: `Analýza dokončená: ${contract.fileName}`,
+      content: plan === "basic"
+        ? `Report pre "${contract.fileName}" je hotový (${riskStr}). Klient: ${contract.userId}.`
+        : `Report pre "${contract.fileName}" čaká na lawyer review (${riskStr}). Klient: ${contract.userId}.`,
+    }).catch(err => console.warn("[Notification] Owner push failed:", err));
   } catch (error: any) {
     console.error(`[Analysis] Failed for contract ${contractId}:`, error.message || error);
     await updateContractStatus(contractId, "pending");

@@ -144,3 +144,25 @@
 - [x] Visual feedback: accepted clauses show final text only, rejected show original only
 - [x] Counter showing X/Y decisions made
 - [x] "Download final version" button that generates clean DOCX with only accepted changes applied (no track changes markup)
+
+## Persist Clause Decisions
+- [x] Add clause_decisions table (userId, clauseId, contractId, decision: accepted|rejected)
+- [x] DB helpers: getDecisionsByContractAndUser, upsertDecision, bulkUpsertDecisions, deleteDecision
+- [x] tRPC procedures: decisions.getByContract, decisions.save, decisions.saveAll, decisions.remove
+- [x] Report.tsx: load saved decisions on mount, auto-save on accept/reject/undo
+- [x] Tests for decisions procedures (7 tests passing)
+
+## Email Notifications
+- [x] Send notification to user when report analysis is completed and ready for download (already existed + added owner push)
+- [x] Send notification to owner/admin when new contract is submitted (already existed)
+
+## Admin Lawyer Review Dashboard
+- [x] Admin-only page listing contracts pending lawyer review (status: in_review) — AdminPanel.tsx
+- [x] Per-contract review interface: view clauses, add annotations, approve/override risk levels — AdminReview.tsx
+- [x] Mark report as signed (isSigned + lawyerName) — signReport mutation
+- [x] Status transitions: analyzing → in_review → completed — startReview + signReport
+
+## Side-by-Side Comparison
+- [x] Toggle between inline redline view and side-by-side (two-column) comparison
+- [x] Left column: original text, Right column: suggested edit
+- [x] Visual diff highlighting between columns

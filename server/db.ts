@@ -1,6 +1,6 @@
 import { eq, desc, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, contracts, clauses, reports, notifications, InsertContract, InsertClause, InsertReport, InsertNotification, Contract, Clause, Report, Notification } from "../drizzle/schema";
+import { InsertUser, users, contracts, clauses, reports, notifications, clauseDecisions, InsertContract, InsertClause, InsertReport, InsertNotification, Contract, Clause, Report, Notification, ClauseDecision } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -217,7 +217,46 @@ export async function markNotificationRead(id: number, userId: number): Promise<
 export async function markAllNotificationsRead(userId: number): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-
   await db.update(notifications).set({ isRead: 1 })
     .where(eq(notifications.userId, userId));
+}
+
+// ─── Clause Decisions Helpers ────────────────────────────────────────────────
+
+export async function getDecisionsByContractAndUser(contractId: number, userId: number): Promise<ClauseDecision[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(clauseDecisions)
+    .where(and(eq(clauseDecisions.contractId, contractId), eq(clauseDecisions.userId, userId)));
+}
+
+export async function upsertDecision(userId: number, contractId: number, clauseId: number, decision: "accepted" | "rejected"): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Try to find existing
+  const existing = await db.select().from(clauseDecisions)
+    .where(and(eq(clauseDecisions.userId, userId), eq(clauseDecisions.clauseId, clauseId)));
+  if (existing.length > 0) {
+    await db.update(clauseDecisions).set({ decision })
+      .where(and(eq(clauseDecisions.userId, userId), eq(clauseDecisions.clauseId, clauseId)));
+  } else {
+    await db.insert(clauseDecisions).values({ userId, contractId, clauseId, decision });
+  }
+}
+
+export async function bulkUpsertDecisions(userId: number, contractId: number, decisions: Record<string, "accepted" | "rejected">): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  for (const [clauseIdStr, decision] of Object.entries(decisions)) {
+    const clauseId = parseInt(clauseIdStr);
+    if (isNaN(clauseId)) continue;
+    await upsertDecision(userId, contractId, clauseId, decision);
+  }
+}
+
+export async function deleteDecision(userId: number, clauseId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(clauseDecisions)
+    .where(and(eq(clauseDecisions.userId, userId), eq(clauseDecisions.clauseId, clauseId)));
 }

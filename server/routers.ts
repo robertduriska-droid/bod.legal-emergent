@@ -20,6 +20,10 @@ import {
   getUnreadNotificationCount,
   markNotificationRead,
   markAllNotificationsRead,
+  getDecisionsByContractAndUser,
+  upsertDecision,
+  bulkUpsertDecisions,
+  deleteDecision,
 } from "./db";
 import { storagePut } from "./storage";
 import { analyzeContract } from "./analysis";
@@ -381,6 +385,53 @@ export const appRouter = router({
       await markAllNotificationsRead(ctx.user.id);
       return { success: true };
     }),
+  }),
+
+  // ─── Clause Decisions ──────────────────────────────────────────────────
+  decisions: router({
+    /** Get all decisions for a contract by the current user */
+    getByContract: protectedProcedure
+      .input(z.object({ contractId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const rows = await getDecisionsByContractAndUser(input.contractId, ctx.user.id);
+        // Return as a map: { [clauseId]: "accepted" | "rejected" }
+        const map: Record<string, "accepted" | "rejected"> = {};
+        for (const row of rows) {
+          map[row.clauseId.toString()] = row.decision as "accepted" | "rejected";
+        }
+        return map;
+      }),
+
+    /** Save a single clause decision */
+    save: protectedProcedure
+      .input(z.object({
+        contractId: z.number(),
+        clauseId: z.number(),
+        decision: z.enum(["accepted", "rejected"]),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await upsertDecision(ctx.user.id, input.contractId, input.clauseId, input.decision);
+        return { success: true };
+      }),
+
+    /** Save all decisions at once (bulk) */
+    saveAll: protectedProcedure
+      .input(z.object({
+        contractId: z.number(),
+        decisions: z.record(z.string(), z.enum(["accepted", "rejected"])),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await bulkUpsertDecisions(ctx.user.id, input.contractId, input.decisions);
+        return { success: true };
+      }),
+
+    /** Remove a decision (undo) */
+    remove: protectedProcedure
+      .input(z.object({ clauseId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await deleteDecision(ctx.user.id, input.clauseId);
+        return { success: true };
+      }),
   }),
 
   // ─── Reference Data ─────────────────────────────────────────────────────
