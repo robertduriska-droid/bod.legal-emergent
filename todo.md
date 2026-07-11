@@ -143,3 +143,4 @@
 - [x] Global "Accept all" and "Reject all" buttons
 - [x] Visual feedback: accepted clauses show final text only, rejected show original only
 - [x] Counter showing X/Y decisions made
+- [x] "Download final version" button that generates clean DOCX with only accepted changes applied (no track changes markup)

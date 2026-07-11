@@ -45,6 +45,13 @@ const TX = {
     rejected: "Odmietnuté",
     decisionsCount: (done: number, total: number) => `${done}/${total} rozhodnutí`,
     undoDecision: "Zrušiť",
+    downloadFinal: "Stiahnuť finálnu verziu (DOCX)",
+    downloadFinalDesc: "Čistý dokument s prijatými zmenami, bez sledovania zmien.",
+    generatingFinal: "Generujem finálnu verziu...",
+    finalSuccess: "Finálna verzia bola vygenerovaná",
+    finalSuccessDesc: "Dokument obsahuje iba prijaté zmeny.",
+    finalError: "Chyba pri generovaní finálnej verzie",
+    finalErrorToast: "Chyba pri sťahovaní finálnej verzie",
     notAvailable: "Report ešte nie je k dispozícii.",
     backToDashboard: "Späť na prehľad",
     title: "Analýza zmluvy",
@@ -94,6 +101,13 @@ const TX = {
     rejected: "Rejected",
     decisionsCount: (done: number, total: number) => `${done}/${total} decisions`,
     undoDecision: "Undo",
+    downloadFinal: "Download final version (DOCX)",
+    downloadFinalDesc: "Clean document with accepted changes only, no tracked changes.",
+    generatingFinal: "Generating final version...",
+    finalSuccess: "Final version generated",
+    finalSuccessDesc: "Document contains only accepted changes.",
+    finalError: "Error generating final version",
+    finalErrorToast: "Error downloading final version",
     notAvailable: "The report is not available yet.",
     backToDashboard: "Back to dashboard",
     title: "Contract analysis",
@@ -224,6 +238,65 @@ function DownloadDocxButton({ contractId, tx }: { contractId: number; tx: typeof
         )}
       </Button>
       {error && <p className="text-sm text-red-600 font-sans mt-2">{error}</p>}
+    </div>
+  );
+}
+
+function DownloadFinalButton({ contractId, decisions, tx }: { contractId: number; decisions: Record<number, 'accepted' | 'rejected'>; tx: typeof TX['sk'] }) {
+  const { locale } = useT();
+  const [downloading, setDownloading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/contracts/${contractId}/report-final.docx`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ decisions, lang: locale }),
+      });
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({ error: tx.finalError }));
+        throw new Error(errData.error || tx.finalError);
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const disposition = response.headers.get("Content-Disposition");
+      const filenameMatch = disposition?.match(/filename="(.+?)"/);
+      a.download = filenameMatch?.[1] || `bod-legal-final_${contractId}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success(tx.finalSuccess, {
+        description: tx.finalSuccessDesc,
+      });
+    } catch (err: any) {
+      const msg = err.message || tx.finalError;
+      setError(msg);
+      toast.error(tx.finalErrorToast, {
+        description: msg,
+      });
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  return (
+    <div className="text-center">
+      <Button className="font-sans bg-green-600 hover:bg-green-700 text-white" onClick={handleDownload} disabled={downloading}>
+        {downloading ? (
+          <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {tx.generatingFinal}</>
+        ) : (
+          <><Download className="mr-2 h-4 w-4" /> {tx.downloadFinal}</>
+        )}
+      </Button>
+      {error && <p className="text-sm text-red-600 font-sans mt-2">{error}</p>}
+      <p className="text-xs text-muted-foreground font-sans mt-1">{tx.downloadFinalDesc}</p>
     </div>
   );
 }
@@ -563,9 +636,12 @@ export default function Report() {
 
           {/* Download buttons - only for paid plans */}
           {!isLimited && (
-            <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center flex-wrap mb-8">
               <DownloadPdfButton contractId={contractId} tx={tx} />
               <DownloadDocxButton contractId={contractId} tx={tx} />
+              {showRedline && totalEditable > 0 && totalDecided === totalEditable && (
+                <DownloadFinalButton contractId={contractId} decisions={decisions} tx={tx} />
+              )}
             </div>
           )}
 

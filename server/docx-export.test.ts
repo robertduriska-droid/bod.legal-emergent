@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeAll } from "vitest";
+import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
 import express from "express";
 import request from "supertest";
 import { registerDocxExport } from "./docx-export";
@@ -206,6 +206,105 @@ describe("DOCX Export Endpoint", () => {
     const buf = res.body as Buffer;
     expect(buf.length).toBeGreaterThan(1000);
     // PK header confirms valid ZIP/DOCX
+    expect(buf.toString("utf8", 0, 2)).toBe("PK");
+  });
+});
+
+describe("Final DOCX Export Endpoint (POST)", () => {
+  const app = createApp();
+
+  beforeEach(() => {
+    mockAuth.mockReset();
+    mockGetContract.mockReset();
+    mockGetClauses.mockReset();
+    mockGetReport.mockReset();
+  });
+
+  it("should reject unauthenticated requests", async () => {
+    mockAuth.mockResolvedValue(null);
+    const res = await request(app)
+      .post("/api/contracts/1/report-final.docx")
+      .send({ decisions: { "1": "accepted" }, lang: "sk" });
+    expect(res.status).toBe(401);
+  });
+
+  it("should reject missing decisions body", async () => {
+    mockAuth.mockResolvedValue({ id: 1, role: "user" });
+    const res = await request(app)
+      .post("/api/contracts/1/report-final.docx")
+      .send({});
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain("decisions");
+  });
+
+  it("should reject basic plan users", async () => {
+    mockAuth.mockResolvedValue({ id: 1, role: "user" });
+    mockGetContract.mockResolvedValue({ id: 1, userId: 1, plan: "basic", fileName: "test.pdf", createdAt: Date.now() });
+    const res = await request(app)
+      .post("/api/contracts/1/report-final.docx")
+      .send({ decisions: { "1": "accepted" }, lang: "sk" });
+    expect(res.status).toBe(403);
+  });
+
+  it("should generate a clean final DOCX with accepted changes", async () => {
+    mockAuth.mockResolvedValue({ id: 1, role: "user" });
+    mockGetContract.mockResolvedValue({
+      id: 1, userId: 1, plan: "standard", fileName: "zmluva.pdf", createdAt: Date.now(),
+    });
+    mockGetClauses.mockResolvedValue([
+      { id: 10, clauseNumber: 1, title: "Clause A", riskLevel: "high", excerpt: "Original text", suggestedEdit: "Improved text", finding: "Finding A", legalBasis: "§ 1", lawyerAnnotation: null, overriddenRiskLevel: null },
+      { id: 20, clauseNumber: 2, title: "Clause B", riskLevel: "low", excerpt: "Keep this", suggestedEdit: "Changed text", finding: "Finding B", legalBasis: null, lawyerAnnotation: null, overriddenRiskLevel: null },
+    ]);
+    mockGetReport.mockResolvedValue({
+      id: 1, contractId: 1, summary: "Summary", recommendation: "Recommendation",
+      lawyerName: null, isSigned: 0,
+    });
+
+    const res = await request(app)
+      .post("/api/contracts/1/report-final.docx")
+      .send({ decisions: { "10": "accepted", "20": "rejected" }, lang: "sk" })
+      .buffer(true)
+      .parse((res, cb) => {
+        const chunks: Buffer[] = [];
+        res.on("data", (chunk: Buffer) => chunks.push(chunk));
+        res.on("end", () => cb(null, Buffer.concat(chunks)));
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.headers["content-type"]).toContain("wordprocessingml.document");
+    expect(res.headers["content-disposition"]).toContain("bod-legal-final-1-sk.docx");
+
+    const buf = res.body as Buffer;
+    expect(buf.length).toBeGreaterThan(1000);
+    expect(buf.toString("utf8", 0, 2)).toBe("PK");
+  });
+
+  it("should generate English final DOCX", async () => {
+    mockAuth.mockResolvedValue({ id: 1, role: "user" });
+    mockGetContract.mockResolvedValue({
+      id: 1, userId: 1, plan: "premium", fileName: "contract.pdf", createdAt: Date.now(),
+    });
+    mockGetClauses.mockResolvedValue([
+      { id: 5, clauseNumber: 1, title: "Clause X", riskLevel: "medium", excerpt: "Original", suggestedEdit: "Better version", finding: "Issue", legalBasis: null, lawyerAnnotation: null, overriddenRiskLevel: null },
+    ]);
+    mockGetReport.mockResolvedValue({
+      id: 1, contractId: 1, summary: "Summary", recommendation: "Rec",
+      lawyerName: null, isSigned: 0,
+    });
+
+    const res = await request(app)
+      .post("/api/contracts/1/report-final.docx")
+      .send({ decisions: { "5": "accepted" }, lang: "en" })
+      .buffer(true)
+      .parse((res, cb) => {
+        const chunks: Buffer[] = [];
+        res.on("data", (chunk: Buffer) => chunks.push(chunk));
+        res.on("end", () => cb(null, Buffer.concat(chunks)));
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.headers["content-disposition"]).toContain("bod-legal-final-1-en.docx");
+    const buf = res.body as Buffer;
     expect(buf.toString("utf8", 0, 2)).toBe("PK");
   });
 });
