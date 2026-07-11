@@ -9,6 +9,7 @@ import { useParams } from "wouter";
 import { Link } from "wouter";
 import { Loader2, AlertTriangle, AlertCircle, CheckCircle, Lock, ArrowRight, Shield } from "lucide-react";
 import { PRICING_PLANS } from "@shared/types";
+import { useT } from "@/i18n";
 
 const RISK_COLORS: Record<string, string> = {
   high: "bg-red-100 text-red-800 border-red-200",
@@ -16,10 +17,75 @@ const RISK_COLORS: Record<string, string> = {
   low: "bg-green-100 text-green-800 border-green-200",
 };
 
-const RISK_LABELS: Record<string, string> = { high: "Vysoké", medium: "Stredné", low: "Nízke" };
+const TX = {
+  sk: {
+    riskLabels: { high: "Vysoké", medium: "Stredné", low: "Nízke" } as Record<string, string>,
+    preparing: "Pripravujeme náhľad vašej analýzy...",
+    notFound: "Zmluva nenájdená",
+    uploadNew: "Nahrať novú zmluvu",
+    analyzing: "Analyzujeme vašu zmluvu",
+    analyzingDesc: "AI práve kontroluje každú klauzulu. Zvyčajne to trvá 1-3 minúty.",
+    freePreview: "Bezplatný náhľad",
+    resultsTitle: "Výsledky analýzy",
+    highRisk: "Vysoké riziko",
+    mediumRisk: "Stredné riziko",
+    lowRisk: "Nízke riziko",
+    top3: "Top 3 riziká vo vašej zmluve",
+    moreFindings: (n: number) => `+ ${n} ďalších nálezov`,
+    fullReportContains: "Plný report obsahuje všetky nálezy, právne základy, návrhové úpravy a odporúčania.",
+    wantFull: "Chcete plný report?",
+    wantFullDesc: (lawyer: boolean, redline: boolean) => `Získajte kompletnú analýzu s právnymi základmi, návrhmi úprav${lawyer ? ", overením advokátom" : ""}${redline ? " a redline dokumentom" : ""}.`,
+    yourPlan: "Váš plán",
+    continuePayment: "Pokračovať k platbe",
+    guarantee: "Garancia: Ak report nedodáme v sľúbenej lehote, neplatíte nič.",
+    whatsIncluded: "Čo obsahuje plný report?",
+    included: [
+      "Analýza každej klauzuly s rizikovou klasifikáciou",
+      "Odkazy na Slov-Lex a EUR-Lex",
+      "Konkrétne návrhy úprav problematických klauzúl",
+      "PDF report na stiahnutie",
+      "Overenie advokátom (Štandard a Premium)",
+      "Redline dokument (Premium)",
+    ],
+    viewFull: "Zobraziť plný report",
+  },
+  en: {
+    riskLabels: { high: "High", medium: "Medium", low: "Low" } as Record<string, string>,
+    preparing: "Preparing your analysis preview...",
+    notFound: "Contract not found",
+    uploadNew: "Upload a new contract",
+    analyzing: "Analyzing your contract",
+    analyzingDesc: "AI is reviewing every clause. This usually takes 1-3 minutes.",
+    freePreview: "Free preview",
+    resultsTitle: "Analysis results",
+    highRisk: "High risk",
+    mediumRisk: "Medium risk",
+    lowRisk: "Low risk",
+    top3: "Top 3 risks in your contract",
+    moreFindings: (n: number) => `+ ${n} more findings`,
+    fullReportContains: "The full report includes all findings, legal grounds, suggested amendments, and recommendations.",
+    wantFull: "Want the full report?",
+    wantFullDesc: (lawyer: boolean, redline: boolean) => `Get the complete analysis with legal grounds, suggested amendments${lawyer ? ", lawyer verification" : ""}${redline ? " and a redline document" : ""}.`,
+    yourPlan: "Your plan",
+    continuePayment: "Continue to payment",
+    guarantee: "Guarantee: If we don't deliver the report on time, you pay nothing.",
+    whatsIncluded: "What does the full report include?",
+    included: [
+      "Analysis of every clause with risk classification",
+      "References to Slov-Lex and EUR-Lex",
+      "Specific amendment suggestions for problematic clauses",
+      "Downloadable PDF report",
+      "Lawyer verification (Standard and Premium)",
+      "Redline document (Premium)",
+    ],
+    viewFull: "View full report",
+  },
+};
 
 export default function FreeSken() {
   const { isAuthenticated } = useAuth({ redirectOnUnauthenticated: true });
+  const { locale, localePath } = useT();
+  const tx = TX[locale];
   const params = useParams<{ id: string }>();
   const contractId = parseInt(params.id || "0");
 
@@ -35,7 +101,7 @@ export default function FreeSken() {
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground font-sans">Pripravujeme náhľad vašej analýzy...</p>
+            <p className="text-sm text-muted-foreground font-sans">{tx.preparing}</p>
           </div>
         </main>
       </div>
@@ -49,8 +115,8 @@ export default function FreeSken() {
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h2 className="font-serif text-xl mb-2">Zmluva nenájdená</h2>
-            <Link href="/upload"><Button variant="ghost" className="font-sans">Nahrať novú zmluvu</Button></Link>
+            <h2 className="font-serif text-xl mb-2">{tx.notFound}</h2>
+            <Link href={localePath("/upload")}><Button variant="ghost" className="font-sans">{tx.uploadNew}</Button></Link>
           </div>
         </main>
       </div>
@@ -67,9 +133,9 @@ export default function FreeSken() {
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center max-w-md">
             <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
-            <h2 className="font-serif text-xl mb-2">Analyzujeme vašu zmluvu</h2>
+            <h2 className="font-serif text-xl mb-2">{tx.analyzing}</h2>
             <p className="text-sm text-muted-foreground font-sans">
-              AI práve kontroluje každú klauzulu. Zvyčajne to trvá 1-3 minúty.
+              {tx.analyzingDesc}
             </p>
           </div>
         </main>
@@ -99,9 +165,9 @@ export default function FreeSken() {
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-center gap-2 mb-2">
-              <Badge variant="outline" className="font-sans text-xs">Bezplatný náhľad</Badge>
+              <Badge variant="outline" className="font-sans text-xs">{tx.freePreview}</Badge>
             </div>
-            <h1 className="text-3xl font-serif mb-2">Výsledky analýzy</h1>
+            <h1 className="text-3xl font-serif mb-2">{tx.resultsTitle}</h1>
             <p className="text-muted-foreground font-sans">
               {contract.fileName}
             </p>
@@ -113,19 +179,19 @@ export default function FreeSken() {
               <Card className="border-red-200 bg-red-50">
                 <CardContent className="p-4 text-center">
                   <p className="text-3xl font-serif text-red-800">{riskSummary.high}</p>
-                  <p className="text-xs text-red-600 font-sans">Vysoké riziko</p>
+                  <p className="text-xs text-red-600 font-sans">{tx.highRisk}</p>
                 </CardContent>
               </Card>
               <Card className="border-amber-200 bg-amber-50">
                 <CardContent className="p-4 text-center">
                   <p className="text-3xl font-serif text-amber-800">{riskSummary.medium}</p>
-                  <p className="text-xs text-amber-600 font-sans">Stredné riziko</p>
+                  <p className="text-xs text-amber-600 font-sans">{tx.mediumRisk}</p>
                 </CardContent>
               </Card>
               <Card className="border-green-200 bg-green-50">
                 <CardContent className="p-4 text-center">
                   <p className="text-3xl font-serif text-green-800">{riskSummary.low}</p>
-                  <p className="text-xs text-green-600 font-sans">Nízke riziko</p>
+                  <p className="text-xs text-green-600 font-sans">{tx.lowRisk}</p>
                 </CardContent>
               </Card>
             </div>
@@ -134,7 +200,7 @@ export default function FreeSken() {
           {/* Top 3 Risks Preview */}
           {previewClauses.length > 0 && (
             <div className="mb-8">
-              <h2 className="text-xl font-serif mb-4">Top 3 riziká vo vašej zmluve</h2>
+              <h2 className="text-xl font-serif mb-4">{tx.top3}</h2>
               <div className="space-y-3">
                 {previewClauses.map((clause) => {
                   const effectiveRisk = clause.overriddenRiskLevel || clause.riskLevel;
@@ -147,7 +213,7 @@ export default function FreeSken() {
                             <h4 className="font-sans font-medium">{clause.title}</h4>
                           </div>
                           <Badge className={`${RISK_COLORS[effectiveRisk]} text-xs font-sans`}>
-                            {RISK_LABELS[effectiveRisk]}
+                            {tx.riskLabels[effectiveRisk]}
                           </Badge>
                         </div>
                         {clause.excerpt && (
@@ -168,10 +234,10 @@ export default function FreeSken() {
               <CardContent className="p-6 text-center">
                 <Lock className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
                 <p className="font-sans font-medium mb-1">
-                  + {hiddenCount} ďalších nálezov
+                  {tx.moreFindings(hiddenCount)}
                 </p>
                 <p className="text-sm text-muted-foreground font-sans">
-                  Plný report obsahuje všetky nálezy, právne základy, návrhové úpravy a odporúčania.
+                  {tx.fullReportContains}
                 </p>
               </CardContent>
             </Card>
@@ -181,11 +247,9 @@ export default function FreeSken() {
           <div className="bg-foreground text-background rounded-2xl p-8 mb-8">
             <div className="text-center mb-6">
               <Shield className="h-10 w-10 mx-auto mb-3 opacity-80" />
-              <h2 className="text-2xl font-serif mb-2">Chcete plný report?</h2>
+              <h2 className="text-2xl font-serif mb-2">{tx.wantFull}</h2>
               <p className="text-sm opacity-80 font-sans max-w-md mx-auto">
-                Získajte kompletnú analýzu s právnymi základmi, návrhmi úprav
-                {contract.plan !== "basic" ? ", overením advokátom" : ""}
-                {contract.plan === "premium" ? " a redline dokumentom" : ""}.
+                {tx.wantFullDesc(contract.plan !== "basic", contract.plan === "premium")}
               </p>
             </div>
 
@@ -198,11 +262,11 @@ export default function FreeSken() {
                   }`}
                 >
                   <CardContent className="p-4 text-center">
-                    <p className="font-sans text-xs opacity-70 mb-1">{plan.nameSk}</p>
+                    <p className="font-sans text-xs opacity-70 mb-1">{locale === "en" ? plan.name : plan.nameSk}</p>
                     <p className="text-xl font-serif">{plan.priceLabel}</p>
                     <p className="text-xs opacity-60 font-sans">{plan.delivery}</p>
                     {plan.id === contract.plan && (
-                      <Badge className="mt-2 bg-background/20 text-background text-xs font-sans">Váš plán</Badge>
+                      <Badge className="mt-2 bg-background/20 text-background text-xs font-sans">{tx.yourPlan}</Badge>
                     )}
                   </CardContent>
                 </Card>
@@ -210,13 +274,13 @@ export default function FreeSken() {
             </div>
 
             <div className="text-center">
-              <Link href={`/contract/${contract.id}`}>
+              <Link href={localePath(`/contract/${contract.id}`)}>
                 <Button size="lg" variant="secondary" className="font-sans">
-                  Pokračovať k platbe <ArrowRight className="ml-2 h-4 w-4" />
+                  {tx.continuePayment} <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
               <p className="text-xs opacity-60 font-sans mt-3">
-                Garancia: Ak report nedodáme v sľúbenej lehote, neplatíte nič.
+                {tx.guarantee}
               </p>
             </div>
           </div>
@@ -224,32 +288,14 @@ export default function FreeSken() {
           {/* What's included in full report */}
           <Card className="mb-8">
             <CardContent className="p-6">
-              <h3 className="font-serif text-lg mb-4">Čo obsahuje plný report?</h3>
+              <h3 className="font-serif text-lg mb-4">{tx.whatsIncluded}</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                  <p className="text-sm font-sans">Analýza každej klauzuly s rizikovou klasifikáciou</p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                  <p className="text-sm font-sans">Odkazy na Slov-Lex a EUR-Lex</p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                  <p className="text-sm font-sans">Konkrétne návrhy úprav problematických klauzúl</p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                  <p className="text-sm font-sans">PDF report na stiahnutie</p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                  <p className="text-sm font-sans">Overenie advokátom (Štandard a Premium)</p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                  <p className="text-sm font-sans">Redline dokument (Premium)</p>
-                </div>
+                {tx.included.map((item) => (
+                  <div key={item} className="flex items-start gap-2">
+                    <CheckCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                    <p className="text-sm font-sans">{item}</p>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
@@ -257,9 +303,9 @@ export default function FreeSken() {
           {/* Already paid? Go to full report */}
           {contract.status === "completed" && (
             <div className="text-center">
-              <Link href={`/report/${contract.id}`}>
+              <Link href={localePath(`/report/${contract.id}`)}>
                 <Button className="font-sans">
-                  Zobraziť plný report <ArrowRight className="ml-2 h-4 w-4" />
+                  {tx.viewFull} <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
             </div>

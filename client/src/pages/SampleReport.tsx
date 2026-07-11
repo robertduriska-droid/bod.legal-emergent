@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { AlertTriangle, AlertCircle, CheckCircle, ExternalLink, Shield, FileText } from "lucide-react";
+import { useT } from "@/i18n";
 
 const SAMPLE_CLAUSES = [
   {
@@ -70,10 +71,54 @@ const RISK_COLORS = {
   low: "bg-green-100 text-green-800 border-green-200",
 };
 
-const RISK_LABELS = { high: "Vysoké", medium: "Stredné", low: "Nízke" };
 const RISK_ICONS = { high: AlertCircle, medium: AlertTriangle, low: CheckCircle };
 
+const TX = {
+  sk: {
+    riskLabels: { high: "Vysoké", medium: "Stredné", low: "Nízke" } as Record<string, string>,
+    bannerTitle: "Toto je vzorový report",
+    bannerDesc: "Ukážka toho, čo dostanete po nahratí zmluvy. Údaje sú ilustratívne.",
+    title: "Analýza zmluvy: Rámcová zmluva o poskytovaní IT služieb",
+    date: "Dátum: 9. júla 2025",
+    plan: "Plán: Štandardná kontrola",
+    pages: "Strán: 12",
+    highRisk: "Vysoké riziko",
+    mediumRisk: "Stredné riziko",
+    lowRisk: "Nízke riziko",
+    summary: "Zhrnutie",
+    clauseAnalysis: (n: number) => `Analýza klauzúl (${n})`,
+    legalBasis: "Právny základ:",
+    suggestedEdit: "Navrhovaná úprava:",
+    ctaTitle: "Chcete takýto report pre vašu zmluvu?",
+    ctaDesc: "Nahrajte zmluvu a do 24 hodín dostanete kompletný report s odkazmi na právne predpisy.",
+    ctaUpload: "Nahrať zmluvu",
+    ctaPricing: "Pozrieť cenník",
+  },
+  en: {
+    riskLabels: { high: "High", medium: "Medium", low: "Low" } as Record<string, string>,
+    bannerTitle: "This is a sample report",
+    bannerDesc: "An example of what you receive after uploading a contract. The data is illustrative (findings shown in Slovak).",
+    title: "Contract analysis: Framework agreement for IT services",
+    date: "Date: July 9, 2025",
+    plan: "Plan: Standard review",
+    pages: "Pages: 12",
+    highRisk: "High risk",
+    mediumRisk: "Medium risk",
+    lowRisk: "Low risk",
+    summary: "Summary",
+    clauseAnalysis: (n: number) => `Clause analysis (${n})`,
+    legalBasis: "Legal basis:",
+    suggestedEdit: "Suggested amendment:",
+    ctaTitle: "Want a report like this for your contract?",
+    ctaDesc: "Upload your contract and receive a complete report with legal references within 24 hours.",
+    ctaUpload: "Upload contract",
+    ctaPricing: "View pricing",
+  },
+};
+
 export default function SampleReport() {
+  const { locale, localePath } = useT();
+  const tx = TX[locale];
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -83,18 +128,18 @@ export default function SampleReport() {
           <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-8 flex items-center gap-3">
             <FileText className="h-5 w-5 text-primary shrink-0" />
             <div>
-              <p className="font-sans text-sm font-medium">Toto je vzorový report</p>
-              <p className="font-sans text-xs text-muted-foreground">Ukážka toho, čo dostanete po nahratí zmluvy. Údaje sú ilustratívne.</p>
+              <p className="font-sans text-sm font-medium">{tx.bannerTitle}</p>
+              <p className="font-sans text-xs text-muted-foreground">{tx.bannerDesc}</p>
             </div>
           </div>
 
           {/* Report Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-serif mb-2">Analýza zmluvy: Rámcová zmluva o poskytovaní IT služieb</h1>
+            <h1 className="text-3xl font-serif mb-2">{tx.title}</h1>
             <div className="flex flex-wrap gap-4 text-sm text-muted-foreground font-sans">
-              <span>Dátum: 9. júla 2025</span>
-              <span>Plán: Štandardná kontrola</span>
-              <span>Strán: 12</span>
+              <span>{tx.date}</span>
+              <span>{tx.plan}</span>
+              <span>{tx.pages}</span>
             </div>
           </div>
 
@@ -103,19 +148,19 @@ export default function SampleReport() {
             <Card className="border-red-200 bg-red-50">
               <CardContent className="p-4 text-center">
                 <p className="text-3xl font-serif text-red-800">2</p>
-                <p className="text-xs text-red-600 font-sans">Vysoké riziko</p>
+                <p className="text-xs text-red-600 font-sans">{tx.highRisk}</p>
               </CardContent>
             </Card>
             <Card className="border-amber-200 bg-amber-50">
               <CardContent className="p-4 text-center">
                 <p className="text-3xl font-serif text-amber-800">2</p>
-                <p className="text-xs text-amber-600 font-sans">Stredné riziko</p>
+                <p className="text-xs text-amber-600 font-sans">{tx.mediumRisk}</p>
               </CardContent>
             </Card>
             <Card className="border-green-200 bg-green-50">
               <CardContent className="p-4 text-center">
                 <p className="text-3xl font-serif text-green-800">1</p>
-                <p className="text-xs text-green-600 font-sans">Nízke riziko</p>
+                <p className="text-xs text-green-600 font-sans">{tx.lowRisk}</p>
               </CardContent>
             </Card>
           </div>
@@ -123,7 +168,7 @@ export default function SampleReport() {
           {/* Executive Summary */}
           <Card className="mb-8">
             <CardContent className="p-6">
-              <h2 className="font-serif text-xl mb-3">Zhrnutie</h2>
+              <h2 className="font-serif text-xl mb-3">{tx.summary}</h2>
               <p className="font-sans text-muted-foreground leading-relaxed">
                 Zmluva obsahuje 2 klauzuly s vysokým rizikom, ktoré vyžadujú okamžitú pozornosť pred podpisom. 
                 Najzávažnejšie je úplné vylúčenie zodpovednosti dodávateľa za nepriame škody (klauzula 4.2) a 
@@ -136,7 +181,7 @@ export default function SampleReport() {
           </Card>
 
           {/* Clauses */}
-          <h2 className="text-xl font-serif mb-4">Analýza klauzúl ({SAMPLE_CLAUSES.length})</h2>
+          <h2 className="text-xl font-serif mb-4">{tx.clauseAnalysis(SAMPLE_CLAUSES.length)}</h2>
           <div className="space-y-4 mb-12">
             {SAMPLE_CLAUSES.map((clause) => {
               const Icon = RISK_ICONS[clause.risk];
@@ -150,7 +195,7 @@ export default function SampleReport() {
                         <h4 className="font-sans font-medium">{clause.title}</h4>
                       </div>
                       <Badge className={`${RISK_COLORS[clause.risk]} text-xs font-sans shrink-0`}>
-                        {RISK_LABELS[clause.risk]}
+                        {tx.riskLabels[clause.risk]}
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground font-sans mb-3 italic border-l-2 border-muted pl-3">
@@ -159,14 +204,14 @@ export default function SampleReport() {
                     <p className="text-sm font-sans mb-3">{clause.finding}</p>
                     <div className="flex items-center gap-2 mb-2">
                       <Shield className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-xs font-sans text-muted-foreground">Právny základ:</span>
+                      <span className="text-xs font-sans text-muted-foreground">{tx.legalBasis}</span>
                       <a href={clause.legalSourceUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-sans text-primary hover:underline inline-flex items-center gap-1">
                         {clause.legalBasis} <ExternalLink className="h-3 w-3" />
                       </a>
                     </div>
                     {clause.suggestedEdit && (
                       <div className="bg-primary/5 rounded p-3 mt-3">
-                        <p className="text-xs font-sans font-medium text-primary mb-1">Navrhovaná úprava:</p>
+                        <p className="text-xs font-sans font-medium text-primary mb-1">{tx.suggestedEdit}</p>
                         <p className="text-sm font-sans">{clause.suggestedEdit}</p>
                       </div>
                     )}
@@ -179,14 +224,14 @@ export default function SampleReport() {
           {/* CTA */}
           <Card className="bg-foreground text-background">
             <CardContent className="p-8 text-center">
-              <h3 className="font-serif text-2xl mb-2">Chcete takýto report pre vašu zmluvu?</h3>
-              <p className="font-sans text-background/70 mb-6">Nahrajte zmluvu a do 24 hodín dostanete kompletný report s odkazmi na právne predpisy.</p>
+              <h3 className="font-serif text-2xl mb-2">{tx.ctaTitle}</h3>
+              <p className="font-sans text-background/70 mb-6">{tx.ctaDesc}</p>
               <div className="flex justify-center gap-4">
-                <Link href="/upload">
-                  <Button variant="secondary" size="lg" className="font-sans">Nahrať zmluvu</Button>
+                <Link href={localePath("/upload")}>
+                  <Button variant="secondary" size="lg" className="font-sans">{tx.ctaUpload}</Button>
                 </Link>
-                <a href="/#pricing">
-                  <Button variant="outline" size="lg" className="font-sans border-background/30 text-background hover:bg-background/10">Pozrieť cenník</Button>
+                <a href={localePath("/") + "#pricing"}>
+                  <Button variant="outline" size="lg" className="font-sans border-background/30 text-background hover:bg-background/10">{tx.ctaPricing}</Button>
                 </a>
               </div>
             </CardContent>

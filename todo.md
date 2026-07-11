@@ -112,5 +112,8 @@
 - [x] Language switcher in header
 - [x] English translations for main pages (Home, About, Upload, Dashboard) + components (Header, Footer, Splash, Cookies banner, Demo, FloatingContact)
 - [x] English splash intro (tagline via i18n)
-- [ ] English translations for remaining pages (Report, ContractDetail, FreeSken, SampleReport, VOP, GDPR, Cookies, NotFound)
+- [x] English translations for app pages (Report, ContractDetail, FreeSken, NotFound) - full UI translation
+- [x] SampleReport: English UI chrome (headings, labels, CTA); sample clause content stays Slovak (illustrative data)
+- [x] VOP, GDPR, Cookies: English title + notice banner ("legally binding text is Slovak"); body stays Slovak by design
+- [x] NotificationBell component translated
 - [ ] English PDF report generation

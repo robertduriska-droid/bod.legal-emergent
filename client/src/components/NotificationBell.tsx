@@ -9,6 +9,24 @@ import {
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
+import { useT } from "@/i18n";
+
+const TX = {
+  sk: {
+    title: "Notifikácie",
+    markAll: "Označiť všetky",
+    empty: "Žiadne notifikácie",
+    viewContract: "Zobraziť zmluvu \u2192",
+    dateLocale: "sk-SK",
+  },
+  en: {
+    title: "Notifications",
+    markAll: "Mark all read",
+    empty: "No notifications",
+    viewContract: "View contract \u2192",
+    dateLocale: "en-GB",
+  },
+};
 
 const TYPE_ICONS: Record<string, typeof Bell> = {
   contract_submitted: FileText,
@@ -18,6 +36,8 @@ const TYPE_ICONS: Record<string, typeof Bell> = {
 };
 
 export default function NotificationBell() {
+  const { locale, localePath } = useT();
+  const tx = TX[locale];
   const [open, setOpen] = useState(false);
   const { data: unreadCount } = trpc.notifications.unreadCount.useQuery(undefined, {
     refetchInterval: 30000, // Poll every 30s
@@ -66,7 +86,7 @@ export default function NotificationBell() {
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="end">
         <div className="flex items-center justify-between px-4 py-3 border-b">
-          <h4 className="font-sans font-semibold text-sm">Notifikácie</h4>
+          <h4 className="font-sans font-semibold text-sm">{tx.title}</h4>
           {(unreadCount ?? 0) > 0 && (
             <Button
               variant="ghost"
@@ -74,14 +94,14 @@ export default function NotificationBell() {
               className="text-xs font-sans h-auto py-1 px-2"
               onClick={handleMarkAllRead}
             >
-              Označiť všetky
+              {tx.markAll}
             </Button>
           )}
         </div>
         <div className="max-h-80 overflow-y-auto">
           {!notifications || notifications.length === 0 ? (
             <div className="py-8 text-center text-sm text-muted-foreground font-sans">
-              Žiadne notifikácie
+              {tx.empty}
             </div>
           ) : (
             notifications.map((n) => {
@@ -106,7 +126,7 @@ export default function NotificationBell() {
                         {n.message}
                       </p>
                       <p className="text-[10px] text-muted-foreground font-sans mt-1">
-                        {new Date(n.createdAt).toLocaleString("sk-SK")}
+                        {new Date(n.createdAt).toLocaleString(tx.dateLocale)}
                       </p>
                     </div>
                     {!n.isRead && (
@@ -116,9 +136,9 @@ export default function NotificationBell() {
                     )}
                   </div>
                   {n.contractId && (
-                    <Link href={`/contract/${n.contractId}`}>
+                    <Link href={localePath(`/contract/${n.contractId}`)}>
                       <span className="text-xs text-primary font-sans mt-1 inline-block hover:underline">
-                        Zobraziť zmluvu →
+                        {tx.viewContract}
                       </span>
                     </Link>
                   )}

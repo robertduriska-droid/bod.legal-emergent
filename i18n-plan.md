@@ -18,9 +18,21 @@
 - Dashboard.tsx (status labels, plan labels, dates per locale)
 - About.tsx (inline content object per locale)
 
+## Checkpoint 55fe837b saved (main pages done). Published domain: bodlegal-mqcbxxfs.manus.space
+
 ## TODO (remaining)
-- DemoAnimation.tsx — hardcoded Slovak: stepLabels ["Nahratie","Analýza","Report"], and inside steps (search for Slovak strings). Use t.demo.* keys which exist already.
-- ContractDetail.tsx, Report.tsx, FreeSken.tsx, SampleReport.tsx, VOP.tsx, GDPR.tsx, Cookies.tsx, NotFound.tsx — these are lower priority; ContractDetail + Report have Slovak strings. VOP/GDPR/Cookies legal pages can stay Slovak-only with note, but EN routes point to them.
+- DemoAnimation.tsx — DONE (inline texts object per locale)
+- FloatingContact.tsx — DONE (aria labels)
+- EN splash tagline set to "trust. speed. results." — DONE
+- FreeSken.tsx — DONE (TX object, localePath links)
+- ContractDetail.tsx — DONE (TX object, localePath links)
+- Report.tsx — DONE (TX object passed to DownloadPdfButton as prop, localePath links)
+- NotFound.tsx — DONE
+- SampleReport.tsx — DONE (UI chrome translated; sample clause data stays Slovak, EN banner notes findings are in Slovak)
+- (was FreeSken plan) — OBSOLETE: pattern = inline `const tx = locale === "en" ? {...} : {...}` object like About.tsx; strings: Bezplatný náhľad, Výsledky analýzy, risk labels, Top 3 riziká, + X ďalších nálezov, Chcete plný report?, Pokračovať k platbe, Garancia..., Čo obsahuje plný report? (6 items), Zobraziť plný report, loading/notfound states. Also wrap Links with localePath().
+- VOP.tsx, GDPR.tsx, Cookies.tsx — legal pages: add small EN notice banner when locale=en ("This legal document is available in Slovak only" / legally binding version is Slovak). Do NOT translate full legal text.
+- English PDF report generation — pdf-export.ts: add ?lang=en query param support, translate PDF section labels (title, risk summary, findings, legal basis, suggested edit, lawyer note, disclaimer, QR section). Frontend DownloadPdfButton should append `?lang=${locale}`.
+- AI executive summary in PDF — separate todo item, still open (todo.md line 106).
 - NotificationBell.tsx — check for Slovak strings
 - Verify tests pass (pnpm test), take screenshots of / and /en, checkpoint, deliver.
 
