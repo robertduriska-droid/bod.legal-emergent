@@ -7,6 +7,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { registerStorageProxy } from "./storageProxy";
 import { registerStripeWebhook } from "../stripe-webhook";
 import { registerPdfExport } from "../pdf-export";
+import { registerDocxExport } from "../docx-export";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -41,6 +42,7 @@ async function startServer() {
   registerStorageProxy(app);
   registerOAuthRoutes(app);
   registerPdfExport(app);
+  registerDocxExport(app);
   // tRPC API
   app.use(
     "/api/trpc",

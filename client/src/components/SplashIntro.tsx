@@ -104,6 +104,24 @@ export default function SplashIntro({ onComplete }: { onComplete: () => void }) 
           {t.splash.tagline}
         </p>
       </div>
+
+      {/* Motto */}
+      <div
+        className="mt-6"
+        style={{
+          opacity: phase === "hold" || phase === "exit" ? 1 : 0,
+          transform: phase === "enter" ? "translateY(10px)" : "translateY(0)",
+          transition: "opacity 600ms cubic-bezier(0.23, 1, 0.32, 1), transform 600ms cubic-bezier(0.23, 1, 0.32, 1)",
+          transitionDelay: phase === "hold" ? "400ms" : "0ms",
+        }}
+      >
+        <p
+          className="text-sm md:text-base font-sans tracking-[0.2em] uppercase font-medium"
+          style={{ color: "rgba(255,255,255,0.25)" }}
+        >
+          {t.splash.motto}
+        </p>
+      </div>
     </div>
   );
 }

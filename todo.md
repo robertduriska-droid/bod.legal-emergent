@@ -117,3 +117,14 @@
 - [x] VOP, GDPR, Cookies: English title + notice banner ("legally binding text is Slovak"); body stays Slovak by design
 - [x] NotificationBell component translated
 - [x] English PDF report generation (lang=en query param, all labels translated)
+
+## DOCX Export with Track Changes
+- [x] Server-side DOCX generation endpoint (/api/contracts/:id/report.docx)
+- [x] Track changes (revisions) for suggested edits in DOCX
+- [x] Download DOCX button on Report page
+- [x] Tests for DOCX export endpoint
+
+## Motto & EN Equivalence
+- [x] Add "Dôvera. Rýchlosť. Výsledky." motto to SK homepage/splash
+- [x] Add "Trust. Speed. Results." motto to EN homepage/splash
+- [x] Ensure EN version is precise linguistic equivalent of SK version

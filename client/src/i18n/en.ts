@@ -18,6 +18,7 @@ export const en: Translations = {
   splash: {
     trustBar: "No commitment \u00B7 Flat fee \u00B7 Results in 24h",
     tagline: "trust. speed. results.",
+    motto: "Trust. Speed. Results.",
   },
   hero: {
     titleLine1: "Got a contract",

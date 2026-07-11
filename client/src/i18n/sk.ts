@@ -18,6 +18,7 @@ export const sk: Translations = {
   splash: {
     trustBar: "Bez záväzkov \u00B7 Paušálna cena \u00B7 Výsledok do 24h",
     tagline: "bod. kde právo funguje.",
+    motto: "Dôvera. Rýchlosť. Výsledky.",
   },
   hero: {
     titleLine1: "Dostali ste zmluvu",

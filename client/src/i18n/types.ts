@@ -21,6 +21,7 @@ export interface Translations {
   splash: {
     trustBar: string;
     tagline: string;
+    motto: string;
   };
   // Hero
   hero: {

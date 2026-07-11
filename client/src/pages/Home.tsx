@@ -52,8 +52,11 @@ export default function Home() {
               {t.hero.titleLine1}<br />
               <span className="text-hero-text/60">{t.hero.titleLine2}</span>
             </h1>
-            <p className="text-lg md:text-xl text-hero-text/70 mb-8 max-w-2xl mx-auto font-sans">
+            <p className="text-lg md:text-xl text-hero-text/70 mb-4 max-w-2xl mx-auto font-sans">
               {t.hero.subtitle}
+            </p>
+            <p className="text-xs tracking-[0.25em] uppercase text-hero-text/35 mb-8 font-sans font-medium">
+              {t.splash.motto}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href={localePath("/upload")}>

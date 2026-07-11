@@ -6,7 +6,7 @@ import { trpc } from "@/lib/trpc";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Link, useParams } from "wouter";
-import { ArrowLeft, Loader2, CheckCircle, Download, ExternalLink, Shield, FileDown } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle, Download, ExternalLink, Shield, FileDown, FileText } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { LEGAL_SOURCES } from "@shared/types";
@@ -27,6 +27,12 @@ const TX = {
     pdfErrorToast: "Chyba pri sťahovaní PDF",
     generating: "Generujem PDF...",
     downloadPdf: "Stiahnuť report (PDF)",
+    downloadDocx: "Stiahnuť s revíziami (DOCX)",
+    docxSuccess: "DOCX bol úspešne vygenerovaný",
+    docxSuccessDesc: "Otvorte v MS Word a použite Revízie → Prijať/Odmietnuť.",
+    docxError: "Chyba pri generovaní DOCX",
+    docxErrorToast: "Chyba pri sťahovaní DOCX",
+    generatingDocx: "Generujem DOCX...",
     notAvailable: "Report ešte nie je k dispozícii.",
     backToDashboard: "Späť na prehľad",
     title: "Analýza zmluvy",
@@ -58,6 +64,12 @@ const TX = {
     pdfErrorToast: "Error downloading PDF",
     generating: "Generating PDF...",
     downloadPdf: "Download report (PDF)",
+    downloadDocx: "Download with track changes (DOCX)",
+    docxSuccess: "DOCX generated successfully",
+    docxSuccessDesc: "Open in MS Word and use Review → Accept/Reject.",
+    docxError: "Error generating DOCX",
+    docxErrorToast: "Error downloading DOCX",
+    generatingDocx: "Generating DOCX...",
     notAvailable: "The report is not available yet.",
     backToDashboard: "Back to dashboard",
     title: "Contract analysis",
@@ -124,12 +136,67 @@ function DownloadPdfButton({ contractId, tx }: { contractId: number; tx: typeof 
   };
 
   return (
-    <div className="text-center mb-8">
+    <div className="text-center">
       <Button className="font-sans" onClick={handleDownload} disabled={downloading}>
         {downloading ? (
           <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {tx.generating}</>
         ) : (
           <><FileDown className="mr-2 h-4 w-4" /> {tx.downloadPdf}</>
+        )}
+      </Button>
+      {error && <p className="text-sm text-red-600 font-sans mt-2">{error}</p>}
+    </div>
+  );
+}
+
+function DownloadDocxButton({ contractId, tx }: { contractId: number; tx: typeof TX.sk }) {
+  const { locale } = useT();
+  const [downloading, setDownloading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/contracts/${contractId}/report.docx?lang=${locale}`, {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({ error: tx.docxError }));
+        throw new Error(errData.error || tx.docxError);
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const disposition = response.headers.get("Content-Disposition");
+      const filenameMatch = disposition?.match(/filename="(.+?)"/);
+      a.download = filenameMatch?.[1] || `bod-legal_report_${contractId}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success(tx.docxSuccess, {
+        description: tx.docxSuccessDesc,
+      });
+    } catch (err: any) {
+      const msg = err.message || tx.docxError;
+      setError(msg);
+      toast.error(tx.docxErrorToast, {
+        description: msg,
+      });
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  return (
+    <div className="text-center">
+      <Button variant="outline" className="font-sans" onClick={handleDownload} disabled={downloading}>
+        {downloading ? (
+          <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {tx.generatingDocx}</>
+        ) : (
+          <><FileText className="mr-2 h-4 w-4" /> {tx.downloadDocx}</>
         )}
       </Button>
       {error && <p className="text-sm text-red-600 font-sans mt-2">{error}</p>}
@@ -349,8 +416,13 @@ export default function Report() {
             </Card>
           )}
 
-          {/* Download PDF - only for paid plans */}
-          {!isLimited && <DownloadPdfButton contractId={contractId} tx={tx} />}
+          {/* Download buttons - only for paid plans */}
+          {!isLimited && (
+            <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
+              <DownloadPdfButton contractId={contractId} tx={tx} />
+              <DownloadDocxButton contractId={contractId} tx={tx} />
+            </div>
+          )}
 
           {/* Disclaimer */}
           <div className="text-center text-xs text-muted-foreground font-sans p-4 border rounded bg-muted/30">
