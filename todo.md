@@ -137,3 +137,9 @@
 
 ## Redline Preview
 - [x] In-browser redline view showing tracked changes (deletions strikethrough red, insertions underline green) before DOCX download
+
+## Accept/Reject Changes
+- [x] Per-clause accept/reject buttons with visual state (accepted=green confirmed, rejected=red dismissed)
+- [x] Global "Accept all" and "Reject all" buttons
+- [x] Visual feedback: accepted clauses show final text only, rejected show original only
+- [x] Counter showing X/Y decisions made

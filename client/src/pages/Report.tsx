@@ -6,7 +6,7 @@ import { trpc } from "@/lib/trpc";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Link, useParams } from "wouter";
-import { ArrowLeft, Loader2, CheckCircle, Download, ExternalLink, Shield, FileDown, FileText } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle, Download, ExternalLink, Shield, FileDown, FileText, Check, X, RotateCcw } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { LEGAL_SOURCES } from "@shared/types";
@@ -37,6 +37,14 @@ const TX = {
     hideRedline: "Skryť navrhované zmeny",
     redlineOriginal: "Pôvodné znenie:",
     redlineProposed: "Navrhované znenie:",
+    acceptChange: "Prijať",
+    rejectChange: "Odmietnuť",
+    acceptAll: "Prijať všetky zmeny",
+    rejectAll: "Odmietnuť všetky",
+    accepted: "Prijaté",
+    rejected: "Odmietnuté",
+    decisionsCount: (done: number, total: number) => `${done}/${total} rozhodnutí`,
+    undoDecision: "Zrušiť",
     notAvailable: "Report ešte nie je k dispozícii.",
     backToDashboard: "Späť na prehľad",
     title: "Analýza zmluvy",
@@ -78,6 +86,14 @@ const TX = {
     hideRedline: "Hide proposed changes",
     redlineOriginal: "Original text:",
     redlineProposed: "Proposed text:",
+    acceptChange: "Accept",
+    rejectChange: "Reject",
+    acceptAll: "Accept all changes",
+    rejectAll: "Reject all",
+    accepted: "Accepted",
+    rejected: "Rejected",
+    decisionsCount: (done: number, total: number) => `${done}/${total} decisions`,
+    undoDecision: "Undo",
     notAvailable: "The report is not available yet.",
     backToDashboard: "Back to dashboard",
     title: "Contract analysis",
@@ -254,6 +270,36 @@ export default function Report() {
   const [showRedline, setShowRedline] = useState(false);
   const hasRedlineContent = clauses?.some((c) => c.excerpt && c.suggestedEdit);
 
+  // Accept/Reject state: clauseId -> 'accepted' | 'rejected'
+  const [decisions, setDecisions] = useState<Record<number, 'accepted' | 'rejected'>>({});
+  const clausesWithEdits = clauses?.filter((c) => c.suggestedEdit) || [];
+  const totalEditable = clausesWithEdits.length;
+  const totalDecided = Object.keys(decisions).length;
+
+  const handleAccept = (clauseId: number) => {
+    setDecisions((prev) => ({ ...prev, [clauseId]: 'accepted' }));
+  };
+  const handleReject = (clauseId: number) => {
+    setDecisions((prev) => ({ ...prev, [clauseId]: 'rejected' }));
+  };
+  const handleUndo = (clauseId: number) => {
+    setDecisions((prev) => {
+      const next = { ...prev };
+      delete next[clauseId];
+      return next;
+    });
+  };
+  const handleAcceptAll = () => {
+    const all: Record<number, 'accepted' | 'rejected'> = {};
+    clausesWithEdits.forEach((c) => { all[c.id] = 'accepted'; });
+    setDecisions(all);
+  };
+  const handleRejectAll = () => {
+    const all: Record<number, 'accepted' | 'rejected'> = {};
+    clausesWithEdits.forEach((c) => { all[c.id] = 'rejected'; });
+    setDecisions(all);
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -332,20 +378,38 @@ export default function Report() {
           {/* Clause Findings */}
           {clauses && clauses.length > 0 && (
             <div className="mb-8">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                 <h2 className="text-xl font-serif">{tx.detailedFindings(clauses.length)}</h2>
                 {!isLimited && hasRedlineContent && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowRedline(!showRedline)}
-                    className={`font-sans text-xs gap-1.5 transition-colors ${showRedline ? 'border-primary/50 bg-primary/5 text-primary' : ''}`}
-                  >
-                    <FileText className="h-3.5 w-3.5" />
-                    {showRedline ? tx.hideRedline : tx.showRedline}
-                  </Button>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowRedline(!showRedline)}
+                      className={`font-sans text-xs gap-1.5 transition-colors ${showRedline ? 'border-primary/50 bg-primary/5 text-primary' : ''}`}
+                    >
+                      <FileText className="h-3.5 w-3.5" />
+                      {showRedline ? tx.hideRedline : tx.showRedline}
+                    </Button>
+                  </div>
                 )}
               </div>
+              {/* Accept/Reject toolbar */}
+              {!isLimited && showRedline && totalEditable > 0 && (
+                <div className="flex items-center justify-between mb-4 p-3 rounded-lg border bg-muted/30">
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="outline" onClick={handleAcceptAll} className="font-sans text-xs gap-1 text-green-700 border-green-300 hover:bg-green-50">
+                      <Check className="h-3 w-3" /> {tx.acceptAll}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={handleRejectAll} className="font-sans text-xs gap-1 text-red-700 border-red-300 hover:bg-red-50">
+                      <X className="h-3 w-3" /> {tx.rejectAll}
+                    </Button>
+                  </div>
+                  <span className="text-xs font-sans text-muted-foreground">
+                    {tx.decisionsCount(totalDecided, totalEditable)}
+                  </span>
+                </div>
+              )}
               <div className="space-y-3">
                 {clauses.map((clause) => {
                   const effectiveRisk = clause.overriddenRiskLevel || clause.riskLevel;
@@ -383,24 +447,64 @@ export default function Report() {
                             <p className="text-sm font-sans">{clause.suggestedEdit}</p>
                           </div>
                         )}
-                        {showRedline && clause.excerpt && clause.suggestedEdit && (
-                          <div className="mt-3 rounded-lg border border-dashed border-muted-foreground/30 p-4 bg-muted/20">
-                            <div className="mb-2">
-                              <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-red-600/80">{tx.redlineOriginal}</span>
-                              <p className="text-sm font-sans mt-1 line-through text-red-700/80 decoration-red-500/60">{clause.excerpt}</p>
+                        {showRedline && clause.suggestedEdit && (() => {
+                          const decision = decisions[clause.id];
+                          if (decision === 'accepted') {
+                            return (
+                              <div className="mt-3 rounded-lg border border-green-300 p-4 bg-green-50/50">
+                                <div className="flex items-center justify-between mb-1">
+                                  <Badge className="bg-green-100 text-green-800 border-green-200 text-[10px] font-sans">
+                                    <Check className="h-2.5 w-2.5 mr-0.5" /> {tx.accepted}
+                                  </Badge>
+                                  <Button variant="ghost" size="sm" onClick={() => handleUndo(clause.id)} className="h-6 px-2 text-[10px] font-sans text-muted-foreground hover:text-foreground">
+                                    <RotateCcw className="h-3 w-3 mr-0.5" /> {tx.undoDecision}
+                                  </Button>
+                                </div>
+                                <p className="text-sm font-sans text-green-900">{clause.suggestedEdit}</p>
+                              </div>
+                            );
+                          }
+                          if (decision === 'rejected') {
+                            return (
+                              <div className="mt-3 rounded-lg border border-red-200 p-4 bg-red-50/30 opacity-60">
+                                <div className="flex items-center justify-between mb-1">
+                                  <Badge className="bg-red-100 text-red-800 border-red-200 text-[10px] font-sans">
+                                    <X className="h-2.5 w-2.5 mr-0.5" /> {tx.rejected}
+                                  </Badge>
+                                  <Button variant="ghost" size="sm" onClick={() => handleUndo(clause.id)} className="h-6 px-2 text-[10px] font-sans text-muted-foreground hover:text-foreground">
+                                    <RotateCcw className="h-3 w-3 mr-0.5" /> {tx.undoDecision}
+                                  </Button>
+                                </div>
+                                <p className="text-sm font-sans text-muted-foreground">
+                                  {clause.excerpt || <span className="line-through">{clause.suggestedEdit}</span>}
+                                </p>
+                              </div>
+                            );
+                          }
+                          // No decision yet — show redline with accept/reject buttons
+                          return (
+                            <div className="mt-3 rounded-lg border border-dashed border-muted-foreground/30 p-4 bg-muted/20">
+                              {clause.excerpt && (
+                                <div className="mb-2">
+                                  <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-red-600/80">{tx.redlineOriginal}</span>
+                                  <p className="text-sm font-sans mt-1 line-through text-red-700/80 decoration-red-500/60">{clause.excerpt}</p>
+                                </div>
+                              )}
+                              <div className={clause.excerpt ? "border-t border-dashed border-muted-foreground/20 pt-2" : ""}>
+                                <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-green-700/80">{tx.redlineProposed}</span>
+                                <p className="text-sm font-sans mt-1 text-green-800 underline decoration-green-600/50 underline-offset-2">{clause.suggestedEdit}</p>
+                              </div>
+                              <div className="flex items-center gap-2 mt-3 pt-2 border-t border-muted-foreground/10">
+                                <Button size="sm" variant="outline" onClick={() => handleAccept(clause.id)} className="h-7 px-3 text-[11px] font-sans gap-1 text-green-700 border-green-300 hover:bg-green-50">
+                                  <Check className="h-3 w-3" /> {tx.acceptChange}
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => handleReject(clause.id)} className="h-7 px-3 text-[11px] font-sans gap-1 text-red-700 border-red-300 hover:bg-red-50">
+                                  <X className="h-3 w-3" /> {tx.rejectChange}
+                                </Button>
+                              </div>
                             </div>
-                            <div className="border-t border-dashed border-muted-foreground/20 pt-2">
-                              <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-green-700/80">{tx.redlineProposed}</span>
-                              <p className="text-sm font-sans mt-1 text-green-800 underline decoration-green-600/50 underline-offset-2">{clause.suggestedEdit}</p>
-                            </div>
-                          </div>
-                        )}
-                        {showRedline && !clause.excerpt && clause.suggestedEdit && (
-                          <div className="mt-3 rounded-lg border border-dashed border-muted-foreground/30 p-4 bg-muted/20">
-                            <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-green-700/80">{tx.redlineProposed}</span>
-                            <p className="text-sm font-sans mt-1 text-green-800 underline decoration-green-600/50 underline-offset-2">{clause.suggestedEdit}</p>
-                          </div>
-                        )}
+                          );
+                        })()}
                         {clause.lawyerAnnotation && (
                           <div className="bg-amber-50 rounded p-3 mt-2 border border-amber-200">
                             <p className="text-xs font-sans font-medium text-amber-800 mb-1">{tx.lawyerNote}</p>
