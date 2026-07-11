@@ -16,14 +16,20 @@ export default function DemoAnimation() {
     stepLabels: ["Upload", "Analysis", "Report"],
     dragDrop: "Drag & drop file here",
     fileTypes: "PDF, DOCX - max 50 MB",
-    filePages: "12 pages - 2.4 MB",
+    langNote: "Slovak & English contracts · Slovak law",
+    fileName: "Framework_Agreement_IT.docx",
+    filePages: "12 pages - 1.8 MB",
+    fileType: "DOCX",
+    fileName2: "Ramcova_zmluva_IT.pdf",
+    filePages2: "8 pages - 2.4 MB",
+    fileType2: "PDF",
     analyzing: "Analyzing clauses...",
-    analyzingDesc: "AI reviews the contract clause by clause",
+    analyzingDesc: "AI reviews the contract under Slovak law",
     high: "High",
     medium: "Medium",
-    risk1: "§ 4.2 Exclusion of liability for indirect damages",
+    risk1: "§ 4.2 Exclusion of liability – § 379 Obchodný zákonník",
     risk2: "§ 11.2 IP rights transfer without compensation",
-    risk3: "§ 7.1 Delaware jurisdiction - unfavorable for SVK",
+    risk3: "§ 7.1 Jurisdiction clause – unfavorable for SR",
     reportReady: "Report is ready",
     reportDone: "Analysis completed in 18 minutes",
     highRisk: "High risk",
@@ -32,6 +38,7 @@ export default function DemoAnimation() {
     reportFile: "Analysis_Framework_agreement_IT.pdf",
     generated: "Generated July 10, 2025",
     downloadPdf: "Download PDF",
+    downloadDocx: "Download DOCX",
     play: "Play",
     pause: "Pause",
     paused: "Paused",
@@ -39,14 +46,20 @@ export default function DemoAnimation() {
     stepLabels: ["Nahratie", "Analýza", "Report"],
     dragDrop: "Pretiahnite súbor sem",
     fileTypes: "PDF, DOCX - max 50 MB",
+    langNote: "Zmluvy v SK a EN · slovenské právo",
+    fileName: "Ramcova_zmluva_IT.pdf",
     filePages: "12 strán - 2.4 MB",
+    fileType: "PDF",
+    fileName2: "Service_Agreement_EN.docx",
+    filePages2: "8 strán - 1.6 MB",
+    fileType2: "DOCX",
     analyzing: "Analyzujem klauzuly...",
-    analyzingDesc: "AI prehľadáva zmluvu klauzulu po klauzule",
+    analyzingDesc: "AI analyzuje zmluvu podľa slovenského práva",
     high: "Vysoké",
     medium: "Stredné",
-    risk1: "§ 4.2 Vylúčenie zodpovednosti za nepriame škody",
+    risk1: "§ 4.2 Vylúčenie zodpovednosti – § 379 Obch. zák.",
     risk2: "§ 11.2 Prevod IP práv bez kompenzácie",
-    risk3: "§ 7.1 Jurisdikcia Delaware - nevýhodná pre SR",
+    risk3: "§ 7.1 Jurisdikčná doložka – nevýhodná pre SR",
     reportReady: "Report je hotový",
     reportDone: "Analýza dokončená za 18 minút",
     highRisk: "Vysoké riziko",
@@ -55,6 +68,7 @@ export default function DemoAnimation() {
     reportFile: "Analýza_Ramcova_zmluva_IT.pdf",
     generated: "Vygenerované 10. júla 2025",
     downloadPdf: "Stiahnuť PDF",
+    downloadDocx: "Stiahnuť DOCX",
     play: "Spustiť",
     pause: "Pozastaviť",
     paused: "Pauza",
@@ -128,33 +142,53 @@ export default function DemoAnimation() {
             }}
           >
             <div className="w-full max-w-md">
-              <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center transition-all duration-300 hover:border-primary/50">
+              <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center transition-all duration-300 hover:border-primary/50">
                 <div className="w-12 h-12 rounded-full bg-primary/5 flex items-center justify-center mx-auto mb-3">
                   <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                   </svg>
                 </div>
                 <p className="font-semibold text-sm mb-1">{texts.dragDrop}</p>
-                <p className="text-xs text-muted-foreground">{texts.fileTypes}</p>
+                <p className="text-xs text-muted-foreground mb-1">{texts.fileTypes}</p>
+                <p className="text-[10px] text-muted-foreground/70 font-medium tracking-wide uppercase">{texts.langNote}</p>
               </div>
+              {/* First file - PDF */}
               <div
-                className="mt-4 flex items-center gap-3 bg-gray-50 rounded-lg p-3 border transition-all duration-700"
+                className="mt-3 flex items-center gap-3 bg-gray-50 rounded-lg p-2.5 border transition-all duration-700"
                 style={{
                   opacity: step === 0 ? 1 : 0,
                   transform: step === 0 ? "translateY(0)" : "translateY(-20px)",
-                  transitionDelay: "0.8s",
+                  transitionDelay: "0.6s",
                 }}
               >
-                <div className="w-10 h-10 bg-red-50 rounded flex items-center justify-center">
-                  <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" />
-                  </svg>
+                <div className="w-9 h-9 bg-red-50 rounded flex items-center justify-center shrink-0">
+                  <span className="text-[10px] font-bold text-red-600">{texts.fileType}</span>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Ramcova_zmluva_IT.pdf</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{texts.fileName}</p>
                   <p className="text-xs text-muted-foreground">{texts.filePages}</p>
                 </div>
-                <svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              {/* Second file - DOCX */}
+              <div
+                className="mt-2 flex items-center gap-3 bg-gray-50 rounded-lg p-2.5 border transition-all duration-700"
+                style={{
+                  opacity: step === 0 ? 1 : 0,
+                  transform: step === 0 ? "translateY(0)" : "translateY(-20px)",
+                  transitionDelay: "1.1s",
+                }}
+              >
+                <div className="w-9 h-9 bg-blue-50 rounded flex items-center justify-center shrink-0">
+                  <span className="text-[10px] font-bold text-blue-600">{texts.fileType2}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{texts.fileName2}</p>
+                  <p className="text-xs text-muted-foreground">{texts.filePages2}</p>
+                </div>
+                <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
@@ -273,8 +307,13 @@ export default function DemoAnimation() {
                   <p className="text-sm font-medium">{texts.reportFile}</p>
                   <p className="text-xs text-muted-foreground">{texts.generated}</p>
                 </div>
-                <div className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium">
-                  {texts.downloadPdf}
+                <div className="flex gap-2">
+                  <div className="px-3 py-2 bg-primary text-primary-foreground rounded-md text-xs font-medium">
+                    {texts.downloadPdf}
+                  </div>
+                  <div className="px-3 py-2 bg-blue-600 text-white rounded-md text-xs font-medium">
+                    {texts.downloadDocx}
+                  </div>
                 </div>
               </div>
             </div>
