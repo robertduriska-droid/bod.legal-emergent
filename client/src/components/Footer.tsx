@@ -9,8 +9,14 @@ export default function Footer() {
   const cookiesPath = locale === "en" ? "/en/cookies" : "/cookies";
 
   return (
-    <footer className="bg-hero-bg text-hero-text/70 py-12">
-      <div className="container">
+    <footer className="bg-hero-bg text-hero-text/70 py-12 relative overflow-hidden">
+      {/* Brand watermark background */}
+      <div className="absolute inset-0 flex items-end justify-center pointer-events-none select-none" aria-hidden="true">
+        <span className="font-serif text-[8rem] md:text-[12rem] text-hero-text/[0.03] whitespace-nowrap leading-none translate-y-8">
+          bod.legal
+        </span>
+      </div>
+      <div className="container relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div>

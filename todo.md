@@ -128,3 +128,9 @@
 - [x] Add "Dôvera. Rýchlosť. Výsledky." motto to SK homepage/splash
 - [x] Add "Trust. Speed. Results." motto to EN homepage/splash
 - [x] Ensure EN version is precise linguistic equivalent of SK version
+
+## Brand Presence Enhancement
+- [x] Subtle "bod.legal" watermark text in hero section background (3% opacity, 22rem)
+- [x] Brand mark in section dividers (between FAQ and Reviews)
+- [x] Oversized "bod.legal" watermark in CTA section background
+- [x] Oversized "bod.legal" watermark in footer background

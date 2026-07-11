@@ -46,6 +46,12 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className="bg-hero-bg text-hero-text py-24 md:py-32 relative overflow-hidden">
+        {/* Brand watermark background */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none" aria-hidden="true">
+          <span className="font-serif text-[12rem] md:text-[18rem] lg:text-[22rem] text-hero-text/[0.03] whitespace-nowrap leading-none">
+            bod.legal
+          </span>
+        </div>
         <div className="container relative z-10">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl md:text-6xl font-serif font-normal mb-6 leading-tight">
@@ -316,6 +322,13 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Brand Divider */}
+      <div className="bg-white py-4 flex items-center justify-center gap-4 select-none" aria-hidden="true">
+        <div className="h-px w-16 bg-border" />
+        <span className="font-serif text-sm text-muted-foreground/40 tracking-wider">bod.legal</span>
+        <div className="h-px w-16 bg-border" />
+      </div>
+
       {/* Google Reviews */}
       <section className="py-20 bg-white">
         <div className="container">
@@ -387,8 +400,14 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-hero-bg text-hero-text">
-        <div className="container text-center">
+      <section className="py-20 bg-hero-bg text-hero-text relative overflow-hidden">
+        {/* Brand watermark background */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none" aria-hidden="true">
+          <span className="font-serif text-[10rem] md:text-[14rem] text-hero-text/[0.03] whitespace-nowrap leading-none">
+            bod.legal
+          </span>
+        </div>
+        <div className="container text-center relative z-10">
           <h2 className="text-3xl md:text-4xl font-serif mb-4">{t.cta.title}</h2>
           <p className="text-hero-text/70 font-sans mb-8 max-w-lg mx-auto">
             {t.cta.subtitle}
