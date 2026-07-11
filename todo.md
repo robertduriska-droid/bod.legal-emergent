@@ -103,7 +103,7 @@
 - [x] Success/error toast notifications on PDF download button
 - [x] Add bod.legal diagonal watermark to every PDF page
 - [x] Add QR code linking to online report on last page of PDF
-- [ ] AI-generated executive summary section at top of PDF report
+- [x] AI-generated executive summary section at top of PDF report
 - [x] Splash/intro animation with large bod.legal logo on dark background before scroll
 
 ## English Version (i18n)
@@ -116,4 +116,4 @@
 - [x] SampleReport: English UI chrome (headings, labels, CTA); sample clause content stays Slovak (illustrative data)
 - [x] VOP, GDPR, Cookies: English title + notice banner ("legally binding text is Slovak"); body stays Slovak by design
 - [x] NotificationBell component translated
-- [ ] English PDF report generation
+- [x] English PDF report generation (lang=en query param, all labels translated)

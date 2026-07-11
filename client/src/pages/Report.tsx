@@ -83,6 +83,7 @@ const TX = {
 };
 
 function DownloadPdfButton({ contractId, tx }: { contractId: number; tx: typeof TX.sk }) {
+  const { locale } = useT();
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -90,7 +91,7 @@ function DownloadPdfButton({ contractId, tx }: { contractId: number; tx: typeof 
     setDownloading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/contracts/${contractId}/report.pdf`, {
+      const response = await fetch(`/api/contracts/${contractId}/report.pdf?lang=${locale}`, {
         credentials: "include",
       });
       if (!response.ok) {

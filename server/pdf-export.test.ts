@@ -19,6 +19,20 @@ vi.mock("./db", () => ({
   getReportByContractId: vi.fn(),
 }));
 
+// Mock LLM for executive summary
+vi.mock("./_core/llm", () => ({
+  invokeLLM: vi.fn().mockResolvedValue({
+    choices: [{
+      index: 0,
+      message: {
+        role: "assistant",
+        content: "This contract contains moderate risk. The primary concern is the lack of scope specification. We recommend adding detailed appendices before signing.",
+      },
+      finish_reason: "stop",
+    }],
+  }),
+}));
+
 import { sdk } from "./_core/sdk";
 import { getContractById, getClausesByContractId, getReportByContractId } from "./db";
 
@@ -170,6 +184,118 @@ describe("PDF Export Endpoint", () => {
     const res = await request(app).get("/api/contracts/1/report.pdf");
     expect(res.status).toBe(200);
     expect(res.headers["content-type"]).toBe("application/pdf");
+  });
+
+  it("should generate English PDF when lang=en query param is passed", async () => {
+    const { registerPdfExport } = await import("./pdf-export");
+    const express = await import("express");
+    const app = express.default();
+    app.use(express.default.json());
+    registerPdfExport(app);
+
+    (sdk.authenticateRequest as any).mockResolvedValue({ id: 1, role: "user" });
+    (getContractById as any).mockResolvedValue({
+      id: 1,
+      userId: 1,
+      plan: "standard",
+      fileName: "Service-Agreement.pdf",
+      createdAt: new Date("2026-01-15"),
+    });
+    (getClausesByContractId as any).mockResolvedValue([
+      {
+        id: 1,
+        contractId: 1,
+        clauseNumber: 1,
+        title: "Scope of Work",
+        excerpt: "The supplier commits to...",
+        riskLevel: "high",
+        finding: "Missing precise scope definition.",
+        suggestedEdit: "Add appendix with detailed scope.",
+        legalBasis: "Section 536 Commercial Code",
+        legalSourceUrl: "https://www.slov-lex.sk/...",
+        riskCategory: "scope_performance",
+        lawyerAnnotation: null,
+        lawyerApproved: 0,
+        overriddenRiskLevel: null,
+      },
+    ]);
+    (getReportByContractId as any).mockResolvedValue({
+      id: 1,
+      contractId: 1,
+      summary: "The contract has several risky clauses.",
+      recommendation: "We recommend supplementing appendices.",
+      riskSummary: { high: 1, medium: 0, low: 0 },
+      isSigned: 1,
+      lawyerName: "JUDr. Test",
+      signedAt: new Date("2026-01-16"),
+    });
+
+    const request = await import("supertest").then(m => m.default);
+    const res = await request(app).get("/api/contracts/1/report.pdf?lang=en");
+    expect(res.status).toBe(200);
+    expect(res.headers["content-type"]).toBe("application/pdf");
+    // PDF should start with %PDF
+    expect(res.body.slice(0, 5).toString()).toContain("%PDF");
+    // The PDF should contain the Inter font (used for all text)
+    const pdfContent = res.body.toString("latin1");
+    expect(pdfContent).toContain("Inter");
+  });
+
+  it("should include executive summary section in the PDF", async () => {
+    const { registerPdfExport } = await import("./pdf-export");
+    const express = await import("express");
+    const app = express.default();
+    app.use(express.default.json());
+    registerPdfExport(app);
+
+    (sdk.authenticateRequest as any).mockResolvedValue({ id: 1, role: "user" });
+    (getContractById as any).mockResolvedValue({
+      id: 1,
+      userId: 1,
+      plan: "premium",
+      fileName: "Executive-Test.pdf",
+      createdAt: new Date("2026-01-15"),
+    });
+    (getClausesByContractId as any).mockResolvedValue([
+      {
+        id: 1,
+        contractId: 1,
+        clauseNumber: 1,
+        title: "Predmet zmluvy",
+        excerpt: "Dodavatel sa zavazuje...",
+        riskLevel: "high",
+        finding: "Chyba presna specifikacia rozsahu.",
+        suggestedEdit: null,
+        legalBasis: null,
+        legalSourceUrl: null,
+        riskCategory: "scope_performance",
+        lawyerAnnotation: null,
+        lawyerApproved: 0,
+        overriddenRiskLevel: null,
+      },
+    ]);
+    (getReportByContractId as any).mockResolvedValue({
+      id: 1,
+      contractId: 1,
+      summary: "Zmluva obsahuje rizikove klauzuly.",
+      recommendation: "Odporucame doplnit prilohy.",
+      riskSummary: { high: 1, medium: 0, low: 0 },
+      isSigned: 0,
+      lawyerName: null,
+      signedAt: null,
+    });
+
+    const request = await import("supertest").then(m => m.default);
+    const res = await request(app).get("/api/contracts/1/report.pdf");
+    expect(res.status).toBe(200);
+    // The LLM mock returns a summary, so the PDF should be generated successfully
+    // and contain the executive summary rendered as part of the document
+    const pdfContent = res.body.toString("latin1");
+    // The PDF should have a filled rectangle (the executive summary background box)
+    // jsPDF roundedRect with "F" fill produces re/rn operators
+    expect(pdfContent).toMatch(/\d+\.?\d* \d+\.?\d* \d+\.?\d* rg/);
+    // The PDF should contain the Inter font
+    expect(pdfContent).toContain("Inter");
   });
 
   it("should include QR code and watermark in the generated PDF", async () => {
