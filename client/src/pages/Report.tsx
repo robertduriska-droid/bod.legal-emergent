@@ -33,6 +33,10 @@ const TX = {
     docxError: "Chyba pri generovaní DOCX",
     docxErrorToast: "Chyba pri sťahovaní DOCX",
     generatingDocx: "Generujem DOCX...",
+    showRedline: "Zobraziť navrhované zmeny",
+    hideRedline: "Skryť navrhované zmeny",
+    redlineOriginal: "Pôvodné znenie:",
+    redlineProposed: "Navrhované znenie:",
     notAvailable: "Report ešte nie je k dispozícii.",
     backToDashboard: "Späť na prehľad",
     title: "Analýza zmluvy",
@@ -70,6 +74,10 @@ const TX = {
     docxError: "Error generating DOCX",
     docxErrorToast: "Error downloading DOCX",
     generatingDocx: "Generating DOCX...",
+    showRedline: "Show proposed changes",
+    hideRedline: "Hide proposed changes",
+    redlineOriginal: "Original text:",
+    redlineProposed: "Proposed text:",
     notAvailable: "The report is not available yet.",
     backToDashboard: "Back to dashboard",
     title: "Contract analysis",
@@ -243,6 +251,8 @@ export default function Report() {
 
   const { contract, clauses, report, isLimited } = data;
   const riskSummary = report.riskSummary as { high: number; medium: number; low: number } | null;
+  const [showRedline, setShowRedline] = useState(false);
+  const hasRedlineContent = clauses?.some((c) => c.excerpt && c.suggestedEdit);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -322,7 +332,20 @@ export default function Report() {
           {/* Clause Findings */}
           {clauses && clauses.length > 0 && (
             <div className="mb-8">
-              <h2 className="text-xl font-serif mb-4">{tx.detailedFindings(clauses.length)}</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-serif">{tx.detailedFindings(clauses.length)}</h2>
+                {!isLimited && hasRedlineContent && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowRedline(!showRedline)}
+                    className={`font-sans text-xs gap-1.5 transition-colors ${showRedline ? 'border-primary/50 bg-primary/5 text-primary' : ''}`}
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                    {showRedline ? tx.hideRedline : tx.showRedline}
+                  </Button>
+                )}
+              </div>
               <div className="space-y-3">
                 {clauses.map((clause) => {
                   const effectiveRisk = clause.overriddenRiskLevel || clause.riskLevel;
@@ -354,10 +377,28 @@ export default function Report() {
                             )}
                           </div>
                         )}
-                        {clause.suggestedEdit && (
+                        {clause.suggestedEdit && !showRedline && (
                           <div className="bg-primary/5 rounded p-3 mt-2">
                             <p className="text-xs font-sans font-medium text-primary mb-1">{tx.suggestedEdit}</p>
                             <p className="text-sm font-sans">{clause.suggestedEdit}</p>
+                          </div>
+                        )}
+                        {showRedline && clause.excerpt && clause.suggestedEdit && (
+                          <div className="mt-3 rounded-lg border border-dashed border-muted-foreground/30 p-4 bg-muted/20">
+                            <div className="mb-2">
+                              <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-red-600/80">{tx.redlineOriginal}</span>
+                              <p className="text-sm font-sans mt-1 line-through text-red-700/80 decoration-red-500/60">{clause.excerpt}</p>
+                            </div>
+                            <div className="border-t border-dashed border-muted-foreground/20 pt-2">
+                              <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-green-700/80">{tx.redlineProposed}</span>
+                              <p className="text-sm font-sans mt-1 text-green-800 underline decoration-green-600/50 underline-offset-2">{clause.suggestedEdit}</p>
+                            </div>
+                          </div>
+                        )}
+                        {showRedline && !clause.excerpt && clause.suggestedEdit && (
+                          <div className="mt-3 rounded-lg border border-dashed border-muted-foreground/30 p-4 bg-muted/20">
+                            <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-green-700/80">{tx.redlineProposed}</span>
+                            <p className="text-sm font-sans mt-1 text-green-800 underline decoration-green-600/50 underline-offset-2">{clause.suggestedEdit}</p>
                           </div>
                         )}
                         {clause.lawyerAnnotation && (

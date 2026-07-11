@@ -134,3 +134,6 @@
 - [x] Brand mark in section dividers (between FAQ and Reviews)
 - [x] Oversized "bod.legal" watermark in CTA section background
 - [x] Oversized "bod.legal" watermark in footer background
+
+## Redline Preview
+- [x] In-browser redline view showing tracked changes (deletions strikethrough red, insertions underline green) before DOCX download
