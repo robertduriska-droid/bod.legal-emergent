@@ -57,12 +57,12 @@ export default function Dashboard() {
     : { basic: "Základná", standard: "Štandardná", premium: "Prémiová" };
 
   // Price labels per plan, currency depends on contract language
-  // Source of truth: server/stripe-products.ts (basic=149€, standard=249€, premium=399€, express=99€)
-  // CZK conversion rate ~25.3
+  // Source of truth: server/stripe-products.ts (basic=197€, standard=297€, premium=497€)
+  // CZK: marketing-friendly rounded equivalents
   const planPrices: Record<string, { eur: string; czk: string }> = {
-    basic: { eur: "149 €", czk: "3 770 Kč" },
-    standard: { eur: "249 €", czk: "6 300 Kč" },
-    premium: { eur: "399 €", czk: "10 095 Kč" },
+    basic: { eur: "197 €", czk: "4 990 Kč" },
+    standard: { eur: "297 €", czk: "7 490 Kč" },
+    premium: { eur: "497 €", czk: "12 490 Kč" },
   };
 
   function getPlanDisplay(plan: string, language: string) {

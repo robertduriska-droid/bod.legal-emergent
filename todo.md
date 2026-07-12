@@ -248,3 +248,11 @@
 
 ## CZK Pricing on Dashboard
 - [x] Show prices in CZK for Czech contracts on Dashboard (plan labels with CZK amounts, date in cs-CZ locale)
+
+## AI Output Language by Jurisdiction
+- [x] Ensure AI analysis output is generated in Slovak for SK contracts and Czech for CZ contracts (already in place via SYSTEM_PROMPTS per language)
+
+## Pricing Update (Marketing-Friendly)
+- [x] Update EUR prices: 197€ / 297€ / 497€ / +127€ express
+- [x] Update CZK prices: 4 990 Kč / 7 490 Kč / 12 490 Kč / +3 190 Kč express
+- [x] Update all places: stripe-products.ts, Dashboard, i18n (sk, cz, en), VOP, Report.tsx
