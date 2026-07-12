@@ -8,6 +8,8 @@ import Footer from "@/components/Footer";
 import { Link } from "wouter";
 import { FileText, Upload, Clock, CheckCircle, AlertCircle, Loader2, Eye, CreditCard, Brain, Scale } from "lucide-react";
 import { useT } from "@/i18n";
+import { useState, useMemo } from "react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export default function Dashboard() {
   const { isAuthenticated, loading: authLoading } = useAuth({ redirectOnUnauthenticated: true });
@@ -15,6 +17,19 @@ export default function Dashboard() {
     enabled: isAuthenticated,
   });
   const { t, locale, localePath } = useT();
+  const [jurisdictionFilter, setJurisdictionFilter] = useState<string>("all");
+
+  const filteredContracts = useMemo(() => {
+    if (!contracts) return [];
+    if (jurisdictionFilter === "all") return contracts;
+    return contracts.filter((c: any) => c.language === jurisdictionFilter);
+  }, [contracts, jurisdictionFilter]);
+
+  const jurisdictionLabels: Record<string, string> = locale === "en"
+    ? { all: "All", sk: "Slovak", cz: "Czech" }
+    : locale === "cz"
+    ? { all: "Všechny", sk: "Slovenské", cz: "České" }
+    : { all: "Všetky", sk: "Slovenské", cz: "České" };
 
   const STATUS_MAP: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; icon: typeof Clock }> = {
     pending: { label: t.dashboard.status.pending, variant: "secondary", icon: Clock },
@@ -67,6 +82,28 @@ export default function Dashboard() {
             </Link>
           </div>
 
+          {/* Jurisdiction filter */}
+          {contracts && contracts.length > 0 && (
+            <div className="mb-4">
+              <ToggleGroup
+                type="single"
+                value={jurisdictionFilter}
+                onValueChange={(v) => v && setJurisdictionFilter(v)}
+                className="justify-start"
+              >
+                <ToggleGroupItem value="all" className="font-sans text-xs px-3 h-8">
+                  {jurisdictionLabels.all}
+                </ToggleGroupItem>
+                <ToggleGroupItem value="sk" className="font-sans text-xs px-3 h-8">
+                  🇸🇰 {jurisdictionLabels.sk}
+                </ToggleGroupItem>
+                <ToggleGroupItem value="cz" className="font-sans text-xs px-3 h-8">
+                  🇨🇿 {jurisdictionLabels.cz}
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+          )}
+
           {isLoading ? (
             <div className="flex items-center justify-center py-20">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -87,9 +124,18 @@ export default function Dashboard() {
                 </Link>
               </CardContent>
             </Card>
+          ) : filteredContracts.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground font-sans">
+                  {locale === "en" ? "No contracts for this jurisdiction" : locale === "cz" ? "Žádné smlouvy pro tuto jurisdikci" : "Žiadne zmluvy pre túto jurisdikciu"}
+                </p>
+              </CardContent>
+            </Card>
           ) : (
             <div className="space-y-3">
-              {contracts.map((contract) => {
+              {filteredContracts.map((contract) => {
                 const status = STATUS_MAP[contract.status] || STATUS_MAP.pending;
                 const StatusIcon = status.icon;
                 return (

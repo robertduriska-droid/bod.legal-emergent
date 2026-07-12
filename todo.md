@@ -242,3 +242,6 @@
 - [x] Add Czech legal sources to AI analysis prompt (NOZ 89/2012, ZOK 90/2012, zákonyprolidi.cz, smlouvy.gov.cz)
 - [x] CZ entries in all page-level TX objects (Report, SampleReport, FreeSken, ContractDetail, AdminReview, NotFound, NotificationBell)
 - [x] Language-aware system prompt selection based on contract.language field
+
+## Jurisdiction Filter on Dashboard
+- [x] Add SK/CZ/All filter toggle on client Dashboard to filter contracts by language/jurisdiction
