@@ -199,3 +199,29 @@
 - [x] Frontend: redirect to Stripe Checkout on plan selection - already existed
 - [x] Payment success/cancel toast notifications on ContractDetail page
 - [x] Test instructions for user (4242 card, claim sandbox)
+
+## Phase 0 Copy Deck - BOD Contract Intelligence Repositioning
+- [ ] Meta/title/OG: "bod.legal | Zmluvná pamäť firmy · Kontrola zmlúv s podpisom advokáta"
+- [ ] Nav: Contract Intelligence, Sprint, Cenník, O nás, EN, Prihlásiť sa, [Vybudovať zmluvnú pamäť]
+- [ ] Hero: new H1, subtitle, mechanism line, dual CTA, microcopy
+- [ ] Trust bar: SAK, 10.000+ docs, EÚ dáta (replace 24h/149€)
+- [ ] Section 5: Zmluvná amnézia (problém) with definition box
+- [ ] Section 6: BOD slučka zmluvnej pamäte (6 steps, text list for Phase 0)
+- [ ] Section 7: Pred BOD / Po BOD comparison table
+- [ ] Section 8: Sprint (flagship 30-day implementation)
+- [ ] Section 9: Cenník (3 tiers: Check 149€, Sprint 8000€, Desk 1000€/mo + Playbook Lite 2500€)
+- [ ] Section 10: Pre koho (qualification/disqualification)
+- [ ] Section 11: Skóre (lead magnet, simple form for Phase 0)
+- [ ] Section 12: Bezpečnosť (keep existing, move lower)
+- [ ] Section 13: FAQ (keep 4, add 4 new)
+- [ ] Section 14: Záverečné CTA
+- [ ] Section 15: Footer (keep, add new links)
+- [ ] Full EN translation for all new sections
+
+## SendGrid Email Integration
+- [x] Configure SendGrid API key and from email (robert.duriska@kilian.legal)
+- [x] Create email service module (server/email.ts) with branded HTML templates
+- [x] Email client when AI analysis completes (report ready)
+- [x] Email lawyer when new contract needs review (paid plans)
+- [x] Email client when lawyer completes review (signReport)
+- [x] Validate SendGrid API key via test

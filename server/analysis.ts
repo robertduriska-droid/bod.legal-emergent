@@ -1,6 +1,7 @@
 import { ENV } from "./_core/env";
-import { getContractById, createClauses, createReport, updateContractStatus, createNotification } from "./db";
+import { getContractById, createClauses, createReport, updateContractStatus, createNotification, getUserById } from "./db";
 import { notifyOwner } from "./_core/notification";
+import { sendEmail, emailReportReady, emailNewContractForReview } from "./email";
 import { storageGetSignedUrl } from "./storage";
 import { LEGAL_SOURCES, RISK_CATEGORIES } from "@shared/types";
 import type { ClauseAnalysis, AnalysisResult } from "@shared/types";
@@ -343,6 +344,39 @@ export async function analyzeContract(contractId: number): Promise<void> {
         ? `Report pre "${contract.fileName}" je hotový (${riskStr}). Klient: ${contract.userId}.\nOdkaz: /report/${contract.id}`
         : `Report pre "${contract.fileName}" čaká na lawyer review (${riskStr}). Klient: ${contract.userId}.\nOdkaz: /admin/review/${contract.id}`,
     }).catch(err => console.warn("[Notification] Owner push failed:", err));
+
+    // Email notifications via SendGrid
+    const baseUrl = "https://bod.legal";
+    const user = await getUserById(contract.userId).catch(() => null);
+
+    if (plan === "basic" && user?.email) {
+      // Basic plan: email client that report is ready
+      const { subject, html } = emailReportReady({
+        contractName: contract.fileName,
+        reportUrl: `${baseUrl}/report/${contract.id}`,
+        recipientName: user.name || undefined,
+      });
+      sendEmail({ to: user.email, subject, html }).catch(err => console.warn("[Email] Report ready failed:", err));
+    } else if (plan !== "basic") {
+      // Paid plan: email lawyer that new contract needs review
+      const lawyerEmail = ENV.sendgridFromEmail; // lawyer = owner for now
+      const { subject, html } = emailNewContractForReview({
+        contractName: contract.fileName,
+        reviewUrl: `${baseUrl}/admin/review/${contract.id}`,
+        uploaderName: user?.name || undefined,
+      });
+      sendEmail({ to: lawyerEmail, subject, html }).catch(err => console.warn("[Email] New review failed:", err));
+
+      // Also email client that analysis is done, awaiting review
+      if (user?.email) {
+        const clientEmail = emailReportReady({
+          contractName: contract.fileName,
+          reportUrl: `${baseUrl}/report/${contract.id}`,
+          recipientName: user.name || undefined,
+        });
+        sendEmail({ to: user.email, subject: clientEmail.subject, html: clientEmail.html }).catch(err => console.warn("[Email] Client notify failed:", err));
+      }
+    }
   } catch (error: any) {
     console.error(`[Analysis] Failed for contract ${contractId}:`, error.message || error);
     await updateContractStatus(contractId, "pending");

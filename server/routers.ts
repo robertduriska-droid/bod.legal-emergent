@@ -27,10 +27,12 @@ import {
   getCommentsByContract,
   createComment,
   deleteComment,
+  getUserById,
 } from "./db";
 import { storagePut } from "./storage";
 import { analyzeContract } from "./analysis";
 import { notifyOwner } from "./_core/notification";
+import { sendEmail, emailReviewCompleted } from "./email";
 import { LEGAL_SOURCES, RISK_CATEGORIES, PRICING_PLANS } from "@shared/types";
 import Stripe from "stripe";
 import { ENV } from "./_core/env";
@@ -253,6 +255,18 @@ export const appRouter = router({
             type: "contract_completed",
             contractId: input.contractId,
           }).catch(err => console.error("[Notification] Failed to create:", err));
+
+          // Email notification to client
+          const clientUser = await getUserById(signedContract.userId).catch(() => null);
+          if (clientUser?.email) {
+            const { subject, html } = emailReviewCompleted({
+              contractName: signedContract.fileName,
+              reportUrl: `https://bod.legal/report/${signedContract.id}`,
+              recipientName: clientUser.name || undefined,
+              lawyerName: ctx.user.name || undefined,
+            });
+            sendEmail({ to: clientUser.email, subject, html }).catch(err => console.warn("[Email] Review completed failed:", err));
+          }
         }
 
         return { success: true };
