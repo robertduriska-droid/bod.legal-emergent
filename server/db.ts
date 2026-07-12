@@ -89,6 +89,19 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function getUserById(userId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  return result[0];
+}
+
+export async function updateUserStripeCustomerId(userId: number, stripeCustomerId: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(users).set({ stripeCustomerId }).where(eq(users.id, userId));
+}
+
 // ─── Contract Helpers ───────────────────────────────────────────────────────
 
 export async function createContract(data: InsertContract): Promise<number> {
@@ -273,7 +286,7 @@ export async function getCommentsByContract(contractId: number): Promise<ClauseC
     .orderBy(desc(clauseComments.createdAt));
 }
 
-export async function createComment(data: InsertClauseComment): Promise<number> {
+export async function createComment(data: Omit<InsertClauseComment, 'parentId' | 'isLawyer'> & { parentId?: number | null; isLawyer?: number }): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(clauseComments).values(data);

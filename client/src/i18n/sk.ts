@@ -226,6 +226,7 @@ export const sk: Translations = {
     continueLabel: "Pokračovať",
     basicNote: "Základná kontrola: AI analyzuje vašu zmluvu a zobrazí top 3 riziká zadarmo. Pre plný report s právnymi základmi si môžete vybrať vyšší plán.",
     paidNote: "Po nahratí budete presmerovaní na bezpečnú platobnú bránu Stripe. Analýza sa spustí automaticky po úspešnej platbe.",
+    testCardNote: "Testovací režim: použite kartu 4242 4242 4242 4242, ľubovoľný budúci dátum a CVC.",
     loginNote: "Po kliknutí sa najprv prihláste a následne budete presmerovaní na platbu.",
     successBasic: "Zmluva bola úspešne nahratá! Pripravujeme bezplatný náhľad...",
     successPaid: "Zmluva bola úspešne nahratá! Pokračujte k platbe.",

@@ -200,6 +200,7 @@ export interface Translations {
     continueLabel: string;
     basicNote: string;
     paidNote: string;
+    testCardNote: string;
     loginNote: string;
     successBasic: string;
     successPaid: string;

@@ -136,6 +136,8 @@ describe("Comments tRPC Procedures", () => {
         userId: 1,
         userName: "Test User",
         content: "This clause needs revision",
+        parentId: null,
+        isLawyer: 0,
       });
     });
 

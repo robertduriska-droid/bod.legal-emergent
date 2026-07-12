@@ -85,6 +85,7 @@ const TX = {
     deleteComment: "Zmazať",
     commentAdded: "Komentár bol pridaný",
     commentDeleted: "Komentár bol zmazaný",
+    lawyerBadge: "Advokát",
     dateLocale: "sk-SK",
   },
   en: {
@@ -149,6 +150,7 @@ const TX = {
     sendComment: "Send",
     comments: "Comments",
     noComments: "No comments yet.",
+    lawyerBadge: "Lawyer",
     deleteComment: "Delete",
     commentAdded: "Comment added",
     commentDeleted: "Comment deleted",
@@ -779,28 +781,59 @@ export default function Report() {
                                   {clauseComments.length === 0 && (
                                     <p className="text-xs text-muted-foreground font-sans italic">{tx.noComments}</p>
                                   )}
-                                  {clauseComments.map((comment) => (
-                                    <div key={comment.id} className="bg-muted/40 rounded p-2.5 border border-muted-foreground/10">
-                                      <div className="flex items-center justify-between mb-1">
-                                        <span className="text-[11px] font-sans font-medium text-foreground">{comment.userName}</span>
-                                        <div className="flex items-center gap-1.5">
-                                          <span className="text-[10px] font-sans text-muted-foreground">
-                                            {new Date(comment.createdAt).toLocaleString(tx.dateLocale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                                          </span>
-                                          {authUser && comment.userId === authUser.id && (
-                                            <button
-                                              onClick={() => handleDeleteComment(comment.id)}
-                                              className="text-muted-foreground hover:text-red-600 transition-colors"
-                                              title={tx.deleteComment}
-                                            >
-                                              <Trash2 className="h-3 w-3" />
-                                            </button>
+                                  {(() => {
+                                    const topLevel = clauseComments.filter((c: any) => !c.parentId);
+                                    const replies = clauseComments.filter((c: any) => c.parentId);
+                                    return topLevel.map((comment: any) => {
+                                      const commentReplies = replies.filter((r: any) => r.parentId === comment.id);
+                                      return (
+                                        <div key={comment.id}>
+                                          <div className={`rounded p-2.5 border ${comment.isLawyer ? 'bg-emerald-50/50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800' : 'bg-muted/40 border-muted-foreground/10'}`}>
+                                            <div className="flex items-center justify-between mb-1">
+                                              <span className="text-[11px] font-sans font-medium text-foreground flex items-center gap-1">
+                                                {comment.userName}
+                                                {comment.isLawyer ? <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 font-medium">{tx.lawyerBadge}</span> : null}
+                                              </span>
+                                              <div className="flex items-center gap-1.5">
+                                                <span className="text-[10px] font-sans text-muted-foreground">
+                                                  {new Date(comment.createdAt).toLocaleString(tx.dateLocale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                                {authUser && comment.userId === authUser.id && (
+                                                  <button
+                                                    onClick={() => handleDeleteComment(comment.id)}
+                                                    className="text-muted-foreground hover:text-red-600 transition-colors"
+                                                    title={tx.deleteComment}
+                                                  >
+                                                    <Trash2 className="h-3 w-3" />
+                                                  </button>
+                                                )}
+                                              </div>
+                                            </div>
+                                            <p className="text-sm font-sans text-foreground/90">{comment.content}</p>
+                                          </div>
+                                          {/* Threaded replies */}
+                                          {commentReplies.length > 0 && (
+                                            <div className="ml-4 mt-1 space-y-1">
+                                              {commentReplies.map((reply: any) => (
+                                                <div key={reply.id} className={`rounded p-2 border ${reply.isLawyer ? 'bg-emerald-50/50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800' : 'bg-muted/40 border-muted-foreground/10'}`}>
+                                                  <div className="flex items-center justify-between mb-0.5">
+                                                    <span className="text-[11px] font-sans font-medium text-foreground flex items-center gap-1">
+                                                      {reply.userName}
+                                                      {reply.isLawyer ? <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 font-medium">{tx.lawyerBadge}</span> : null}
+                                                    </span>
+                                                    <span className="text-[10px] font-sans text-muted-foreground">
+                                                      {new Date(reply.createdAt).toLocaleString(tx.dateLocale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                  </div>
+                                                  <p className="text-sm font-sans text-foreground/90">{reply.content}</p>
+                                                </div>
+                                              ))}
+                                            </div>
                                           )}
                                         </div>
-                                      </div>
-                                      <p className="text-sm font-sans text-foreground/90">{comment.content}</p>
-                                    </div>
-                                  ))}
+                                      );
+                                    });
+                                  })()}
                                   <div className="flex gap-2 mt-2">
                                     <Textarea
                                       value={commentInputs[clause.id] || ''}

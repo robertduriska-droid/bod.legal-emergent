@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import Stripe from "stripe";
 import { ENV } from "./_core/env";
-import { updateContractStatus, getContractById, createNotification } from "./db";
+import { updateContractStatus, getContractById, createNotification, updateUserStripeCustomerId } from "./db";
 import { analyzeContract } from "./analysis";
 import { notifyOwner } from "./_core/notification";
 
@@ -43,6 +43,14 @@ export function registerStripeWebhook(app: express.Express) {
           case "checkout.session.completed": {
             const session = event.data.object as Stripe.Checkout.Session;
             const contractId = session.metadata?.contract_id;
+            const userId = session.metadata?.user_id;
+
+            // Store Stripe customer ID on user record
+            if (userId && session.customer) {
+              const customerId = typeof session.customer === 'string' ? session.customer : session.customer.id;
+              updateUserStripeCustomerId(parseInt(userId), customerId)
+                .catch(err => console.warn('[Stripe Webhook] Failed to store customer ID:', err));
+            }
 
             if (contractId) {
               const contract = await getContractById(parseInt(contractId));

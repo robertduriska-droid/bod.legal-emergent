@@ -261,6 +261,11 @@ export default function Upload() {
                   : t.upload.loginNote
               }
             </p>
+            {selectedPlan !== "basic" && (
+              <p className="text-xs text-amber-600 font-sans font-medium">
+                {t.upload.testCardNote}
+              </p>
+            )}
           </div>
         </div>
       </main>

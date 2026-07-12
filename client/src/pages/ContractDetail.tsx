@@ -5,8 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Link, useParams } from "wouter";
+import { Link, useParams, useSearch } from "wouter";
 import { FileText, ArrowLeft, Loader2, AlertTriangle, AlertCircle, CheckCircle, ExternalLink, CreditCard } from "lucide-react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useT } from "@/i18n";
 
@@ -81,6 +82,18 @@ export default function ContractDetail() {
   const tx = TX[locale];
   const params = useParams<{ id: string }>();
   const contractId = parseInt(params.id || "0");
+  const searchString = useSearch();
+  const searchParams = new URLSearchParams(searchString);
+  const paymentResult = searchParams.get('payment');
+
+  // Show toast on payment result (once via useEffect)
+  useEffect(() => {
+    if (paymentResult === 'success') {
+      toast.success(locale === 'sk' ? 'Platba úspešná! Analýza sa začína.' : 'Payment successful! Analysis starting.');
+    } else if (paymentResult === 'cancelled') {
+      toast.error(locale === 'sk' ? 'Platba bola zrušená.' : 'Payment was cancelled.');
+    }
+  }, [paymentResult, locale]);
 
   const { data, isLoading, refetch } = trpc.contracts.getById.useQuery(
     { id: contractId },

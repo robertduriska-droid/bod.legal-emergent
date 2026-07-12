@@ -340,8 +340,8 @@ export async function analyzeContract(contractId: number): Promise<void> {
     await notifyOwner({
       title: `Analýza dokončená: ${contract.fileName}`,
       content: plan === "basic"
-        ? `Report pre "${contract.fileName}" je hotový (${riskStr}). Klient: ${contract.userId}.`
-        : `Report pre "${contract.fileName}" čaká na lawyer review (${riskStr}). Klient: ${contract.userId}.`,
+        ? `Report pre "${contract.fileName}" je hotový (${riskStr}). Klient: ${contract.userId}.\nOdkaz: /report/${contract.id}`
+        : `Report pre "${contract.fileName}" čaká na lawyer review (${riskStr}). Klient: ${contract.userId}.\nOdkaz: /admin/review/${contract.id}`,
     }).catch(err => console.warn("[Notification] Owner push failed:", err));
   } catch (error: any) {
     console.error(`[Analysis] Failed for contract ${contractId}:`, error.message || error);

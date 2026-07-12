@@ -179,3 +179,23 @@
 - [x] Update homepage/upload text: PDF a DOCX do 50 MB, slovenčina a angličtina, slovenské právo
 - [x] Update upload page file validation to reflect 50 MB limit and PDF/DOCX only (already correct)
 - [x] Update any FAQ or info sections with correct file/language parameters
+
+## Email Notifications
+- [x] Send owner notification when report analysis is completed (already existed in analysis.ts)
+- [x] Send owner notification when a new comment is added to a clause
+- [x] Include contract name, clause reference, and direct link in notification
+
+## Lawyer Reply Thread
+- [x] Allow admin/lawyer to reply to comments in AdminReview
+- [x] Display replies threaded under the original comment (parentId + isLawyer fields)
+- [x] Show replies in Report page (user-facing) as lawyer responses with badge
+- [x] Full SK+EN i18n for reply UI
+
+## Stripe Checkout Flow
+- [x] Define products/prices in products.ts (Basic, Standard, Premium plans) - already existed
+- [x] Create checkout session endpoint with user metadata - already existed
+- [x] Webhook handler for checkout.session.completed - already existed, enhanced
+- [x] Store stripe_customer_id on user (subscription tracking deferred — not needed for per-contract checkout model)
+- [x] Frontend: redirect to Stripe Checkout on plan selection - already existed
+- [x] Payment success/cancel toast notifications on ContractDetail page
+- [x] Test instructions for user (4242 card, claim sandbox)

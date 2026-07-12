@@ -10,6 +10,8 @@ export const users = mysqlTable("users", {
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  /** Stripe customer ID for payment tracking */
+  stripeCustomerId: varchar("stripeCustomerId", { length: 128 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -163,6 +165,10 @@ export const clauseComments = mysqlTable("clause_comments", {
   userName: varchar("userName", { length: 256 }).notNull(),
   /** Comment content */
   content: text("content").notNull(),
+  /** Parent comment ID for threaded replies (null = top-level) */
+  parentId: int("parentId"),
+  /** Whether this comment was posted by a lawyer/admin */
+  isLawyer: int("isLawyer").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

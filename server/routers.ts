@@ -456,6 +456,7 @@ export const appRouter = router({
         contractId: z.number(),
         clauseId: z.number(),
         content: z.string().min(1).max(2000),
+        parentId: z.number().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         // Verify user owns the contract or is admin
@@ -463,13 +464,44 @@ export const appRouter = router({
         if (!contract || (contract.userId !== ctx.user.id && ctx.user.role !== 'admin')) {
           throw new Error('Unauthorized');
         }
+        const isLawyer = ctx.user.role === 'admin' ? 1 : 0;
         const id = await createComment({
           contractId: input.contractId,
           clauseId: input.clauseId,
           userId: ctx.user.id,
           userName: ctx.user.name || 'User',
           content: input.content,
+          parentId: input.parentId || null,
+          isLawyer,
         });
+
+        // Send owner notification about new comment
+        const isUserComment = ctx.user.role !== 'admin';
+        const siteUrl = ctx.req.headers.origin || 'https://bod.legal';
+        notifyOwner({
+          title: isUserComment
+            ? `Nový komentár klienta: ${contract.fileName}`
+            : `Odpoveď advokáta: ${contract.fileName}`,
+          content: `${ctx.user.name || 'User'} pridal komentár ku klauzule #${input.clauseId}: "${input.content.slice(0, 200)}${input.content.length > 200 ? '...' : ''}"
+
+Zmluva: ${contract.fileName}
+Odkaz: ${siteUrl}/${isUserComment ? 'admin/review' : 'report'}/${contract.id}`,
+        }).catch(err => console.warn('[Notification] Comment notify failed:', err));
+
+        // Create in-app notification for the other party
+        if (isUserComment) {
+          // User commented → notify would go to admin (handled by owner notification above)
+        } else {
+          // Admin/lawyer replied → notify the contract owner
+          createNotification({
+            userId: contract.userId,
+            title: 'Nová odpoveď advokáta',
+            message: `Advokát odpovedal na váš komentár ku zmluve "${contract.fileName}".`,
+            type: 'comment_reply',
+            contractId: contract.id,
+          }).catch(err => console.error('[Notification] Reply notify failed:', err));
+        }
+
         return { id, success: true };
       }),
 

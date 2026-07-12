@@ -226,6 +226,7 @@ export const en: Translations = {
     continueLabel: "Continue",
     basicNote: "Basic review: AI analyzes your contract and shows the top 3 risks for free. For a full report with legal references, choose a higher plan.",
     paidNote: "After uploading, you will be redirected to the secure Stripe payment gateway. Analysis starts automatically after successful payment.",
+    testCardNote: "Test mode: use card 4242 4242 4242 4242, any future date and CVC.",
     loginNote: "Click to sign in first, then you will be redirected to payment.",
     successBasic: "Contract uploaded successfully! Preparing free preview...",
     successPaid: "Contract uploaded successfully! Proceed to payment.",
