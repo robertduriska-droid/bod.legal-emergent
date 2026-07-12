@@ -127,7 +127,7 @@ export const cz: Translations = {
       "Prioritní podpora",
       "Do 50 stran",
     ],
-    standardBadge: "Doporučený",
+    standardBadge: "Nejoblíbenější",
     premiumTitle: "Prémiová kontrola",
     premiumPrice: "12 490 Kč",
     premiumTime: "do 24 hodin",

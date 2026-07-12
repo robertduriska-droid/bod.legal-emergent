@@ -127,7 +127,7 @@ export const sk: Translations = {
       "Prioritná podpora",
       "Do 50 strán",
     ],
-    standardBadge: "Odporúčaný",
+    standardBadge: "Najobľúbenejšie",
     premiumTitle: "Prémiová kontrola",
     premiumPrice: "497 eur",
     premiumTime: "do 24 hodín",

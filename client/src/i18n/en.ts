@@ -127,7 +127,7 @@ export const en: Translations = {
       "Priority support",
       "Up to 50 pages",
     ],
-    standardBadge: "Recommended",
+    standardBadge: "Most Popular",
     premiumTitle: "Premium review",
     premiumPrice: "€497",
     premiumTime: "within 24 hours",
