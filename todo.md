@@ -245,3 +245,6 @@
 
 ## Jurisdiction Filter on Dashboard
 - [x] Add SK/CZ/All filter toggle on client Dashboard to filter contracts by language/jurisdiction
+
+## CZK Pricing on Dashboard
+- [x] Show prices in CZK for Czech contracts on Dashboard (plan labels with CZK amounts, date in cs-CZ locale)

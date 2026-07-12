@@ -52,7 +52,26 @@ export default function Dashboard() {
 
   const planLabels: Record<string, string> = locale === "en"
     ? { basic: "Basic", standard: "Standard", premium: "Premium" }
+    : locale === "cz"
+    ? { basic: "Základní", standard: "Standardní", premium: "Prémiová" }
     : { basic: "Základná", standard: "Štandardná", premium: "Prémiová" };
+
+  // Price labels per plan, currency depends on contract language
+  // Source of truth: server/stripe-products.ts (basic=149€, standard=249€, premium=399€, express=99€)
+  // CZK conversion rate ~25.3
+  const planPrices: Record<string, { eur: string; czk: string }> = {
+    basic: { eur: "149 €", czk: "3 770 Kč" },
+    standard: { eur: "249 €", czk: "6 300 Kč" },
+    premium: { eur: "399 €", czk: "10 095 Kč" },
+  };
+
+  function getPlanDisplay(plan: string, language: string) {
+    const label = planLabels[plan] || plan;
+    const price = planPrices[plan];
+    if (!price) return label;
+    const amount = language === "cz" ? price.czk : price.eur;
+    return `${label} · ${amount}`;
+  }
 
   if (authLoading) {
     return (
@@ -149,7 +168,7 @@ export default function Dashboard() {
                           <div className="min-w-0">
                             <p className="font-sans font-medium truncate">{contract.fileName}</p>
                             <p className="text-xs text-muted-foreground font-sans">
-                              {new Date(contract.createdAt).toLocaleDateString(locale === "en" ? "en-GB" : "sk-SK")} · {planLabels[contract.plan] || contract.plan}
+                              {new Date(contract.createdAt).toLocaleDateString(locale === "en" ? "en-GB" : locale === "cz" ? "cs-CZ" : "sk-SK")} · {getPlanDisplay(contract.plan, (contract as any).language || "sk")}
                             </p>
                           </div>
                         </div>
