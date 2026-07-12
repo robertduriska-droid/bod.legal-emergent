@@ -18,6 +18,12 @@ const TX = {
     home: "Back to homepage",
     upload: "Upload contract",
   },
+  cz: {
+    title: "Stránka nenalezena",
+    desc: "Tato stránka neexistuje nebo byla přesunuta.",
+    home: "Na úvodní stránku",
+    upload: "Nahrát smlouvu",
+  },
 };
 
 export default function NotFound() {

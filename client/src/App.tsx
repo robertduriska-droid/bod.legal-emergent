@@ -53,6 +53,21 @@ function Router() {
         <Route path="/preview/:id" component={FreeSken} />
         <Route path="/vzorovy-report" component={SampleReport} />
 
+        {/* Czech routes (/cz prefix) */}
+        <Route path="/cz" component={Home} />
+        <Route path="/cz/dashboard" component={Dashboard} />
+        <Route path="/cz/upload" component={Upload} />
+        <Route path="/cz/contract/:id" component={ContractDetail} />
+        <Route path="/cz/report/:id" component={Report} />
+        <Route path="/cz/admin" component={AdminPanel} />
+        <Route path="/cz/admin/review/:id" component={AdminReview} />
+        <Route path="/cz/about" component={About} />
+        <Route path="/cz/vop" component={VOP} />
+        <Route path="/cz/gdpr" component={GDPR} />
+        <Route path="/cz/cookies" component={Cookies} />
+        <Route path="/cz/preview/:id" component={FreeSken} />
+        <Route path="/cz/vzorovy-report" component={SampleReport} />
+
         {/* English routes (/en prefix) */}
         <Route path="/en" component={Home} />
         <Route path="/en/dashboard" component={Dashboard} />

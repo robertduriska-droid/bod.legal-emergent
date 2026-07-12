@@ -114,6 +114,26 @@ const TX = {
     ctaUpload: "Upload contract",
     ctaPricing: "View pricing",
   },
+  cz: {
+    riskLabels: { high: "Vysoké", medium: "Střední", low: "Nízké" } as Record<string, string>,
+    bannerTitle: "Toto je vzorový report",
+    bannerDesc: "Ukázka toho, co obdržíte po nahrání smlouvy. Údaje jsou ilustrativní.",
+    title: "Analýza smlouvy: Rámcová smlouva o poskytování IT služeb",
+    date: "Datum: 9. července 2025",
+    plan: "Plán: Standardní kontrola",
+    pages: "Stran: 12",
+    highRisk: "Vysoké riziko",
+    mediumRisk: "Střední riziko",
+    lowRisk: "Nízké riziko",
+    summary: "Shrnutí",
+    clauseAnalysis: (n: number) => `Analýza klauzulí (${n})`,
+    legalBasis: "Právní základ:",
+    suggestedEdit: "Navrhovaná úprava:",
+    ctaTitle: "Chcete takový report pro vaši smlouvu?",
+    ctaDesc: "Nahrajte smlouvu a do 24 hodin obdržíte kompletní report s odkazy na právní předpisy.",
+    ctaUpload: "Nahrát smlouvu",
+    ctaPricing: "Zobrazit ceník",
+  },
 };
 
 export default function SampleReport() {

@@ -26,6 +26,13 @@ const TX = {
     viewContract: "View contract \u2192",
     dateLocale: "en-GB",
   },
+  cz: {
+    title: "Notifikace",
+    markAll: "Označit všechny",
+    empty: "Žádné notifikace",
+    viewContract: "Zobrazit smlouvu \u2192",
+    dateLocale: "cs-CZ",
+  },
 };
 
 const TYPE_ICONS: Record<string, typeof Bell> = {

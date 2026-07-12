@@ -1,4 +1,4 @@
-export type Locale = "sk" | "en";
+export type Locale = "sk" | "cz" | "en";
 
 export interface Translations {
   // Meta
@@ -224,6 +224,7 @@ export interface Translations {
   // Language switcher
   langSwitch: {
     sk: string;
+    cz: string;
     en: string;
   };
 }

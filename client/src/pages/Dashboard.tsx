@@ -6,7 +6,7 @@ import { trpc } from "@/lib/trpc";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Link } from "wouter";
-import { FileText, Upload, Clock, CheckCircle, AlertCircle, Loader2, Eye } from "lucide-react";
+import { FileText, Upload, Clock, CheckCircle, AlertCircle, Loader2, Eye, CreditCard, Brain, Scale } from "lucide-react";
 import { useT } from "@/i18n";
 
 export default function Dashboard() {
@@ -22,6 +22,18 @@ export default function Dashboard() {
     in_review: { label: t.dashboard.status.in_review, variant: "default", icon: Eye },
     completed: { label: t.dashboard.status.completed, variant: "default", icon: CheckCircle },
   };
+
+  const PROGRESS_STEPS = [
+    { key: "pending", label: locale === "en" ? "Uploaded" : "Nahraná", icon: Upload },
+    { key: "analyzing", label: locale === "en" ? "AI Analysis" : "AI analýza", icon: Brain },
+    { key: "in_review", label: locale === "en" ? "Lawyer Review" : "Kontrola advokátom", icon: Scale },
+    { key: "completed", label: locale === "en" ? "Done" : "Hotovo", icon: CheckCircle },
+  ];
+
+  function getStepIndex(status: string) {
+    const idx = PROGRESS_STEPS.findIndex(s => s.key === status);
+    return idx >= 0 ? idx : 0;
+  }
 
   const planLabels: Record<string, string> = locale === "en"
     ? { basic: "Basic", standard: "Standard", premium: "Premium" }
@@ -96,15 +108,43 @@ export default function Dashboard() {
                           </div>
                         </div>
                         <div className="flex items-center gap-3 shrink-0">
-                          <Badge variant={status.variant} className="font-sans text-xs">
-                            <StatusIcon className={`h-3 w-3 mr-1 ${contract.status === "analyzing" ? "animate-spin" : ""}`} />
-                            {status.label}
-                          </Badge>
                           <Link href={localePath(contract.status === "completed" && contract.plan !== "basic" ? `/report/${contract.id}` : contract.plan === "basic" && contract.status !== "pending" ? `/preview/${contract.id}` : `/contract/${contract.id}`)}>
                             <Button variant="ghost" size="sm" className="font-sans">
                               {locale === "en" ? "View" : "Zobraziť"}
                             </Button>
                           </Link>
+                        </div>
+                      </div>
+                      {/* Progress bar */}
+                      <div className="mt-4 pt-3 border-t border-border/50">
+                        <div className="flex items-center gap-1">
+                          {PROGRESS_STEPS.map((step, i) => {
+                            const currentIdx = getStepIndex(contract.status);
+                            const isCompleted = i < currentIdx;
+                            const isCurrent = i === currentIdx;
+                            const StepIcon = step.icon;
+                            return (
+                              <div key={step.key} className="flex items-center flex-1">
+                                <div className="flex flex-col items-center flex-1">
+                                  <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
+                                    isCompleted ? "bg-primary text-primary-foreground" :
+                                    isCurrent ? "bg-primary/20 text-primary ring-2 ring-primary/40" :
+                                    "bg-muted text-muted-foreground"
+                                  }`}>
+                                    <StepIcon className={`h-3.5 w-3.5 ${isCurrent && step.key === "analyzing" ? "animate-spin" : ""}`} />
+                                  </div>
+                                  <span className={`text-[10px] mt-1 font-sans text-center leading-tight ${
+                                    isCurrent ? "text-foreground font-medium" : "text-muted-foreground"
+                                  }`}>{step.label}</span>
+                                </div>
+                                {i < PROGRESS_STEPS.length - 1 && (
+                                  <div className={`h-0.5 flex-1 mx-1 rounded-full transition-colors ${
+                                    i < currentIdx ? "bg-primary" : "bg-muted"
+                                  }`} />
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     </CardContent>

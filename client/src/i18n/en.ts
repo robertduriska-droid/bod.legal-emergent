@@ -248,6 +248,7 @@ export const en: Translations = {
   },
   langSwitch: {
     sk: "SK",
+    cz: "CZ",
     en: "EN",
   },
 };

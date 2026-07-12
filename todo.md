@@ -225,3 +225,20 @@
 - [x] Email lawyer when new contract needs review (paid plans)
 - [x] Email client when lawyer completes review (signReport)
 - [x] Validate SendGrid API key via test
+
+## Contract Status Indicator
+- [x] Visual status badge on client dashboard (Moje zmluvy) showing: pending, analyzing, in_review, completed
+- [x] Color-coded with descriptive SK/EN text for each state (progress bar with icons)
+
+## Progress Bar
+- [x] Add step-based progress bar to Dashboard contract cards showing current stage in the workflow
+
+## Czech (CZ) Localization
+- [x] Create cz.ts i18n file with full Czech translations
+- [x] Convert EUR pricing to CZK (approx 25.3 rate: 149€→3 770 Kč, 2500€→63 250 Kč, 8000€→202 400 Kč, 1000€→25 300 Kč)
+- [x] Update i18n system to support 3 locales (sk, cz, en)
+- [x] Add /cz/ route prefix (detectLocaleFromPath + stripLocalePrefix)
+- [x] Update language switcher to SK | CZ | EN (3-button group)
+- [x] Add Czech legal sources to AI analysis prompt (NOZ 89/2012, ZOK 90/2012, zákonyprolidi.cz, smlouvy.gov.cz)
+- [x] CZ entries in all page-level TX objects (Report, SampleReport, FreeSken, ContractDetail, AdminReview, NotFound, NotificationBell)
+- [x] Language-aware system prompt selection based on contract.language field
