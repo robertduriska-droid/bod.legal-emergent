@@ -6,7 +6,7 @@ import { trpc } from "@/lib/trpc";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Link, useParams, useSearch } from "wouter";
-import { FileText, ArrowLeft, Loader2, AlertTriangle, AlertCircle, CheckCircle, ExternalLink, CreditCard } from "lucide-react";
+import { FileText, ArrowLeft, Loader2, AlertTriangle, AlertCircle, CheckCircle, ExternalLink, CreditCard, Upload, Scale, FileCheck } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useT } from "@/i18n";
@@ -31,12 +31,12 @@ const TX = {
     awaitingPayment: "Čaká na platbu",
     awaitingPaymentDesc: "Analýza sa spustí automaticky po úspešnej platbe.",
     payAndStart: "Zaplatiť a spustiť analýzu",
-    awaitingProcessing: "Čaká na spracovanie",
-    aiAnalyzing: "Prebieha AI analýza",
-    analyzingDesc: "Analýza zmluvy zvyčajne trvá 1-3 minúty. Stránka sa automaticky aktualizuje.",
+    awaitingProcessing: "Spúšťame analýzu",
+    aiAnalyzing: "AI analyzuje vašu zmluvu",
+    analyzingDesc: "Kontrolujeme každú klauzulu a porovnávame s právnymi predpismi. Zvyčajne to trvá 1–3 minúty. Stránka sa aktualizuje automaticky.",
     retryAnalysis: "Spustiť analýzu znova",
-    lawyerReview: "Kontrola advokátom",
-    lawyerReviewDesc: "AI analýza je dokončená. Advokát práve kontroluje nálezy a pripravuje finálny report.",
+    lawyerReview: "Advokát overuje report",
+    lawyerReviewDesc: "AI analýza je hotová. Advokát teraz kontroluje nálezy, dopĺňa poznámky a pripravuje finálny report. Dostanete e-mail, keď bude hotový.",
     highRisk: "Vysoké riziko",
     mediumRisk: "Stredné riziko",
     lowRisk: "Nízke riziko",
@@ -59,12 +59,12 @@ const TX = {
     awaitingPayment: "Awaiting payment",
     awaitingPaymentDesc: "The analysis starts automatically after successful payment.",
     payAndStart: "Pay and start analysis",
-    awaitingProcessing: "Awaiting processing",
-    aiAnalyzing: "AI analysis in progress",
-    analyzingDesc: "Contract analysis usually takes 1-3 minutes. This page refreshes automatically.",
+    awaitingProcessing: "Starting analysis",
+    aiAnalyzing: "AI is analyzing your contract",
+    analyzingDesc: "We're checking every clause against applicable legal provisions. This usually takes 1–3 minutes. The page refreshes automatically.",
     retryAnalysis: "Restart analysis",
-    lawyerReview: "Lawyer review",
-    lawyerReviewDesc: "AI analysis is complete. A lawyer is reviewing the findings and preparing the final report.",
+    lawyerReview: "Lawyer is verifying the report",
+    lawyerReviewDesc: "AI analysis is complete. A lawyer is now reviewing the findings, adding notes, and preparing the final report. You'll receive an email when it's ready.",
     highRisk: "High risk",
     mediumRisk: "Medium risk",
     lowRisk: "Low risk",
@@ -87,12 +87,12 @@ const TX = {
     awaitingPayment: "Čeká na platbu",
     awaitingPaymentDesc: "Analýza se spustí automaticky po úspěšné platbě.",
     payAndStart: "Zaplatit a spustit analýzu",
-    awaitingProcessing: "Čeká na zpracování",
-    aiAnalyzing: "Probíhá AI analýza",
-    analyzingDesc: "Analýza smlouvy obvykle trvá 1-3 minuty. Stránka se automaticky aktualizuje.",
+    awaitingProcessing: "Spouštíme analýzu",
+    aiAnalyzing: "AI analyzuje vaši smlouvu",
+    analyzingDesc: "Kontrolujeme každou klauzuli a porovnáváme s právními předpisy. Obvykle to trvá 1–3 minuty. Stránka se aktualizuje automaticky.",
     retryAnalysis: "Spustit analýzu znovu",
-    lawyerReview: "Kontrola advokátem",
-    lawyerReviewDesc: "AI analýza je dokončena. Advokát právě kontroluje nálezy a připravuje finální report.",
+    lawyerReview: "Advokát ověřuje report",
+    lawyerReviewDesc: "AI analýza je hotová. Advokát nyní kontroluje nálezy, doplňuje poznámky a připravuje finální report. Dostanete e-mail, až bude hotový.",
     highRisk: "Vysoké riziko",
     mediumRisk: "Střední riziko",
     lowRisk: "Nízké riziko",
@@ -228,25 +228,48 @@ export default function ContractDetail() {
           {/* Status - analyzing or paid pending */}
           {(contract.status === "analyzing" || (contract.status === "pending" && paymentStatus.data?.paid)) && (
             <Card className="mb-8 border-primary/20 bg-primary/[0.02]">
-              <CardContent className="p-6 text-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-3" />
-                <h3 className="font-sans text-lg font-semibold mb-1">
-                  {contract.status === "pending" ? tx.awaitingProcessing : tx.aiAnalyzing}
-                </h3>
-                <p className="text-sm text-muted-foreground font-sans">
-                  {tx.analyzingDesc}
-                </p>
+              <CardContent className="p-6">
+                <div className="text-center mb-5">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-3" />
+                  <h3 className="font-sans text-lg font-semibold mb-1">
+                    {contract.status === "pending" ? tx.awaitingProcessing : tx.aiAnalyzing}
+                  </h3>
+                  <p className="text-sm text-muted-foreground font-sans">
+                    {tx.analyzingDesc}
+                  </p>
+                </div>
+                {/* Progress steps */}
+                <div className="flex items-center justify-center gap-2 mt-4">
+                  {[
+                    { icon: Upload, done: true },
+                    { icon: CreditCard, done: true },
+                    { icon: Loader2, done: false, current: true },
+                    { icon: Scale, done: false },
+                    { icon: FileCheck, done: false },
+                  ].map((step, i) => (
+                    <div key={i} className="flex items-center">
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center ${
+                        step.done ? 'bg-primary text-primary-foreground' : step.current ? 'bg-primary/20 text-primary ring-2 ring-primary/40' : 'bg-muted text-muted-foreground'
+                      }`}>
+                        <step.icon className={`h-3.5 w-3.5 ${step.current ? 'animate-spin' : ''}`} />
+                      </div>
+                      {i < 4 && <div className={`w-6 h-0.5 mx-1 rounded-full ${step.done ? 'bg-primary' : 'bg-muted'}`} />}
+                    </div>
+                  ))}
+                </div>
                 {contract.status === "pending" && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-4 font-sans"
-                    onClick={() => retryMutation.mutate({ contractId: contract.id })}
-                    disabled={retryMutation.isPending}
-                  >
-                    {retryMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                    {tx.retryAnalysis}
-                  </Button>
+                  <div className="text-center mt-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="font-sans"
+                      onClick={() => retryMutation.mutate({ contractId: contract.id })}
+                      disabled={retryMutation.isPending}
+                    >
+                      {retryMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                      {tx.retryAnalysis}
+                    </Button>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -254,12 +277,33 @@ export default function ContractDetail() {
 
           {contract.status === "in_review" && (
             <Card className="mb-8 border-amber-200 bg-amber-50">
-              <CardContent className="p-6 text-center">
-                <AlertTriangle className="h-8 w-8 text-amber-600 mx-auto mb-3" />
-                <h3 className="font-sans text-lg font-semibold mb-1">{tx.lawyerReview}</h3>
-                <p className="text-sm text-muted-foreground font-sans">
-                  {tx.lawyerReviewDesc}
-                </p>
+              <CardContent className="p-6">
+                <div className="text-center">
+                  <Scale className="h-8 w-8 text-amber-600 mx-auto mb-3" />
+                  <h3 className="font-sans text-lg font-semibold mb-1">{tx.lawyerReview}</h3>
+                  <p className="text-sm text-muted-foreground font-sans">
+                    {tx.lawyerReviewDesc}
+                  </p>
+                </div>
+                {/* Progress steps */}
+                <div className="flex items-center justify-center gap-2 mt-5">
+                  {[
+                    { icon: Upload, done: true },
+                    { icon: CreditCard, done: true },
+                    { icon: Loader2, done: true },
+                    { icon: Scale, done: false, current: true },
+                    { icon: FileCheck, done: false },
+                  ].map((step, i) => (
+                    <div key={i} className="flex items-center">
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center ${
+                        step.done ? 'bg-primary text-primary-foreground' : step.current ? 'bg-amber-200 text-amber-700 ring-2 ring-amber-300' : 'bg-muted text-muted-foreground'
+                      }`}>
+                        <step.icon className={`h-3.5 w-3.5`} />
+                      </div>
+                      {i < 4 && <div className={`w-6 h-0.5 mx-1 rounded-full ${step.done ? 'bg-primary' : 'bg-muted'}`} />}
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           )}

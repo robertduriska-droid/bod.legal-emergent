@@ -174,8 +174,15 @@ export default function Dashboard() {
                         </div>
                         <div className="flex items-center gap-3 shrink-0">
                           <Link href={localePath(contract.status === "completed" && contract.plan !== "basic" ? `/report/${contract.id}` : contract.plan === "basic" && contract.status !== "pending" ? `/preview/${contract.id}` : `/contract/${contract.id}`)}>
-                            <Button variant="ghost" size="sm" className="font-sans">
-                              {locale === "en" ? "View" : "Zobraziť"}
+                            <Button variant={contract.status === "completed" ? "default" : "ghost"} size="sm" className="font-sans">
+                              {contract.status === "completed"
+                                ? (locale === "en" ? "View report" : locale === "cz" ? "Zobrazit report" : "Zobraziť report")
+                                : contract.status === "in_review"
+                                ? (locale === "en" ? "In review" : locale === "cz" ? "U advokáta" : "U advokáta")
+                                : contract.status === "analyzing"
+                                ? (locale === "en" ? "Analyzing..." : locale === "cz" ? "Analyzuje se..." : "Analyzuje sa...")
+                                : (locale === "en" ? "Continue" : locale === "cz" ? "Pokračovat" : "Pokračovať")
+                              }
                             </Button>
                           </Link>
                         </div>

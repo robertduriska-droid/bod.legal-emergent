@@ -7,7 +7,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useState, useCallback } from "react";
 import { useLocation, useSearch } from "wouter";
-import { Upload as UploadIcon, FileText, CheckCircle, AlertCircle, Loader2, CreditCard, Zap } from "lucide-react";
+import { Upload as UploadIcon, FileText, CheckCircle, AlertCircle, Loader2, CreditCard, Zap, Lock, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { PRICING_PLANS, EXPRESS_ADDON } from "@shared/types";
 import { useT } from "@/i18n";
@@ -97,9 +97,14 @@ export default function Upload() {
     }
   };
 
-  // Get price for selected plan
+  // Get price for selected plan - use marketing-friendly prices from stripe-products
+  const MARKETING_PRICES_EUR: Record<string, number> = { basic: 197, standard: 297, premium: 497 };
+  const MARKETING_PRICES_CZK: Record<string, number> = { basic: 4990, standard: 7490, premium: 12490 };
+  const EXPRESS_EUR = 127;
+  const EXPRESS_CZK = 3190;
   const selectedPlanData = PRICING_PLANS.find(p => p.id === selectedPlan);
-  const totalPrice = (selectedPlanData?.price || 0) + (expressAddon ? EXPRESS_ADDON.price : 0);
+  const totalPriceEur = (MARKETING_PRICES_EUR[selectedPlan] || 0) + (expressAddon ? EXPRESS_EUR : 0);
+  const totalPriceCzk = (MARKETING_PRICES_CZK[selectedPlan] || 0) + (expressAddon ? EXPRESS_CZK : 0);
 
   // Plan names per locale
   const planNames = locale === "en"
@@ -179,7 +184,7 @@ export default function Upload() {
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <h3 className="font-sans font-semibold text-sm">{planNames[index]}</h3>
-                      <p className="text-2xl font-serif">{plan.priceLabel}</p>
+                      <p className="text-2xl font-serif">{[t.pricing.basicPrice, t.pricing.standardPrice, t.pricing.premiumPrice][index]}</p>
                     </div>
                     {selectedPlan === plan.id && (
                       <CheckCircle className="h-5 w-5 text-primary" />
@@ -242,7 +247,7 @@ export default function Upload() {
                     {selectedPlan === "basic" ? (
                       <><UploadIcon className="mr-2 h-4 w-4" />{t.upload.uploadFreePreview}</>
                     ) : (
-                      <><CreditCard className="mr-2 h-4 w-4" />{isAuthenticated ? `${t.upload.uploadAndPay} (${totalPrice} eur)` : `${t.upload.continueLabel} (${totalPrice} eur)`}</>
+                      <><CreditCard className="mr-2 h-4 w-4" />{isAuthenticated ? `${t.upload.uploadAndPay} (${locale === 'cz' ? `${totalPriceCzk.toLocaleString('cs-CZ')} Kč` : `${totalPriceEur} eur`})` : `${t.upload.continueLabel} (${locale === 'cz' ? `${totalPriceCzk.toLocaleString('cs-CZ')} Kč` : `${totalPriceEur} eur`})`}</>
                     )}
                   </>
                 )}
@@ -262,9 +267,15 @@ export default function Upload() {
               }
             </p>
             {selectedPlan !== "basic" && (
-              <p className="text-xs text-amber-600 font-sans font-medium">
-                {t.upload.testCardNote}
-              </p>
+              <>
+                <div className="flex items-center gap-4 text-xs text-muted-foreground font-sans">
+                  <span className="flex items-center gap-1"><Lock className="h-3 w-3" /> {locale === 'en' ? 'SSL encrypted' : locale === 'cz' ? 'Šifrované připojení' : 'Šifrované pripojenie'}</span>
+                  <span className="flex items-center gap-1"><Shield className="h-3 w-3" /> {locale === 'en' ? 'Attorney-client privilege' : locale === 'cz' ? 'Advokátní mlčenlivost' : 'Advokátska mlčanlivosť'}</span>
+                </div>
+                <p className="text-xs text-amber-600 font-sans font-medium">
+                  {t.upload.testCardNote}
+                </p>
+              </>
             )}
           </div>
         </div>

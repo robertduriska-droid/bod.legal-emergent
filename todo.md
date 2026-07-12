@@ -256,3 +256,10 @@
 - [x] Update EUR prices: 197€ / 297€ / 497€ / +127€ express
 - [x] Update CZK prices: 4 990 Kč / 7 490 Kč / 12 490 Kč / +3 190 Kč express
 - [x] Update all places: stripe-products.ts, Dashboard, i18n (sk, cz, en), VOP, Report.tsx
+
+## Client Experience Improvements (110%)
+- [x] Fix Upload page CTA: show CZK for CZ locale instead of hardcoded "eur"
+- [x] Add trust signals (lock icon + advokátska mlčanlivosť) near payment CTA on Upload page
+- [x] Improve ContractDetail waiting states: add ETA, reassurance copy, progress steps
+- [x] Dashboard: contextual CTA per status (not just generic "View")
+- [x] Notify client (in-app) when lawyer replies to their comment (already implemented in routers.ts + added icon/deep-link in NotificationBell)

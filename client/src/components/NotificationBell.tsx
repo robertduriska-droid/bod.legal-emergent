@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { Bell, Check, FileText, CreditCard, Info } from "lucide-react";
+import { Bell, Check, FileText, CreditCard, Info, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -39,6 +39,7 @@ const TYPE_ICONS: Record<string, typeof Bell> = {
   contract_submitted: FileText,
   contract_completed: Check,
   payment_received: CreditCard,
+  comment_reply: MessageCircle,
   system: Info,
 };
 
@@ -143,7 +144,7 @@ export default function NotificationBell() {
                     )}
                   </div>
                   {n.contractId && (
-                    <Link href={localePath(`/contract/${n.contractId}`)}>
+                    <Link href={localePath(n.type === 'comment_reply' ? `/report/${n.contractId}` : `/contract/${n.contractId}`)}>
                       <span className="text-xs text-primary font-sans mt-1 inline-block hover:underline">
                         {tx.viewContract}
                       </span>
