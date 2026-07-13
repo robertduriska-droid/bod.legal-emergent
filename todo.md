@@ -263,3 +263,8 @@
 - [x] Improve ContractDetail waiting states: add ETA, reassurance copy, progress steps
 - [x] Dashboard: contextual CTA per status (not just generic "View")
 - [x] Notify client (in-app) when lawyer replies to their comment (already implemented in routers.ts + added icon/deep-link in NotificationBell)
+
+## Ask the Lawyer (Report Detail)
+- [x] Promote existing per-clause comment section into a visible "Opýtať sa advokáta" CTA button on each clause card
+- [x] Restyle the comment input as a focused question form with clear guidance copy
+- [x] Auto-expand the question section when CTA is clicked (scroll into view)
