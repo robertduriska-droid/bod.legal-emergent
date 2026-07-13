@@ -148,6 +148,63 @@ export interface Translations {
     subtitle: string;
     viewAll: string;
   };
+  // Contract Amnesia (Problem)
+  amnesia: {
+    title: string;
+    subtitle: string;
+    definition: string;
+    definitionText: string;
+    bullets: string[];
+  };
+  // BOD Loop
+  bodLoop: {
+    title: string;
+    subtitle: string;
+    steps: { label: string; desc: string }[];
+  };
+  // Before/After
+  beforeAfter: {
+    title: string;
+    beforeTitle: string;
+    afterTitle: string;
+    rows: { label: string; before: string; after: string }[];
+  };
+  // Sprint
+  sprint: {
+    title: string;
+    subtitle: string;
+    duration: string;
+    desc: string;
+    includes: string[];
+    cta: string;
+  };
+  // New Pricing (Contract Intelligence)
+  ciPricing: {
+    title: string;
+    subtitle: string;
+    tiers: { name: string; price: string; desc: string; features: string[]; cta: string; highlighted?: boolean }[];
+  };
+  // For Whom
+  forWhom: {
+    title: string;
+    qualifyTitle: string;
+    qualifyItems: string[];
+    disqualifyTitle: string;
+    disqualifyItems: string[];
+  };
+  // Score (Lead Magnet)
+  score: {
+    title: string;
+    subtitle: string;
+    cta: string;
+    placeholder: string;
+    success: string;
+  };
+  // Security
+  security: {
+    title: string;
+    items: { title: string; desc: string }[];
+  };
   // CTA
   cta: {
     title: string;

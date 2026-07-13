@@ -6,11 +6,11 @@ import { trpc } from "@/lib/trpc";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Link, useParams } from "wouter";
-import { ArrowLeft, Loader2, CheckCircle, Download, ExternalLink, Shield, FileDown, FileText, Check, X, RotateCcw, Columns2, EyeOff, MessageCircle, Send, Trash2, HelpCircle, ChevronDown } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle, Download, ExternalLink, Shield, FileDown, FileText, Check, X, RotateCcw, Columns2, EyeOff, MessageCircle, Send, Trash2, HelpCircle, ChevronDown, ThumbsUp, ThumbsDown, Scale } from "lucide-react";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { toast } from "sonner";
 import { LEGAL_SOURCES } from "@shared/types";
 import { useT } from "@/i18n";
@@ -94,6 +94,15 @@ const TX = {
     qaPending: "Čaká na odpoveď",
     qaClause: "Klauzula",
     dateLocale: "sk-SK",
+    lawyerCardTitle: "Overil",
+    lawyerCardSAK: "SAK č.",
+    lawyerCardFirm: "KILIAN LEGAL s.r.o.",
+    surveyTitle: "Bol pre vás report užitočný?",
+    surveyThanks: "Ďakujeme za spätnú väzbu!",
+    surveyCommentPlaceholder: "Voliteľné: čo by sme mohli zlepšiť?",
+    surveySubmit: "Odoslať",
+    surveyYes: "Áno",
+    surveyNo: "Nie",
   },
   en: {
     riskLabels: { high: "High risk", medium: "Medium risk", low: "Low risk" } as Record<string, string>,
@@ -168,6 +177,15 @@ const TX = {
     qaPending: "Awaiting reply",
     qaClause: "Clause",
     dateLocale: "en-GB",
+    lawyerCardTitle: "Verified by",
+    lawyerCardSAK: "Bar No.",
+    lawyerCardFirm: "KILIAN LEGAL s.r.o.",
+    surveyTitle: "Was this report helpful?",
+    surveyThanks: "Thank you for your feedback!",
+    surveyCommentPlaceholder: "Optional: What could we improve?",
+    surveySubmit: "Submit",
+    surveyYes: "Yes",
+    surveyNo: "No",
   },
   cz: {
     riskLabels: { high: "Vysoké riziko", medium: "Střední riziko", low: "Nízké riziko" } as Record<string, string>,
@@ -242,6 +260,15 @@ const TX = {
     qaPending: "Čeká na odpověď",
     qaClause: "Klauzule",
     dateLocale: "cs-CZ",
+    lawyerCardTitle: "Ověřil",
+    lawyerCardSAK: "ČAK č.",
+    lawyerCardFirm: "KILIAN LEGAL s.r.o.",
+    surveyTitle: "Byl pro vás report užitečný?",
+    surveyThanks: "Děkujeme za zpětnou vazbu!",
+    surveyCommentPlaceholder: "Volitelné: Co bychom mohli zlepšit?",
+    surveySubmit: "Odeslat",
+    surveyYes: "Ano",
+    surveyNo: "Ne",
   },
 };
 
@@ -414,6 +441,77 @@ function DownloadFinalButton({ contractId, decisions, tx }: { contractId: number
   );
 }
 
+function SatisfactionSurvey({ contractId, tx }: { contractId: number; tx: typeof TX.sk }) {
+  const { data: existing, isLoading } = trpc.feedback.getByContract.useQuery({ contractId });
+  const submitMutation = trpc.feedback.submit.useMutation();
+  const [rating, setRating] = useState<'positive' | 'negative' | null>(null);
+  const [comment, setComment] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+
+  if (isLoading) return null;
+  if (existing || submitted) {
+    return (
+      <div className="text-center py-6 mb-8">
+        <div className="inline-flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded-full px-4 py-2">
+          <CheckCircle className="h-4 w-4" />
+          <span className="text-sm font-sans font-medium">{tx.surveyThanks}</span>
+        </div>
+      </div>
+    );
+  }
+
+  const handleSubmit = async () => {
+    if (!rating) return;
+    await submitMutation.mutateAsync({ contractId, rating, comment: comment.trim() || undefined });
+    setSubmitted(true);
+    toast.success(tx.surveyThanks);
+  };
+
+  return (
+    <div className="mb-8 p-6 border rounded-lg bg-muted/20">
+      <p className="text-center font-sans font-medium text-sm mb-4">{tx.surveyTitle}</p>
+      <div className="flex justify-center gap-4 mb-4">
+        <button
+          onClick={() => setRating('positive')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-full border transition-all duration-150 font-sans text-sm ${
+            rating === 'positive' ? 'bg-green-100 border-green-400 text-green-800 scale-105' : 'border-border hover:bg-muted'
+          }`}
+        >
+          <ThumbsUp className="h-4 w-4" /> {tx.surveyYes}
+        </button>
+        <button
+          onClick={() => setRating('negative')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-full border transition-all duration-150 font-sans text-sm ${
+            rating === 'negative' ? 'bg-red-100 border-red-400 text-red-800 scale-105' : 'border-border hover:bg-muted'
+          }`}
+        >
+          <ThumbsDown className="h-4 w-4" /> {tx.surveyNo}
+        </button>
+      </div>
+      {rating && (
+        <div className="max-w-md mx-auto space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+          <Textarea
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder={tx.surveyCommentPlaceholder}
+            className="font-sans text-sm resize-none"
+            rows={2}
+          />
+          <Button
+            onClick={handleSubmit}
+            disabled={submitMutation.isPending}
+            size="sm"
+            className="w-full font-sans"
+          >
+            {submitMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            {tx.surveySubmit}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Report() {
   const { isAuthenticated, user: authUser } = useAuth({ redirectOnUnauthenticated: true });
   const { locale, localePath } = useT();
@@ -581,9 +679,23 @@ export default function Report() {
               )}
             </div>
             {report.isSigned === 1 && report.lawyerName && (
-              <p className="text-sm text-muted-foreground font-sans mt-2">
-                {tx.signed}: {report.lawyerName} · {report.signedAt ? new Date(report.signedAt).toLocaleDateString(tx.dateLocale) : ""}
-              </p>
+              <div className="mt-4 p-4 border border-green-200 bg-green-50/50 rounded-lg flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-green-100 border-2 border-green-300 flex items-center justify-center shrink-0">
+                  <Scale className="h-6 w-6 text-green-700" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-sans font-semibold text-green-900">
+                    {tx.lawyerCardTitle}: {report.lawyerName}
+                  </p>
+                  <p className="text-xs text-green-700 font-sans mt-0.5">
+                    {tx.lawyerCardFirm} · {tx.lawyerCardSAK} 19668
+                  </p>
+                  <p className="text-xs text-muted-foreground font-sans mt-0.5">
+                    {report.signedAt ? new Date(report.signedAt).toLocaleDateString(tx.dateLocale) : ""}
+                  </p>
+                </div>
+                <Shield className="h-5 w-5 text-green-600 shrink-0" />
+              </div>
             )}
           </div>
 
@@ -1108,6 +1220,9 @@ export default function Report() {
               )}
             </div>
           )}
+
+          {/* Satisfaction Micro-Survey */}
+          {!isLimited && <SatisfactionSurvey contractId={contractId} tx={tx} />}
 
           {/* Disclaimer */}
           <div className="text-center text-xs text-muted-foreground font-sans p-4 border rounded bg-muted/30">

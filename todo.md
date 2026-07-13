@@ -271,3 +271,9 @@
 
 ## Q&A Summary Section (Report Detail)
 - [x] Add a collapsible "Moje otázky a odpovede" summary section in Report page showing all client questions and lawyer replies grouped by clause
+
+## Premium Customer Experience
+- [x] Email notification with top 3 findings in body (not just "report ready" link)
+- [x] Satisfaction micro-survey popup on Report page (thumbs up/down + optional comment)
+- [x] Delivery countdown timer on ContractDetail (live countdown from payment to 24h deadline)
+- [x] Lawyer profile card on signed reports (name, SAK number, short bio)

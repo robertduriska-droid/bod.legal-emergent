@@ -1,6 +1,6 @@
 import { eq, desc, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, contracts, clauses, reports, notifications, clauseDecisions, InsertContract, InsertClause, InsertReport, InsertNotification, Contract, Clause, Report, Notification, ClauseDecision } from "../drizzle/schema";
+import { InsertUser, users, contracts, clauses, reports, notifications, clauseDecisions, feedback, InsertContract, InsertClause, InsertReport, InsertNotification, InsertFeedback, Contract, Clause, Report, Notification, ClauseDecision, Feedback } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -298,4 +298,22 @@ export async function deleteComment(id: number, userId: number): Promise<void> {
   if (!db) throw new Error("Database not available");
   await db.delete(clauseComments)
     .where(and(eq(clauseComments.id, id), eq(clauseComments.userId, userId)));
+}
+
+
+// ─── Feedback Helpers ────────────────────────────────────────────────────────
+
+export async function createFeedback(data: InsertFeedback): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(feedback).values(data);
+}
+
+export async function getFeedbackByContract(contractId: number, userId: number): Promise<Feedback | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(feedback)
+    .where(and(eq(feedback.contractId, contractId), eq(feedback.userId, userId)))
+    .limit(1);
+  return rows[0] || null;
 }

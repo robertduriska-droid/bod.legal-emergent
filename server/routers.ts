@@ -28,6 +28,8 @@ import {
   createComment,
   deleteComment,
   getUserById,
+  createFeedback,
+  getFeedbackByContract,
 } from "./db";
 import { storagePut } from "./storage";
 import { analyzeContract } from "./analysis";
@@ -528,6 +530,29 @@ Odkaz: ${siteUrl}/${isUserComment ? 'admin/review' : 'report'}/${contract.id}`,
       }),
   }),
 
+  // ─── Feedback / Satisfaction Survey ───────────────────────────────────────
+  feedback: router({
+    submit: protectedProcedure
+      .input(z.object({
+        contractId: z.number(),
+        rating: z.enum(["positive", "negative"]),
+        comment: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await createFeedback({
+          userId: ctx.user.id,
+          contractId: input.contractId,
+          rating: input.rating,
+          comment: input.comment || null,
+        });
+        return { success: true };
+      }),
+    getByContract: protectedProcedure
+      .input(z.object({ contractId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        return await getFeedbackByContract(input.contractId, ctx.user.id);
+      }),
+  }),
   // ─── Reference Data ─────────────────────────────────────────────────────
   reference: router({
     legalSources: publicProcedure.query(() => LEGAL_SOURCES),

@@ -6,8 +6,8 @@ import { trpc } from "@/lib/trpc";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Link, useParams, useSearch } from "wouter";
-import { FileText, ArrowLeft, Loader2, AlertTriangle, AlertCircle, CheckCircle, ExternalLink, CreditCard, Upload, Scale, FileCheck } from "lucide-react";
-import { useState, useEffect } from "react";
+import { FileText, ArrowLeft, Loader2, AlertTriangle, AlertCircle, CheckCircle, ExternalLink, CreditCard, Upload, Scale, FileCheck, Clock } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { useT } from "@/i18n";
 
@@ -45,6 +45,8 @@ const TX = {
     suggestedEdit: "Navrhovaná úprava:",
     lawyerNote: "Poznámka advokáta:",
     dateLocale: "sk-SK",
+    countdownLabel: "Gar. dodanie do:",
+    countdownExpired: "Report bude dodaný čo najskôr",
   },
   en: {
     riskLabels: { high: "High", medium: "Medium", low: "Low" } as Record<string, string>,
@@ -73,6 +75,8 @@ const TX = {
     suggestedEdit: "Suggested amendment:",
     lawyerNote: "Lawyer's note:",
     dateLocale: "en-GB",
+    countdownLabel: "Guaranteed by:",
+    countdownExpired: "Report will be delivered ASAP",
   },
   cz: {
     riskLabels: { high: "Vysoké", medium: "Střední", low: "Nízké" } as Record<string, string>,
@@ -101,8 +105,55 @@ const TX = {
     suggestedEdit: "Navrhovaná úprava:",
     lawyerNote: "Poznámka advokáta:",
     dateLocale: "cs-CZ",
+    countdownLabel: "Gar. dodání do:",
+    countdownExpired: "Report bude dodán co nejdříve",
   },
 };
+
+function DeliveryCountdown({ createdAt, expressAddon, tx }: { createdAt: string | Date; expressAddon: number; tx: typeof TX.sk }) {
+  const deadline = useMemo(() => {
+    const start = new Date(createdAt).getTime();
+    const hours = expressAddon ? 4 : 24;
+    return start + hours * 60 * 60 * 1000;
+  }, [createdAt, expressAddon]);
+
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const remaining = deadline - now;
+  if (remaining <= 0) {
+    return (
+      <div className="flex items-center justify-center gap-2 mt-4 text-sm text-muted-foreground font-sans">
+        <Clock className="h-4 w-4" />
+        <span>{tx.countdownExpired}</span>
+      </div>
+    );
+  }
+
+  const hours = Math.floor(remaining / (1000 * 60 * 60));
+  const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+
+  return (
+    <div className="flex items-center justify-center gap-2 mt-4">
+      <Clock className="h-4 w-4 text-primary" />
+      <span className="text-sm font-sans text-muted-foreground">{tx.countdownLabel}</span>
+      <div className="flex gap-1">
+        {[{ val: hours, label: 'h' }, { val: minutes, label: 'm' }, { val: seconds, label: 's' }].map((unit, i) => (
+          <span key={i} className="inline-flex items-center gap-0.5">
+            <span className="bg-primary/10 text-primary font-mono font-semibold text-sm px-1.5 py-0.5 rounded">
+              {String(unit.val).padStart(2, '0')}
+            </span>
+            <span className="text-xs text-muted-foreground">{unit.label}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function ContractDetail() {
   const { isAuthenticated } = useAuth({ redirectOnUnauthenticated: true });
@@ -238,6 +289,8 @@ export default function ContractDetail() {
                     {tx.analyzingDesc}
                   </p>
                 </div>
+                {/* Delivery Countdown */}
+                <DeliveryCountdown createdAt={contract.createdAt} expressAddon={contract.expressAddon} tx={tx} />
                 {/* Progress steps */}
                 <div className="flex items-center justify-center gap-2 mt-4">
                   {[

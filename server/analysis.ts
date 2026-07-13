@@ -396,12 +396,20 @@ export async function analyzeContract(contractId: number): Promise<void> {
     const baseUrl = "https://bod.legal";
     const user = await getUserById(contract.userId).catch(() => null);
 
+    // Prepare top 3 findings for email
+    const topFindings = clauseRecords
+      .sort((a, b) => { const order = { high: 0, medium: 1, low: 2 }; return (order[a.riskLevel] ?? 2) - (order[b.riskLevel] ?? 2); })
+      .slice(0, 3)
+      .map(c => ({ title: c.title, riskLevel: c.riskLevel, finding: c.finding.slice(0, 120) + (c.finding.length > 120 ? "..." : "") }));
+
     if (plan === "basic" && user?.email) {
       // Basic plan: email client that report is ready
       const { subject, html } = emailReportReady({
         contractName: contract.fileName,
         reportUrl: `${baseUrl}/report/${contract.id}`,
         recipientName: user.name || undefined,
+        topFindings,
+        riskSummary: analysis.riskSummary,
       });
       sendEmail({ to: user.email, subject, html }).catch(err => console.warn("[Email] Report ready failed:", err));
     } else if (plan !== "basic") {
@@ -420,6 +428,8 @@ export async function analyzeContract(contractId: number): Promise<void> {
           contractName: contract.fileName,
           reportUrl: `${baseUrl}/report/${contract.id}`,
           recipientName: user.name || undefined,
+          topFindings,
+          riskSummary: analysis.riskSummary,
         });
         sendEmail({ to: user.email, subject: clientEmail.subject, html: clientEmail.html }).catch(err => console.warn("[Email] Client notify failed:", err));
       }

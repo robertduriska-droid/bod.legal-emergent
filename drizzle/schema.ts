@@ -174,3 +174,20 @@ export const clauseComments = mysqlTable("clause_comments", {
 
 export type ClauseComment = typeof clauseComments.$inferSelect;
 export type InsertClauseComment = typeof clauseComments.$inferInsert;
+
+/**
+ * Feedback table - satisfaction micro-survey responses
+ */
+export const feedback = mysqlTable("feedback", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  contractId: int("contractId").notNull(),
+  /** Rating: positive or negative */
+  rating: mysqlEnum("rating", ["positive", "negative"]).notNull(),
+  /** Optional free-text comment */
+  comment: text("comment"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Feedback = typeof feedback.$inferSelect;
+export type InsertFeedback = typeof feedback.$inferInsert;
