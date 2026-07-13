@@ -6,7 +6,8 @@ import { trpc } from "@/lib/trpc";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Link, useParams } from "wouter";
-import { ArrowLeft, Loader2, CheckCircle, Download, ExternalLink, Shield, FileDown, FileText, Check, X, RotateCcw, Columns2, EyeOff, MessageCircle, Send, Trash2, HelpCircle } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle, Download, ExternalLink, Shield, FileDown, FileText, Check, X, RotateCcw, Columns2, EyeOff, MessageCircle, Send, Trash2, HelpCircle, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -88,6 +89,10 @@ const TX = {
     lawyerBadge: "Advokát",
     askLawyer: "Opýtať sa advokáta",
     askLawyerHint: "Advokát odpovie zvyčajne do 24 hodín.",
+    qaSummary: "Moje otázky a odpovede",
+    qaSummaryEmpty: "Zatiaľ ste nepoložili žiadnu otázku.",
+    qaPending: "Čaká na odpoveď",
+    qaClause: "Klauzula",
     dateLocale: "sk-SK",
   },
   en: {
@@ -158,6 +163,10 @@ const TX = {
     commentDeleted: "Comment deleted",
     askLawyer: "Ask the lawyer",
     askLawyerHint: "The lawyer usually responds within 24 hours.",
+    qaSummary: "My questions & answers",
+    qaSummaryEmpty: "You haven't asked any questions yet.",
+    qaPending: "Awaiting reply",
+    qaClause: "Clause",
     dateLocale: "en-GB",
   },
   cz: {
@@ -228,6 +237,10 @@ const TX = {
     commentDeleted: "Komentář byl smazán",
     askLawyer: "Zeptat se advokáta",
     askLawyerHint: "Advokát obvykle odpoví do 24 hodin.",
+    qaSummary: "Moje otázky a odpovědi",
+    qaSummaryEmpty: "Zatím jste nepoložili žádnou otázku.",
+    qaPending: "Čeká na odpověď",
+    qaClause: "Klauzule",
     dateLocale: "cs-CZ",
   },
 };
@@ -971,6 +984,92 @@ export default function Report() {
               </CardContent>
             </Card>
           )}
+
+          {/* Q&A Summary */}
+          {!isLimited && commentsData && (() => {
+            const clientQuestions = commentsData.filter((c: any) => !c.parentId && !c.isLawyer);
+            const lawyerReplies = commentsData.filter((c: any) => c.parentId && c.isLawyer);
+            // Build clause map for titles
+            const clauseMap = new Map<number, string>();
+            clauses?.forEach((cl) => { clauseMap.set(cl.id, `#${cl.clauseNumber} ${cl.title}`); });
+            // Group questions by clause
+            const byClause = new Map<number, any[]>();
+            clientQuestions.forEach((q: any) => {
+              const arr = byClause.get(q.clauseId) || [];
+              arr.push(q);
+              byClause.set(q.clauseId, arr);
+            });
+            return (
+              <Card className="mb-8 border-primary/10">
+                <Collapsible defaultOpen={clientQuestions.length > 0}>
+                  <CardContent className="p-6">
+                    <CollapsibleTrigger className="w-full">
+                      <h2 className="font-serif text-xl flex items-center gap-2 cursor-pointer group">
+                        <MessageCircle className="h-5 w-5 text-primary" />
+                        {tx.qaSummary}
+                        {clientQuestions.length > 0 && (
+                          <Badge variant="outline" className="text-xs font-sans ml-2">{clientQuestions.length}</Badge>
+                        )}
+                        <ChevronDown className="h-4 w-4 ml-auto text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                      </h2>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="mt-4">
+                      {clientQuestions.length === 0 ? (
+                        <p className="text-sm text-muted-foreground font-sans italic">{tx.qaSummaryEmpty}</p>
+                      ) : (
+                        <div className="space-y-5">
+                          {Array.from(byClause.entries()).map(([clauseId, questions]) => {
+                            const clauseTitle = clauseMap.get(clauseId) || `${tx.qaClause} ${clauseId}`;
+                            return (
+                              <div key={clauseId}>
+                                <p className="text-xs font-sans font-semibold text-muted-foreground uppercase tracking-wider mb-2">{clauseTitle}</p>
+                                <div className="space-y-3">
+                                  {questions.map((q: any) => {
+                                    const replies = lawyerReplies.filter((r: any) => r.parentId === q.id);
+                                    return (
+                                      <div key={q.id} className="rounded-lg border p-4 bg-muted/20">
+                                        <div className="flex items-center justify-between mb-1.5">
+                                          <span className="text-[11px] font-sans font-medium">{q.userName}</span>
+                                          <span className="text-[10px] font-sans text-muted-foreground">
+                                            {new Date(q.createdAt).toLocaleString(tx.dateLocale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                          </span>
+                                        </div>
+                                        <p className="text-sm font-sans mb-2">{q.content}</p>
+                                        {replies.length > 0 ? (
+                                          <div className="ml-3 pl-3 border-l-2 border-emerald-300 space-y-2">
+                                            {replies.map((r: any) => (
+                                              <div key={r.id} className="bg-emerald-50/60 rounded p-2.5 border border-emerald-200">
+                                                <div className="flex items-center gap-1.5 mb-1">
+                                                  <span className="text-[11px] font-sans font-medium">{r.userName}</span>
+                                                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">{tx.lawyerBadge}</span>
+                                                  <span className="text-[10px] font-sans text-muted-foreground ml-auto">
+                                                    {new Date(r.createdAt).toLocaleString(tx.dateLocale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                                  </span>
+                                                </div>
+                                                <p className="text-sm font-sans">{r.content}</p>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        ) : (
+                                          <Badge variant="outline" className="text-[10px] font-sans text-amber-700 border-amber-300 bg-amber-50">
+                                            {tx.qaPending}
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </CollapsibleContent>
+                  </CardContent>
+                </Collapsible>
+              </Card>
+            );
+          })()}
 
           {/* Legal Sources */}
           {!isLimited && (

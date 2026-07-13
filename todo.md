@@ -268,3 +268,6 @@
 - [x] Promote existing per-clause comment section into a visible "Opýtať sa advokáta" CTA button on each clause card
 - [x] Restyle the comment input as a focused question form with clear guidance copy
 - [x] Auto-expand the question section when CTA is clicked (scroll into view)
+
+## Q&A Summary Section (Report Detail)
+- [x] Add a collapsible "Moje otázky a odpovede" summary section in Report page showing all client questions and lawyer replies grouped by clause
