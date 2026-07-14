@@ -14,19 +14,13 @@ export default function I18nProvider({ children }: { children: React.ReactNode }
       locale,
       t,
       localePath: (path: string) => {
-        if (locale === "en") {
-          return path === "/" ? "/en" : `/en${path}`;
-        }
-        return path;
+        if (locale === "sk") return path;
+        return path === "/" ? `/${locale}` : `/${locale}${path}`;
       },
-      switchLocalePath: (currentPath: string) => {
+      switchLocalePath: (currentPath: string, targetLocale: Locale) => {
         const stripped = stripLocalePrefix(currentPath);
-        if (locale === "sk") {
-          // Currently SK → switch to EN
-          return stripped === "/" ? "/en" : `/en${stripped}`;
-        }
-        // Currently EN → switch to SK
-        return stripped;
+        if (targetLocale === "sk") return stripped;
+        return stripped === "/" ? `/${targetLocale}` : `/${targetLocale}${stripped}`;
       },
     }),
     [locale, t]
