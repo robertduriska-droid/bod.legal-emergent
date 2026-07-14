@@ -115,7 +115,10 @@ const TX = {
 
 export default function FreeSken() {
   const { isAuthenticated } = useAuth({ redirectOnUnauthenticated: true });
-  const { locale, localePath } = useT();
+  const { t, locale, localePath } = useT();
+  const planNames = [t.pricing.basicTitle, t.pricing.standardTitle, t.pricing.premiumTitle];
+  const planPrices = [t.pricing.basicPrice, t.pricing.standardPrice, t.pricing.premiumPrice];
+  const planTimes = [t.pricing.basicTime, t.pricing.standardTime, t.pricing.premiumTime];
   const tx = TX[locale];
   const params = useParams<{ id: string }>();
   const contractId = parseInt(params.id || "0");
@@ -285,7 +288,7 @@ export default function FreeSken() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-              {PRICING_PLANS.map((plan) => (
+              {PRICING_PLANS.map((plan, index) => (
                 <Card
                   key={plan.id}
                   className={`bg-background/10 border-background/20 text-background ${
@@ -293,9 +296,9 @@ export default function FreeSken() {
                   }`}
                 >
                   <CardContent className="p-4 text-center">
-                    <p className="font-sans text-xs opacity-70 mb-1">{locale === "en" ? plan.name : plan.nameSk}</p>
-                    <p className="text-xl font-serif">{plan.priceLabel}</p>
-                    <p className="text-xs opacity-60 font-sans">{plan.delivery}</p>
+                    <p className="font-sans text-xs opacity-70 mb-1">{planNames[index]}</p>
+                    <p className="text-xl font-serif">{planPrices[index]}</p>
+                    <p className="text-xs opacity-60 font-sans">{planTimes[index]}</p>
                     {plan.id === contract.plan && (
                       <Badge className="mt-2 bg-background/20 text-background text-xs font-sans">{tx.yourPlan}</Badge>
                     )}

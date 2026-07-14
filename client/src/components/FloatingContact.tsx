@@ -31,7 +31,11 @@ export default function FloatingContact() {
       <button
         onClick={() => setOpen(!open)}
         className="w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all flex items-center justify-center active:scale-95"
-        aria-label={open ? (locale === "en" ? "Close contact" : "Zavrieť kontakt") : (locale === "en" ? "Contact us" : "Kontaktovať nás")}
+        aria-label={
+          open
+            ? locale === "en" ? "Close contact" : locale === "cz" ? "Zavřít kontakt" : "Zavrieť kontakt"
+            : locale === "en" ? "Contact us" : locale === "cz" ? "Kontaktovat nás" : "Kontaktovať nás"
+        }
       >
         {open ? <X className="h-5 w-5" /> : <MessageCircle className="h-5 w-5" />}
       </button>

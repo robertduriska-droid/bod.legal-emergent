@@ -4,9 +4,10 @@ import { useT } from "@/i18n";
 export default function Footer() {
   const { t, locale, localePath } = useT();
 
-  const vopPath = locale === "en" ? "/en/terms" : "/vop";
-  const privacyPath = locale === "en" ? "/en/privacy" : "/gdpr";
-  const cookiesPath = locale === "en" ? "/en/cookies" : "/cookies";
+  // VOP/GDPR use different slugs in English (terms/privacy); cookies keeps the same slug everywhere.
+  const vopPath = locale === "en" ? "/en/terms" : locale === "cz" ? "/cz/vop" : "/vop";
+  const privacyPath = locale === "en" ? "/en/privacy" : locale === "cz" ? "/cz/gdpr" : "/gdpr";
+  const cookiesPath = localePath("/cookies");
 
   return (
     <footer className="bg-hero-bg text-hero-text/70 py-12 relative overflow-hidden">
@@ -61,11 +62,23 @@ export default function Footer() {
           <p>&copy; {new Date().getFullYear()} KILIAN LEGAL s.r.o. {t.footer.allRights}</p>
           <p className="mt-1">
             {t.footer.legalSources}{" "}
-            <a href="https://www.slov-lex.sk" target="_blank" rel="noopener noreferrer" className="underline hover:text-hero-text">Slov-Lex</a>
-            {" | "}
-            <a href="https://eur-lex.europa.eu" target="_blank" rel="noopener noreferrer" className="underline hover:text-hero-text">EUR-Lex</a>
-            {" | "}
-            <a href="https://www.crz.gov.sk" target="_blank" rel="noopener noreferrer" className="underline hover:text-hero-text">CRZ</a>
+            {locale === "cz" ? (
+              <>
+                <a href="https://www.zakonyprolidi.cz" target="_blank" rel="noopener noreferrer" className="underline hover:text-hero-text">Zákony pro lidi</a>
+                {" | "}
+                <a href="https://eur-lex.europa.eu" target="_blank" rel="noopener noreferrer" className="underline hover:text-hero-text">EUR-Lex</a>
+                {" | "}
+                <a href="https://smlouvy.gov.cz" target="_blank" rel="noopener noreferrer" className="underline hover:text-hero-text">Registr smluv</a>
+              </>
+            ) : (
+              <>
+                <a href="https://www.slov-lex.sk" target="_blank" rel="noopener noreferrer" className="underline hover:text-hero-text">Slov-Lex</a>
+                {" | "}
+                <a href="https://eur-lex.europa.eu" target="_blank" rel="noopener noreferrer" className="underline hover:text-hero-text">EUR-Lex</a>
+                {" | "}
+                <a href="https://www.crz.gov.sk" target="_blank" rel="noopener noreferrer" className="underline hover:text-hero-text">CRZ</a>
+              </>
+            )}
           </p>
         </div>
       </div>

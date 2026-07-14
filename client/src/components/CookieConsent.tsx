@@ -7,7 +7,7 @@ const COOKIE_KEY = "bod_cookie_consent";
 
 export default function CookieConsent() {
   const [visible, setVisible] = useState(false);
-  const { t, locale, localePath } = useT();
+  const { t, localePath } = useT();
 
   useEffect(() => {
     const consent = localStorage.getItem(COOKIE_KEY);
@@ -29,7 +29,7 @@ export default function CookieConsent() {
 
   if (!visible) return null;
 
-  const cookiesPath = locale === "en" ? "/en/cookies" : "/cookies";
+  const cookiesPath = localePath("/cookies");
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[100] p-4 animate-in slide-in-from-bottom duration-300">

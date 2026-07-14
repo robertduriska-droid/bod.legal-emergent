@@ -9,7 +9,7 @@ import { useState, useCallback } from "react";
 import { useLocation, useSearch } from "wouter";
 import { Upload as UploadIcon, FileText, CheckCircle, AlertCircle, Loader2, CreditCard, Zap, Lock, Shield } from "lucide-react";
 import { toast } from "sonner";
-import { PRICING_PLANS, EXPRESS_ADDON } from "@shared/types";
+import { PRICING_PLANS } from "@shared/types";
 import { useT } from "@/i18n";
 
 export default function Upload() {
@@ -106,10 +106,11 @@ export default function Upload() {
   const totalPriceEur = (MARKETING_PRICES_EUR[selectedPlan] || 0) + (expressAddon ? EXPRESS_EUR : 0);
   const totalPriceCzk = (MARKETING_PRICES_CZK[selectedPlan] || 0) + (expressAddon ? EXPRESS_CZK : 0);
 
-  // Plan names per locale
-  const planNames = locale === "en"
-    ? [t.pricing.basicTitle, t.pricing.standardTitle, t.pricing.premiumTitle]
-    : PRICING_PLANS.map(p => p.nameSk);
+  // Plan display strings are locale-specific (sk/cz/en)
+  const planNames = [t.pricing.basicTitle, t.pricing.standardTitle, t.pricing.premiumTitle];
+  const planPrices = [t.pricing.basicPrice, t.pricing.standardPrice, t.pricing.premiumPrice];
+  const planTimes = [t.pricing.basicTime, t.pricing.standardTime, t.pricing.premiumTime];
+  const planFeatures = [t.pricing.basicFeatures, t.pricing.standardFeatures, t.pricing.premiumFeatures];
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -184,21 +185,21 @@ export default function Upload() {
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <h3 className="font-sans font-semibold text-sm">{planNames[index]}</h3>
-                      <p className="text-2xl font-serif">{[t.pricing.basicPrice, t.pricing.standardPrice, t.pricing.premiumPrice][index]}</p>
+                      <p className="text-2xl font-serif">{planPrices[index]}</p>
                     </div>
                     {selectedPlan === plan.id && (
                       <CheckCircle className="h-5 w-5 text-primary" />
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground font-sans mb-2">{plan.delivery}</p>
+                  <p className="text-xs text-muted-foreground font-sans mb-2">{planTimes[index]}</p>
                   <ul className="text-xs text-muted-foreground font-sans space-y-1">
-                    {plan.features.slice(0, 3).map((f, i) => (
+                    {planFeatures[index].slice(0, 3).map((f, i) => (
                       <li key={i} className="flex items-center gap-1">
                         <CheckCircle className="h-3 w-3 text-primary shrink-0" /> {f}
                       </li>
                     ))}
-                    {plan.features.length > 3 && (
-                      <li className="text-muted-foreground">+{plan.features.length - 3} {t.upload.moreFeatures}</li>
+                    {planFeatures[index].length > 3 && (
+                      <li className="text-muted-foreground">+{planFeatures[index].length - 3} {t.upload.moreFeatures}</li>
                     )}
                   </ul>
                 </CardContent>
@@ -222,7 +223,7 @@ export default function Upload() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className="font-serif text-lg">{EXPRESS_ADDON.priceLabel}</span>
+                <span className="font-serif text-lg">{t.pricing.expressPrice}</span>
                 {expressAddon && <CheckCircle className="h-4 w-4 text-primary" />}
               </div>
             </CardContent>

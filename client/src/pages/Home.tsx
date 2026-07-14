@@ -28,16 +28,12 @@ export default function Home() {
     setShowSplash(false);
   };
 
-  // Pricing plan names per locale
-  const planNames = locale === "en"
-    ? [t.pricing.basicTitle, t.pricing.standardTitle, t.pricing.premiumTitle]
-    : PRICING_PLANS.map(p => p.nameSk);
-  const planFeatures = locale === "en"
-    ? [t.pricing.basicFeatures, t.pricing.standardFeatures, t.pricing.premiumFeatures]
-    : PRICING_PLANS.map(p => p.features);
-  const planPrices = locale === "en"
-    ? [t.pricing.basicPrice, t.pricing.standardPrice, t.pricing.premiumPrice]
-    : PRICING_PLANS.map(p => p.priceLabel);
+  // Pricing plan display strings are locale-specific (sk/cz/en); PRICING_PLANS
+  // from shared/types.ts is only used below for stable ids (plan.id) in the render loop.
+  const planNames = [t.pricing.basicTitle, t.pricing.standardTitle, t.pricing.premiumTitle];
+  const planFeatures = [t.pricing.basicFeatures, t.pricing.standardFeatures, t.pricing.premiumFeatures];
+  const planPrices = [t.pricing.basicPrice, t.pricing.standardPrice, t.pricing.premiumPrice];
+  const planTimes = [t.pricing.basicTime, t.pricing.standardTime, t.pricing.premiumTime];
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -253,7 +249,7 @@ export default function Home() {
                 <CardContent className="pt-6 pb-6 px-6">
                   <h3 className="font-sans text-xl font-semibold mb-1">{planNames[index]}</h3>
                   <p className="text-3xl font-serif font-normal mb-1">{planPrices[index]}</p>
-                  <p className="text-sm text-muted-foreground mb-4 font-sans">{locale === "en" ? t.pricing.basicTime : plan.delivery}</p>
+                  <p className="text-sm text-muted-foreground mb-4 font-sans">{planTimes[index]}</p>
                   <ul className="space-y-2 text-sm font-sans mb-6">
                     {planFeatures[index].map((feature, i) => (
                       <li key={i} className="flex items-start gap-2">
@@ -294,7 +290,7 @@ export default function Home() {
               <Clock className="h-4 w-4 inline mr-1" />
               {t.pricing.guarantee}
             </p>
-            <Link href={locale === "en" ? "/en/sample-report" : "/vzorovy-report"}>
+            <Link href={locale === "en" ? "/en/sample-report" : locale === "cz" ? "/cz/vzorovy-report" : "/vzorovy-report"}>
               <button className="text-sm text-primary hover:underline font-sans inline-flex items-center gap-1 mt-2">
                 <Eye className="h-4 w-4" /> {t.pricing.ctaSampleReport}
               </button>
@@ -432,7 +428,7 @@ export default function Home() {
           <div className="relative max-w-5xl w-full animate-in fade-in zoom-in-95 duration-200">
             <img
               src={lightboxImg}
-              alt={locale === "en" ? "Enlarged detail" : "Zväčšený detail"}
+              alt={locale === "en" ? "Enlarged detail" : locale === "cz" ? "Zvětšený detail" : "Zväčšený detail"}
               className="w-full h-auto rounded-xl shadow-2xl"
             />
             <button

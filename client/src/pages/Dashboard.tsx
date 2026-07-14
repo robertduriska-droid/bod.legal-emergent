@@ -39,9 +39,9 @@ export default function Dashboard() {
   };
 
   const PROGRESS_STEPS = [
-    { key: "pending", label: locale === "en" ? "Uploaded" : "Nahraná", icon: Upload },
+    { key: "pending", label: locale === "en" ? "Uploaded" : locale === "cz" ? "Nahráno" : "Nahraná", icon: Upload },
     { key: "analyzing", label: locale === "en" ? "AI Analysis" : "AI analýza", icon: Brain },
-    { key: "in_review", label: locale === "en" ? "Lawyer Review" : "Kontrola advokátom", icon: Scale },
+    { key: "in_review", label: locale === "en" ? "Lawyer Review" : locale === "cz" ? "Kontrola advokátem" : "Kontrola advokátom", icon: Scale },
     { key: "completed", label: locale === "en" ? "Done" : "Hotovo", icon: CheckCircle },
   ];
 
@@ -90,7 +90,7 @@ export default function Dashboard() {
             <div>
               <h1 className="text-3xl font-serif">{t.dashboard.title}</h1>
               <p className="text-muted-foreground font-sans mt-1">
-                {locale === "en" ? "Overview of your submitted contracts and their status" : "Prehľad vašich odoslaných zmlúv a ich stav"}
+                {locale === "en" ? "Overview of your submitted contracts and their status" : locale === "cz" ? "Přehled vašich odeslaných smluv a jejich stav" : "Prehľad vašich odoslaných zmlúv a ich stav"}
               </p>
             </div>
             <Link href={localePath("/upload")}>
@@ -132,7 +132,7 @@ export default function Dashboard() {
               <CardContent className="py-16 text-center">
                 <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="font-sans text-xl font-semibold mb-2">
-                  {locale === "en" ? "No contracts yet" : "Zatiaľ žiadne zmluvy"}
+                  {locale === "en" ? "No contracts yet" : locale === "cz" ? "Zatím žádné smlouvy" : "Zatiaľ žiadne zmluvy"}
                 </h3>
                 <p className="text-muted-foreground font-sans mb-4">{t.dashboard.noContracts}</p>
                 <Link href={localePath("/upload")}>

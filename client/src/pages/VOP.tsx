@@ -10,14 +10,22 @@ export default function VOP() {
       <Header />
       <main className="flex-1 py-16">
         <div className="container max-w-3xl">
-          <h1 className="text-4xl font-serif mb-2">{locale === "en" ? "Terms and Conditions" : "Všeobecné obchodné podmienky"}</h1>
-          <p className="text-sm text-muted-foreground font-sans mb-4">{locale === "en" ? "Effective from July 1, 2025" : "Platné od 1. júla 2025"}</p>
+          <h1 className="text-4xl font-serif mb-2">{locale === "en" ? "Terms and Conditions" : locale === "cz" ? "Všeobecné obchodní podmínky" : "Všeobecné obchodné podmienky"}</h1>
+          <p className="text-sm text-muted-foreground font-sans mb-4">{locale === "en" ? "Effective from July 1, 2025" : locale === "cz" ? "Platné od 1. července 2025" : "Platné od 1. júla 2025"}</p>
 
           {locale === "en" && (
             <div className="flex items-start gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4 mb-6">
               <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
               <p className="text-sm font-sans text-muted-foreground">
                 This legal document is available in Slovak only. The Slovak version below is the legally binding text. For questions in English, contact us at robert.duriska@bod.legal.
+              </p>
+            </div>
+          )}
+          {locale === "cz" && (
+            <div className="flex items-start gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4 mb-6">
+              <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+              <p className="text-sm font-sans text-muted-foreground">
+                Tento právní dokument je dostupný pouze ve slovenštině. Níže uvedená slovenská verze je právně závazným textem. V případě otázek v češtině nás kontaktujte na robert.duriska@bod.legal.
               </p>
             </div>
           )}
