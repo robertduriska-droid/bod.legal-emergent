@@ -30,9 +30,12 @@ import {
   getUserById,
   createFeedback,
   getFeedbackByContract,
+  getChatMessages,
+  clearChatMessages,
 } from "./db";
 import { storagePut } from "./storage";
 import { analyzeContract } from "./analysis";
+import { runAssistant } from "./assistant";
 import { notifyOwner } from "./_core/notification";
 import { sendEmail, emailReviewCompleted } from "./email";
 import { LEGAL_SOURCES, RISK_CATEGORIES, PRICING_PLANS } from "@shared/types";
@@ -553,6 +556,55 @@ Odkaz: ${siteUrl}/${isUserComment ? 'admin/review' : 'report'}/${contract.id}`,
         return await getFeedbackByContract(input.contractId, ctx.user.id);
       }),
   }),
+
+  // ─── AI Legal Assistant (chat with your contract) ───────────────────────────
+  assistant: router({
+    /** Load chat history for a contract (or the general assistant when null) */
+    history: protectedProcedure
+      .input(z.object({ contractId: z.number().nullable().optional() }))
+      .query(async ({ ctx, input }) => {
+        const contractId = input.contractId ?? null;
+        if (contractId !== null) {
+          const contract = await getContractById(contractId);
+          if (!contract || (contract.userId !== ctx.user.id && ctx.user.role !== "admin")) return [];
+        }
+        return getChatMessages(ctx.user.id, contractId);
+      }),
+
+    /** Send a message to the assistant and get the updated conversation */
+    send: protectedProcedure
+      .input(z.object({
+        contractId: z.number().nullable().optional(),
+        message: z.string().min(1).max(4000),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const contractId = input.contractId ?? null;
+        let language = "sk";
+        if (contractId !== null) {
+          const contract = await getContractById(contractId);
+          if (!contract || (contract.userId !== ctx.user.id && ctx.user.role !== "admin")) {
+            throw new Error("Unauthorized");
+          }
+          language = contract.language || "sk";
+        }
+        const messages = await runAssistant({
+          userId: ctx.user.id,
+          contractId,
+          userMessage: input.message,
+          language,
+        });
+        return { messages };
+      }),
+
+    /** Clear the conversation */
+    clear: protectedProcedure
+      .input(z.object({ contractId: z.number().nullable().optional() }))
+      .mutation(async ({ ctx, input }) => {
+        await clearChatMessages(ctx.user.id, input.contractId ?? null);
+        return { success: true };
+      }),
+  }),
+
   // ─── Reference Data ─────────────────────────────────────────────────────
   reference: router({
     legalSources: publicProcedure.query(() => LEGAL_SOURCES),

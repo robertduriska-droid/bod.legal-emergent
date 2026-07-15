@@ -317,3 +317,56 @@ export async function getFeedbackByContract(contractId: number, userId: number):
     .limit(1);
   return rows[0] || null;
 }
+
+// ─── Chat / AI Assistant Helpers ─────────────────────────────────────────────
+
+import { sql, isNull } from "drizzle-orm";
+import { chatMessages, ChatMessage, InsertChatMessage } from "../drizzle/schema";
+
+let _chatTableReady = false;
+
+/** Idempotently ensure the chat_messages table exists (avoids a migration step). */
+export async function ensureChatTable(): Promise<void> {
+  if (_chatTableReady) return;
+  const db = await getDb();
+  if (!db) return;
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS chat_messages (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      userId INT NOT NULL,
+      contractId INT NULL,
+      role ENUM('user','assistant') NOT NULL,
+      content TEXT NOT NULL,
+      createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  _chatTableReady = true;
+}
+
+function chatScope(userId: number, contractId: number | null) {
+  return contractId === null
+    ? and(eq(chatMessages.userId, userId), isNull(chatMessages.contractId))
+    : and(eq(chatMessages.userId, userId), eq(chatMessages.contractId, contractId));
+}
+
+export async function getChatMessages(userId: number, contractId: number | null): Promise<ChatMessage[]> {
+  const db = await getDb();
+  if (!db) return [];
+  await ensureChatTable();
+  return db.select().from(chatMessages).where(chatScope(userId, contractId)).orderBy(chatMessages.createdAt);
+}
+
+export async function createChatMessage(data: InsertChatMessage): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await ensureChatTable();
+  const result = await db.insert(chatMessages).values(data);
+  return Number(result[0].insertId);
+}
+
+export async function clearChatMessages(userId: number, contractId: number | null): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await ensureChatTable();
+  await db.delete(chatMessages).where(chatScope(userId, contractId));
+}

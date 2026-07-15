@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import ContractAssistant from "@/components/ContractAssistant";
 import { Link, useParams } from "wouter";
 import { ArrowLeft, Loader2, CheckCircle, Download, ExternalLink, Shield, FileDown, FileText, Check, X, RotateCcw, Columns2, EyeOff, MessageCircle, Send, Trash2, HelpCircle, ChevronDown, ThumbsUp, ThumbsDown, Scale } from "lucide-react";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
@@ -1222,6 +1223,7 @@ export default function Report() {
           )}
 
           {/* Satisfaction Micro-Survey */}
+          {!isLimited && <ContractAssistant contractId={contractId} language={contract.language} />}
           {!isLimited && <SatisfactionSurvey contractId={contractId} tx={tx} />}
 
           {/* Disclaimer */}

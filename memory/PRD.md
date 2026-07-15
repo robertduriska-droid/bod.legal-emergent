@@ -35,6 +35,23 @@ bod.legal is an existing, mature AI contract-review platform built for the **Man
 - Local boot: `/api/auth/google/login` → 302 to accounts.google.com (correct params + CSRF cookie);
   forged-state callback → 403. Full live click-test not possible in Emergent pod (Manus stack).
 
+### Mike integration → AI Legal Assistant ("chat with your contract") (2026-07-15)
+Mike (OSS AI legal platform) rebuilt as a native feature in bod.legal's own stack.
+- Backend:
+  - `drizzle/schema.ts`: new `chat_messages` table (userId, nullable contractId, role, content, createdAt).
+  - `server/db.ts`: `ensureChatTable()` (idempotent CREATE TABLE IF NOT EXISTS — no migration step needed),
+    `getChatMessages`, `createChatMessage`, `clearChatMessages`.
+  - `server/assistant.ts`: `runAssistant()` — grounds answers on the contract's clauses/findings/legal basis +
+    report summary, multilingual (SK/CZ/EN), can draft clauses/emails; uses Manus Forge `gpt-5-mini`.
+  - `server/routers.ts`: `assistant` tRPC router — `history`, `send`, `clear` (all protected + ownership-checked).
+- Frontend:
+  - `client/src/components/ContractAssistant.tsx` (wraps existing `AIChatBox`), SK/CZ/EN copy + suggested prompts.
+    test-ids: `contract-assistant`, `assistant-clear-button`.
+  - Mounted on the Report page for full reports only (`!isLimited`), so it's gated behind payment.
+- Verified: `tsc` 0 errors; server boots; `assistant.history` returns UNAUTHORIZED (registered/protected),
+  unknown path returns NOT_FOUND. Live LLM reply + DB write require MySQL + Manus Forge (deployed site only).
+- Skipped: Mike's CourtListener US case-law (US-only; bod.legal is SK/CZ jurisdiction).
+
 ## Required config (set in the app's real env — Manus dashboard / .env)
 - GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET (Google Cloud Console, Web application OAuth client)
 - Authorized redirect URI to register (per domain): `https://<domain>/api/auth/google/callback`
@@ -42,6 +59,6 @@ bod.legal is an existing, mature AI contract-review platform built for the **Man
 - JWT_SECRET + VITE_APP_ID must be set (session signing) — already provided on Manus.
 
 ## Backlog / Next
-- Mike integration (original request) — deferred pending platform decision (Manus vs re-platform vs fresh build).
-- P1: optionally add Google button to Home/Upload/DashboardLayout login CTAs (currently header only).
-- P1: map an owner Google account to admin (set OWNER_OPEN_ID = `google:<sub>`).
+- P1: expose the AI assistant on the ContractDetail page and/or a standalone "general" legal Q&A + drafting page (backend already supports contractId=null).
+- P1: optional streaming responses (currently non-streaming mutation).
+- Mike's CourtListener/US case-law feature intentionally skipped (US-only; bod.legal is SK/CZ jurisdiction).
