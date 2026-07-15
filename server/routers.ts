@@ -2,6 +2,10 @@ import { COOKIE_NAME, ATTACHMENT_ALLOWED_MIME, ATTACHMENT_MAX_BYTES } from "@sha
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
+import { TRPCError } from "@trpc/server";
+import { sdk } from "./_core/sdk";
+import { ONE_YEAR_MS } from "@shared/const";
+import { registerEmailUser, loginEmailUser, EmailAuthError } from "./emailAuth";
 import { z } from "zod";
 import {
   createContract,
@@ -59,6 +63,48 @@ export const appRouter = router({
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
     }),
+
+    /** Register with email + password */
+    register: publicProcedure
+      .input(z.object({
+        email: z.string().email(),
+        password: z.string().min(8).max(200),
+        name: z.string().max(200).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        try {
+          const { openId, name } = await registerEmailUser(input);
+          const token = await sdk.createSessionToken(openId, { name, expiresInMs: ONE_YEAR_MS });
+          ctx.res.cookie(COOKIE_NAME, token, { ...getSessionCookieOptions(ctx.req), maxAge: ONE_YEAR_MS });
+          return { success: true as const };
+        } catch (e) {
+          if (e instanceof EmailAuthError && e.reason === "EMAIL_TAKEN") {
+            throw new TRPCError({ code: "CONFLICT", message: "An account with this email already exists." });
+          }
+          console.error("[EmailAuth] register failed:", e);
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Registration failed. Please try again." });
+        }
+      }),
+
+    /** Log in with email + password */
+    login: publicProcedure
+      .input(z.object({
+        email: z.string().email(),
+        password: z.string().min(1).max(200),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        try {
+          const { openId, name } = await loginEmailUser(input);
+          const token = await sdk.createSessionToken(openId, { name, expiresInMs: ONE_YEAR_MS });
+          ctx.res.cookie(COOKIE_NAME, token, { ...getSessionCookieOptions(ctx.req), maxAge: ONE_YEAR_MS });
+          return { success: true as const };
+        } catch (e) {
+          if (e instanceof EmailAuthError && e.reason === "LOCKED") {
+            throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Too many attempts. Please try again in 15 minutes." });
+          }
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid email or password." });
+        }
+      }),
   }),
 
   // ─── Contract Procedures ────────────────────────────────────────────────

@@ -467,3 +467,53 @@ export async function getNotifyPhone(contractId: number): Promise<string | null>
     .limit(1);
   return rows[0]?.phone || null;
 }
+
+// ─── Email credentials (classic email+password login) ────────────────────────
+
+import { emailCredentials, EmailCredential, InsertEmailCredential } from "../drizzle/schema";
+
+let _emailCredTableReady = false;
+
+export async function ensureEmailCredentialsTable(): Promise<void> {
+  if (_emailCredTableReady) return;
+  const db = await getDb();
+  if (!db) return;
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS email_credentials (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      userId INT NOT NULL,
+      email VARCHAR(320) NOT NULL,
+      passwordHash VARCHAR(255) NOT NULL,
+      failedAttempts INT NOT NULL DEFAULT 0,
+      lockedUntil TIMESTAMP NULL,
+      createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updatedAt TIMESTAMP NULL,
+      UNIQUE KEY uq_email_credentials_email (email)
+    )
+  `);
+  _emailCredTableReady = true;
+}
+
+export async function getEmailCredentialByEmail(email: string): Promise<EmailCredential | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  await ensureEmailCredentialsTable();
+  const rows = await db.select().from(emailCredentials).where(eq(emailCredentials.email, email)).limit(1);
+  return rows[0];
+}
+
+export async function createEmailCredential(data: InsertEmailCredential): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await ensureEmailCredentialsTable();
+  await db.insert(emailCredentials).values(data);
+}
+
+export async function setEmailCredentialLock(email: string, failedAttempts: number, lockedUntil: Date | null): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await ensureEmailCredentialsTable();
+  await db.update(emailCredentials)
+    .set({ failedAttempts, lockedUntil, updatedAt: new Date() })
+    .where(eq(emailCredentials.email, email));
+}

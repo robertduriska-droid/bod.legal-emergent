@@ -20,6 +20,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { startLogin, startGoogleLogin } from "@/const";
+import EmailAuthForm from "@/components/EmailAuthForm";
 import { useIsMobile } from "@/hooks/useMobile";
 import { LayoutDashboard, LogOut, PanelLeft, Users } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
@@ -93,6 +94,12 @@ export default function DashboardLayout({
               Sign in with Google
             </Button>
           </div>
+          <div className="w-full flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground">or</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+          <EmailAuthForm />
         </div>
       </div>
     );

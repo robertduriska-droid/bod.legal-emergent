@@ -242,3 +242,21 @@ export const notifyPrefs = mysqlTable("notify_prefs", {
 
 export type NotifyPref = typeof notifyPrefs.$inferSelect;
 export type InsertNotifyPref = typeof notifyPrefs.$inferInsert;
+
+/**
+ * Email credentials - classic email+password login. Kept separate from the
+ * users table so it layers on top of the existing OAuth-based user records.
+ */
+export const emailCredentials = mysqlTable("email_credentials", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  passwordHash: varchar("passwordHash", { length: 255 }).notNull(),
+  failedAttempts: int("failedAttempts").default(0).notNull(),
+  lockedUntil: timestamp("lockedUntil"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt"),
+});
+
+export type EmailCredential = typeof emailCredentials.$inferSelect;
+export type InsertEmailCredential = typeof emailCredentials.$inferInsert;

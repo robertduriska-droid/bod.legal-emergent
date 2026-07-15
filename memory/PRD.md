@@ -110,6 +110,22 @@ Extra notification channel alongside existing in-app + SendGrid email, using the
 - Verified: `tsc` 0 errors; server boots (twilio lazy import OK); `contracts.upload` accepts `phone`.
   Live SMS/WhatsApp send requires real Twilio creds + deployed site.
 
+### Email & password login (2026-07-15)
+Classic auth layered on the existing session model (called integration_expert first per policy).
+- `bcryptjs` for hashing; new `email_credentials` table (idempotent auto-create, unique email,
+  failedAttempts + lockedUntil) in `drizzle/schema.ts` + `server/db.ts` helpers.
+- `server/emailAuth.ts`: `registerEmailUser` / `loginEmailUser` — lowercased email, uniqueness,
+  generic errors (no enumeration + dummy-hash timing), brute-force lockout (5 fails → 15 min).
+  openId = `email:<email>`; reuses `sdk.createSessionToken` + `app_session_id` cookie.
+- `server/routers.ts` auth router: `register`, `login` (TRPCError codes: CONFLICT / TOO_MANY_REQUESTS
+  / UNAUTHORIZED); existing `logout`, `me` unchanged.
+- `client/src/components/EmailAuthForm.tsx`: login/register toggle, mounted on the DashboardLayout
+  login gate alongside Manus + Google. test-ids: `email-auth-form`, `email-auth-email`,
+  `email-auth-password`, `email-auth-name`, `email-auth-submit`, `email-auth-toggle`.
+- Admin: set `OWNER_OPEN_ID = email:<email>` to grant admin. No auto-seed (no invented creds).
+- `test_credentials.md` updated. Verified: `tsc` 0 errors; login → generic UNAUTHORIZED;
+  register short password → zod validation error.
+
 ## Required config (set in the app's real env — Manus dashboard / .env)
 - GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET (Google Cloud Console, Web application OAuth client)
 - Authorized redirect URI to register (per domain): `https://<domain>/api/auth/google/callback`
