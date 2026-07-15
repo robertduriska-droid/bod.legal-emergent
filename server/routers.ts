@@ -36,10 +36,13 @@ import {
   getAttachmentsByContract,
   getAttachmentById,
   deleteAttachment,
+  setNotifyPhone,
+  getNotifyPhone,
 } from "./db";
 import { storagePut } from "./storage";
 import { analyzeContract } from "./analysis";
 import { runAssistant } from "./assistant";
+import { notifyClient, notifyAdmins } from "./twilio";
 import { notifyOwner } from "./_core/notification";
 import { sendEmail, emailReviewCompleted } from "./email";
 import { LEGAL_SOURCES, RISK_CATEGORIES, PRICING_PLANS } from "@shared/types";
@@ -69,6 +72,7 @@ export const appRouter = router({
         plan: z.enum(["basic", "standard", "premium"]),
         expressAddon: z.boolean().default(false),
         language: z.string().default("sk"),
+        phone: z.string().max(32).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         // Decode file and upload to S3
@@ -96,6 +100,16 @@ export const appRouter = router({
           language: input.language,
           status: "pending",
         });
+
+        // Persist optional SMS/WhatsApp recipient for this contract (Twilio)
+        if (input.phone) {
+          await setNotifyPhone(contractId, ctx.user.id, input.phone)
+            .catch(err => console.error("[NotifyPref] Failed:", err));
+        }
+
+        // Twilio: alert admins/lawyers about the new submission (SMS + WhatsApp)
+        notifyAdmins(`bod.legal: Nová zmluva "${input.fileName}" (plán: ${input.plan}) od ${ctx.user.name || ctx.user.email || "ID:" + ctx.user.id}.`)
+          .catch(() => {});
 
         // Notify owner/lawyer about new submission
         await notifyOwner({
@@ -264,6 +278,19 @@ export const appRouter = router({
             type: "contract_completed",
             contractId: input.contractId,
           }).catch(err => console.error("[Notification] Failed to create:", err));
+
+          // Twilio: SMS + WhatsApp to the client that the signed report is ready
+          {
+            const signPhone = await getNotifyPhone(input.contractId).catch(() => null);
+            const lang = signedContract.language || "sk";
+            const url = `https://bod.legal/report/${signedContract.id}`;
+            const msg = lang === "en"
+              ? `bod.legal: Your report for "${signedContract.fileName}" is signed by the lawyer and ready: ${url}`
+              : lang === "cz"
+                ? `bod.legal: Váš report pro "${signedContract.fileName}" je podepsán advokátem a připraven: ${url}`
+                : `bod.legal: Váš report pre "${signedContract.fileName}" je podpísaný advokátom a pripravený: ${url}`;
+            notifyClient(signPhone, msg).catch(() => {});
+          }
 
           // Email notification to client
           const clientUser = await getUserById(signedContract.userId).catch(() => null);

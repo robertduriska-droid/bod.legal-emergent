@@ -1,6 +1,7 @@
 import { ENV } from "./_core/env";
-import { getContractById, createClauses, createReport, updateContractStatus, createNotification, getUserById } from "./db";
+import { getContractById, createClauses, createReport, updateContractStatus, createNotification, getUserById, getNotifyPhone } from "./db";
 import { notifyOwner } from "./_core/notification";
+import { notifyClient, notifyAdmins } from "./twilio";
 import { sendEmail, emailReportReady, emailNewContractForReview } from "./email";
 import { storageGetSignedUrl } from "./storage";
 import { LEGAL_SOURCES, RISK_CATEGORIES } from "@shared/types";
@@ -391,6 +392,20 @@ export async function analyzeContract(contractId: number): Promise<void> {
         ? `Report pre "${contract.fileName}" je hotový (${riskStr}). Klient: ${contract.userId}.\nOdkaz: /report/${contract.id}`
         : `Report pre "${contract.fileName}" čaká na lawyer review (${riskStr}). Klient: ${contract.userId}.\nOdkaz: /admin/review/${contract.id}`,
     }).catch(err => console.warn("[Notification] Owner push failed:", err));
+
+    // Twilio: SMS + WhatsApp notifications (client + admins), best-effort.
+    {
+      const notifyPhone = await getNotifyPhone(contractId).catch(() => null);
+      const lang = contract.language || "sk";
+      const reportUrl = `https://bod.legal/report/${contract.id}`;
+      const clientMsg = lang === "en"
+        ? `bod.legal: Your contract "${contract.fileName}" has been analyzed. ${plan === "basic" ? "View report: " + reportUrl : "It now awaits lawyer review."}`
+        : lang === "cz"
+          ? `bod.legal: Vaše smlouva "${contract.fileName}" byla analyzována. ${plan === "basic" ? "Report: " + reportUrl : "Čeká na kontrolu advokátem."}`
+          : `bod.legal: Vaša zmluva "${contract.fileName}" bola analyzovaná. ${plan === "basic" ? "Report: " + reportUrl : "Čaká na kontrolu advokátom."}`;
+      notifyClient(notifyPhone, clientMsg).catch(() => {});
+      notifyAdmins(`bod.legal: Analýza dokončená pre "${contract.fileName}" (${riskStr}).`).catch(() => {});
+    }
 
     // Email notifications via SendGrid
     const baseUrl = "https://bod.legal";

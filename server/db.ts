@@ -427,3 +427,43 @@ export async function deleteAttachment(id: number): Promise<void> {
   await ensureAttachmentsTable();
   await db.delete(attachments).where(eq(attachments.id, id));
 }
+
+// ─── Notify prefs (Twilio SMS/WhatsApp recipient per contract) ────────────────
+
+import { notifyPrefs } from "../drizzle/schema";
+
+let _notifyPrefsTableReady = false;
+
+export async function ensureNotifyPrefsTable(): Promise<void> {
+  if (_notifyPrefsTableReady) return;
+  const db = await getDb();
+  if (!db) return;
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS notify_prefs (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      contractId INT NOT NULL,
+      userId INT NOT NULL,
+      phone VARCHAR(32) NOT NULL,
+      createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  _notifyPrefsTableReady = true;
+}
+
+export async function setNotifyPhone(contractId: number, userId: number, phone: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await ensureNotifyPrefsTable();
+  await db.insert(notifyPrefs).values({ contractId, userId, phone });
+}
+
+export async function getNotifyPhone(contractId: number): Promise<string | null> {
+  const db = await getDb();
+  if (!db) return null;
+  await ensureNotifyPrefsTable();
+  const rows = await db.select().from(notifyPrefs)
+    .where(eq(notifyPrefs.contractId, contractId))
+    .orderBy(desc(notifyPrefs.createdAt))
+    .limit(1);
+  return rows[0]?.phone || null;
+}

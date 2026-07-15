@@ -24,6 +24,7 @@ export default function Upload() {
   const [selectedPlan, setSelectedPlan] = useState<string>(preselectedPlan || "standard");
   const [expressAddon, setExpressAddon] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [phone, setPhone] = useState("");
   const [dragOver, setDragOver] = useState(false);
 
   const uploadMutation = trpc.contracts.upload.useMutation({
@@ -88,6 +89,7 @@ export default function Upload() {
           plan: selectedPlan as "basic" | "standard" | "premium",
           expressAddon: expressAddon,
           language: locale,
+          phone: phone || undefined,
         });
       };
       reader.readAsDataURL(file);
@@ -228,6 +230,29 @@ export default function Upload() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Optional SMS/WhatsApp notifications */}
+          <div className="mb-2" data-testid="upload-phone-block">
+            <label className="text-sm font-sans font-medium block mb-1" htmlFor="notify-phone">
+              {locale === 'en' ? 'Phone for SMS / WhatsApp updates (optional)'
+                : locale === 'cz' ? 'Telefon pro SMS / WhatsApp upozornění (volitelné)'
+                : 'Telefón pre SMS / WhatsApp upozornenia (voliteľné)'}
+            </label>
+            <input
+              id="notify-phone"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+421 900 000 000"
+              className="w-full max-w-sm rounded-md border border-input bg-background px-3 py-2 text-sm font-sans focus:outline-none focus:ring-2 focus:ring-primary/40"
+              data-testid="upload-phone-input"
+            />
+            <p className="text-xs text-muted-foreground font-sans mt-1">
+              {locale === 'en' ? 'We will message you when your analysis and lawyer-signed report are ready.'
+                : locale === 'cz' ? 'Pošleme vám zprávu, až bude analýza a advokátem podepsaný report hotový.'
+                : 'Pošleme vám správu, keď bude analýza a advokátom podpísaný report hotový.'}
+            </p>
+          </div>
 
           {/* Submit */}
           <div className="flex flex-col gap-3">

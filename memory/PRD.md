@@ -94,6 +94,22 @@ Reusable file/media upload built on the app's existing Forge/S3 storage (`server
   `in_review`/`completed` contracts (analysis available).
 - Verified: `tsc` 0 errors; server boots (no circular import); `assistant.send` accepts `attachmentId`.
 
+### Twilio SMS + WhatsApp notifications (2026-07-15)
+Extra notification channel alongside existing in-app + SendGrid email, using the `twilio` Node SDK.
+- `server/twilio.ts`: `sendSms`, `sendWhatsApp`, `notifyClient` (both channels), `notifyAdmins`
+  (env-configured recipients). Lazy client; best-effort (never throws); no-ops without creds.
+- `drizzle/schema.ts` + `server/db.ts`: `notify_prefs` table (idempotent auto-create) +
+  `setNotifyPhone`/`getNotifyPhone` — stores the client's optional notify phone per contract
+  (avoids ALTERing the existing contracts table).
+- Hooks: contract upload → `notifyAdmins`; analysis completion (`analysis.ts`) → client + admins;
+  lawyer sign-off (`routers.ts signReport`) → client. Messages localized SK/CZ/EN.
+- `contracts.upload` accepts optional `phone`; `Upload.tsx` adds an optional phone input
+  (test-id `upload-phone-input`).
+- Env (Manus): TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER, TWILIO_WHATSAPP_FROM,
+  TWILIO_ADMIN_PHONE, TWILIO_ADMIN_WHATSAPP (documented in `.env.example`).
+- Verified: `tsc` 0 errors; server boots (twilio lazy import OK); `contracts.upload` accepts `phone`.
+  Live SMS/WhatsApp send requires real Twilio creds + deployed site.
+
 ## Required config (set in the app's real env — Manus dashboard / .env)
 - GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET (Google Cloud Console, Web application OAuth client)
 - Authorized redirect URI to register (per domain): `https://<domain>/api/auth/google/callback`

@@ -228,3 +228,17 @@ export const attachments = mysqlTable("attachments", {
 
 export type Attachment = typeof attachments.$inferSelect;
 export type InsertAttachment = typeof attachments.$inferInsert;
+
+/**
+ * Notify prefs - optional SMS/WhatsApp recipient phone per contract (Twilio).
+ */
+export const notifyPrefs = mysqlTable("notify_prefs", {
+  id: int("id").autoincrement().primaryKey(),
+  contractId: int("contractId").notNull(),
+  userId: int("userId").notNull(),
+  phone: varchar("phone", { length: 32 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type NotifyPref = typeof notifyPrefs.$inferSelect;
+export type InsertNotifyPref = typeof notifyPrefs.$inferInsert;
