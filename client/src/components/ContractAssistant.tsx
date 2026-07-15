@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { AIChatBox, type Message } from "@/components/AIChatBox";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ASSISTANT_MODELS, DEFAULT_ASSISTANT_MODEL } from "@shared/const";
 import { Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -70,6 +72,7 @@ export default function ContractAssistant({
 }) {
   const tx = TX[(language as Lang)] || TX.sk;
   const [messages, setMessages] = useState<Message[]>([]);
+  const [model, setModel] = useState<string>(DEFAULT_ASSISTANT_MODEL);
 
   const historyQuery = trpc.assistant.history.useQuery({ contractId });
   const sendMutation = trpc.assistant.send.useMutation();
@@ -84,7 +87,7 @@ export default function ContractAssistant({
   const handleSend = async (content: string) => {
     setMessages((prev) => [...prev, { role: "user", content }]);
     try {
-      const res = await sendMutation.mutateAsync({ contractId, message: content });
+      const res = await sendMutation.mutateAsync({ contractId, message: content, model });
       setMessages(res.messages.map((m) => ({ role: m.role as Message["role"], content: m.content })));
     } catch {
       toast.error(tx.error);
@@ -104,23 +107,37 @@ export default function ContractAssistant({
 
   return (
     <div className="mb-8" data-testid="contract-assistant">
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
         <h3 className="font-serif text-xl font-semibold flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-primary" />
           {tx.title}
         </h3>
-        {messages.length > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleClear}
-            disabled={clearMutation.isPending}
-            data-testid="assistant-clear-button"
-          >
-            <Trash2 className="h-4 w-4 mr-1" />
-            {tx.clear}
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          <Select value={model} onValueChange={setModel}>
+            <SelectTrigger className="h-8 w-[200px] text-xs" data-testid="assistant-model-select">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ASSISTANT_MODELS.map((m) => (
+                <SelectItem key={m.id} value={m.id} data-testid={`assistant-model-${m.id}`}>
+                  {m.provider} · {m.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {messages.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClear}
+              disabled={clearMutation.isPending}
+              data-testid="assistant-clear-button"
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              {tx.clear}
+            </Button>
+          )}
+        </div>
       </div>
       <p className="text-sm text-muted-foreground mb-3">{tx.subtitle}</p>
       <AIChatBox

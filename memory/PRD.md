@@ -52,6 +52,21 @@ Mike (OSS AI legal platform) rebuilt as a native feature in bod.legal's own stac
   unknown path returns NOT_FOUND. Live LLM reply + DB write require MySQL + Manus Forge (deployed site only).
 - Skipped: Mike's CourtListener US case-law (US-only; bod.legal is SK/CZ jurisdiction).
 
+### Gemini + Anthropic chat models (2026-07-15)
+Multi-provider model support for the AI assistant, routed through the existing Manus Forge
+(OpenAI-compatible) gateway — no new API keys (user chose "route through Forge").
+- `shared/const.ts`: `ASSISTANT_MODELS` (OpenAI gpt-5-mini, Gemini 2.5 Flash / 3.1 Pro,
+  Claude Sonnet 4.6 / Haiku 4.5), `DEFAULT_ASSISTANT_MODEL`, `ASSISTANT_MODEL_IDS`.
+- `server/assistant.ts`: `buildChatPayload()` branches params by provider (gpt-5*/o* use
+  max_completion_tokens + reasoning; Gemini/Claude use max_tokens). `runAssistant` takes a
+  validated `model` and, if a non-default model errors on Forge, retries with gpt-5-mini so
+  the user still gets an answer.
+- `server/routers.ts`: `assistant.send` accepts optional `model` (whitelisted).
+- `client/src/components/ContractAssistant.tsx`: provider/model dropdown (test-id
+  `assistant-model-select`, items `assistant-model-<id>`); selected model sent with each message.
+- Verified: `tsc` 0 errors; server boots; route accepts `model`. Whether Forge actually serves
+  Gemini/Claude IDs is a Manus-side dependency — the default-model fallback covers unsupported IDs.
+
 ## Required config (set in the app's real env — Manus dashboard / .env)
 - GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET (Google Cloud Console, Web application OAuth client)
 - Authorized redirect URI to register (per domain): `https://<domain>/api/auth/google/callback`

@@ -576,6 +576,7 @@ Odkaz: ${siteUrl}/${isUserComment ? 'admin/review' : 'report'}/${contract.id}`,
       .input(z.object({
         contractId: z.number().nullable().optional(),
         message: z.string().min(1).max(4000),
+        model: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const contractId = input.contractId ?? null;
@@ -592,6 +593,7 @@ Odkaz: ${siteUrl}/${isUserComment ? 'admin/review' : 'report'}/${contract.id}`,
           contractId,
           userMessage: input.message,
           language,
+          model: input.model,
         });
         return { messages };
       }),

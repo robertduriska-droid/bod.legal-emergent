@@ -7,6 +7,7 @@ import {
   createChatMessage,
 } from "./db";
 import type { ChatMessage } from "../drizzle/schema";
+import { ASSISTANT_MODEL_IDS, DEFAULT_ASSISTANT_MODEL } from "@shared/const";
 
 /**
  * AI legal assistant ("chat with your contract"). Grounds answers on the
@@ -64,14 +65,23 @@ function getSystemPrompt(language: string): string {
   return SYSTEM_PROMPTS[language] || SYSTEM_PROMPTS.sk;
 }
 
-async function callChatLLM(messages: { role: string; content: string }[]): Promise<string> {
+function buildChatPayload(model: string, messages: { role: string; content: string }[]): Record<string, unknown> {
+  // OpenAI reasoning models (gpt-5*, o*) require max_completion_tokens + reasoning;
+  // Gemini/Claude via the OpenAI-compatible gateway use the standard max_tokens.
+  const isOpenAIReasoning = /^(gpt-5|o\d)/.test(model);
+  const payload: Record<string, unknown> = { model, messages };
+  if (isOpenAIReasoning) {
+    payload.max_completion_tokens = 2000;
+    payload.reasoning = { effort: "low" };
+  } else {
+    payload.max_tokens = 2000;
+  }
+  return payload;
+}
+
+async function callChatLLM(messages: { role: string; content: string }[], model: string): Promise<string> {
   const url = `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`;
-  const payload: Record<string, unknown> = {
-    model: "gpt-5-mini",
-    max_completion_tokens: 2000,
-    reasoning: { effort: "low" },
-    messages,
-  };
+  const payload = buildChatPayload(model, messages);
 
   const MAX_RETRIES = 2;
   let lastError: Error | null = null;
@@ -153,8 +163,12 @@ export async function runAssistant(opts: {
   contractId: number | null;
   userMessage: string;
   language?: string;
+  model?: string;
 }): Promise<ChatMessage[]> {
   const { userId, contractId, userMessage } = opts;
+  const model = opts.model && ASSISTANT_MODEL_IDS.includes(opts.model)
+    ? opts.model
+    : DEFAULT_ASSISTANT_MODEL;
   let language = opts.language || "sk";
   let contextBlock = "";
 
@@ -177,10 +191,21 @@ export async function runAssistant(opts: {
 
   let reply: string;
   try {
-    reply = await callChatLLM(llmMessages);
+    reply = await callChatLLM(llmMessages, model);
   } catch (err) {
-    console.error("[Assistant] LLM call failed:", err);
-    reply = fallbackReply(language);
+    console.error(`[Assistant] LLM call failed (model=${model}):`, err);
+    // If a non-default provider/model failed (e.g. Forge doesn't expose it),
+    // fall back to the known-good default model so the user still gets an answer.
+    if (model !== DEFAULT_ASSISTANT_MODEL) {
+      try {
+        reply = await callChatLLM(llmMessages, DEFAULT_ASSISTANT_MODEL);
+      } catch (err2) {
+        console.error("[Assistant] Default model fallback failed:", err2);
+        reply = fallbackReply(language);
+      }
+    } else {
+      reply = fallbackReply(language);
+    }
   }
   if (!reply || !reply.trim()) {
     reply = emptyReply(language);

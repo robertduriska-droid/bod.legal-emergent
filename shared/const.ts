@@ -35,3 +35,16 @@ export const decodeOAuthState = (state: string): OAuthState => {
   }
   return { redirectUri: decoded };
 };
+
+// AI legal assistant model options, routed through the Manus Forge
+// (OpenAI-compatible) gateway. Adjust IDs here to match what Forge exposes.
+export const ASSISTANT_MODELS = [
+  { id: "gpt-5-mini", label: "GPT-5 mini", provider: "OpenAI" },
+  { id: "gemini-2.5-flash", label: "Gemini 2.5 Flash", provider: "Google" },
+  { id: "gemini-3.1-pro", label: "Gemini 3.1 Pro", provider: "Google" },
+  { id: "claude-sonnet-4-6", label: "Claude Sonnet 4.6", provider: "Anthropic" },
+  { id: "claude-haiku-4-5", label: "Claude Haiku 4.5", provider: "Anthropic" },
+] as const;
+
+export const DEFAULT_ASSISTANT_MODEL = "gpt-5-mini";
+export const ASSISTANT_MODEL_IDS: string[] = ASSISTANT_MODELS.map(m => m.id);
