@@ -10,6 +10,17 @@ import { notifyOwner } from "./_core/notification";
  * MUST be registered BEFORE express.json() middleware.
  */
 export function registerStripeWebhook(app: express.Express) {
+  // Self-host: Stripe is optional at boot. Without a secret key the Stripe
+  // constructor throws, which would crash the whole server — so skip
+  // registering the webhook and let the rest of the app come up. Payments are
+  // simply inactive until STRIPE_SECRET_KEY is set.
+  if (!ENV.stripeSecretKey) {
+    console.warn(
+      "[Stripe] STRIPE_SECRET_KEY not set — webhook disabled, payments inactive.",
+    );
+    return;
+  }
+
   const stripe = new Stripe(ENV.stripeSecretKey);
 
   app.post(
