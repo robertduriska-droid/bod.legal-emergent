@@ -12,6 +12,7 @@ import { registerDocxExport } from "../docx-export";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { runMigrations } from "./migrate";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -33,6 +34,9 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
+  // Apply any pending DB migrations before serving (no-op when up to date).
+  await runMigrations();
+
   const app = express();
   const server = createServer(app);
   // Stripe webhook MUST be registered before express.json() for signature verification
