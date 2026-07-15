@@ -5,7 +5,10 @@ import {
   getReportByContractId,
   getChatMessages,
   createChatMessage,
+  getAttachmentById,
 } from "./db";
+import { storageGetSignedUrl } from "./storage";
+import { extractDocxText } from "./analysis";
 import type { ChatMessage } from "../drizzle/schema";
 import { ASSISTANT_MODEL_IDS, DEFAULT_ASSISTANT_MODEL } from "@shared/const";
 
@@ -65,7 +68,7 @@ function getSystemPrompt(language: string): string {
   return SYSTEM_PROMPTS[language] || SYSTEM_PROMPTS.sk;
 }
 
-function buildChatPayload(model: string, messages: { role: string; content: string }[]): Record<string, unknown> {
+function buildChatPayload(model: string, messages: { role: string; content: any }[]): Record<string, unknown> {
   // OpenAI reasoning models (gpt-5*, o*) require max_completion_tokens + reasoning;
   // Gemini/Claude via the OpenAI-compatible gateway use the standard max_tokens.
   const isOpenAIReasoning = /^(gpt-5|o\d)/.test(model);
@@ -79,7 +82,7 @@ function buildChatPayload(model: string, messages: { role: string; content: stri
   return payload;
 }
 
-async function callChatLLM(messages: { role: string; content: string }[], model: string): Promise<string> {
+async function callChatLLM(messages: { role: string; content: any }[], model: string): Promise<string> {
   const url = `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`;
   const payload = buildChatPayload(model, messages);
 
@@ -164,6 +167,7 @@ export async function runAssistant(opts: {
   userMessage: string;
   language?: string;
   model?: string;
+  attachmentId?: number;
 }): Promise<ChatMessage[]> {
   const { userId, contractId, userMessage } = opts;
   const model = opts.model && ASSISTANT_MODEL_IDS.includes(opts.model)
@@ -178,15 +182,59 @@ export async function runAssistant(opts: {
     contextBlock = await buildContractContext(contractId);
   }
 
-  // Persist the user's message first.
+  // If the user attached an uploaded file to this question, prepare its content
+  // for the LLM: PDFs/images become multimodal parts, DOCX becomes extracted text.
+  let multimodalContent: any = null;
+  let docxTextNote = "";
+  if (opts.attachmentId && contractId !== null) {
+    const att = await getAttachmentById(opts.attachmentId);
+    if (att && att.contractId === contractId) {
+      try {
+        const signedUrl = await storageGetSignedUrl(att.fileKey);
+        if (att.mimeType.includes("pdf")) {
+          multimodalContent = [
+            { type: "text", text: `${userMessage}\n\n[Priložený súbor / attached file: ${att.fileName}]` },
+            { type: "file_url", file_url: { url: signedUrl, mime_type: "application/pdf" } },
+          ];
+        } else if (att.mimeType.startsWith("image/")) {
+          multimodalContent = [
+            { type: "text", text: `${userMessage}\n\n[Priložený obrázok / attached image: ${att.fileName}]` },
+            { type: "image_url", image_url: { url: signedUrl } },
+          ];
+        } else {
+          const text = await extractDocxText(signedUrl);
+          const truncated = text.length > 6000 ? text.slice(0, 6000) + "\n[... skrátené / truncated ...]" : text;
+          docxTextNote = `\n\n[Priložený súbor / attached file: ${att.fileName}]\nObsah / content:\n${truncated}`;
+        }
+      } catch (err) {
+        console.error("[Assistant] attachment processing failed:", err);
+      }
+    }
+  }
+
+  // Persist the user's typed message (attachment content is included only for
+  // this LLM turn, not stored, to keep history compact).
   await createChatMessage({ userId, contractId, role: "user", content: userMessage });
 
   // Load history (includes the message we just stored).
   const history = await getChatMessages(userId, contractId);
+  const recent: { role: string; content: any }[] = history
+    .slice(-20)
+    .map(m => ({ role: m.role as string, content: m.content as any }));
 
-  const llmMessages: { role: string; content: string }[] = [
+  // Replace the final user turn with attachment-augmented content when present.
+  if (recent.length > 0) {
+    const finalContent = multimodalContent
+      ? multimodalContent
+      : docxTextNote
+        ? userMessage + docxTextNote
+        : userMessage;
+    recent[recent.length - 1] = { role: "user", content: finalContent };
+  }
+
+  const llmMessages: { role: string; content: any }[] = [
     { role: "system", content: getSystemPrompt(language) + (contextBlock ? `\n\n${contextBlock}` : "") },
-    ...history.slice(-20).map(m => ({ role: m.role, content: m.content })),
+    ...recent,
   ];
 
   let reply: string;

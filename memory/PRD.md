@@ -82,6 +82,18 @@ Reusable file/media upload built on the app's existing Forge/S3 storage (`server
 - Verified: `tsc` 0 errors; server boots; `attachments.list`/`upload` → UNAUTHORIZED (registered/protected).
   Live upload/download needs MySQL + Forge storage (deployed site only).
 
+### Assistant ⇄ attachments wiring + ContractDetail mount (2026-07-15)
+- Attachment-aware assistant: `assistant.send` accepts optional `attachmentId`; `runAssistant`
+  loads the chosen attachment and feeds it to the LLM — PDFs/images as multimodal
+  `file_url`/`image_url` parts, DOCX via `extractDocxText` (exported from `analysis.ts`).
+  callChatLLM/buildChatPayload now accept multimodal `content`.
+- `ContractAssistant.tsx`: "Attach file" dropdown (from `attachments.list`) so a client can ask
+  about a specific uploaded draft; resets after each send. test-ids: `assistant-attach-select`,
+  `assistant-attach-none`, `assistant-attach-<id>`, `assistant-attach-row`.
+- `ContractDetail.tsx`: mounts `ContractAssistant` + `ContractAttachments` for
+  `in_review`/`completed` contracts (analysis available).
+- Verified: `tsc` 0 errors; server boots (no circular import); `assistant.send` accepts `attachmentId`.
+
 ## Required config (set in the app's real env — Manus dashboard / .env)
 - GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET (Google Cloud Console, Web application OAuth client)
 - Authorized redirect URI to register (per domain): `https://<domain>/api/auth/google/callback`

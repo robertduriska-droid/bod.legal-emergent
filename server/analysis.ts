@@ -66,7 +66,7 @@ async function callLLM(params: {
 /**
  * Extract text from a DOCX file by downloading and parsing the XML content.
  */
-async function extractDocxText(fileUrl: string): Promise<string> {
+export async function extractDocxText(fileUrl: string): Promise<string> {
   const { default: JSZip } = await import("jszip");
   const response = await axios.get(fileUrl, { responseType: "arraybuffer" });
   const zip = await JSZip.loadAsync(response.data);

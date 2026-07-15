@@ -17,6 +17,8 @@ const TX: Record<Lang, {
   disclaimer: string;
   clear: string;
   error: string;
+  attachLabel: string;
+  attachNone: string;
   prompts: string[];
 }> = {
   sk: {
@@ -27,6 +29,8 @@ const TX: Record<Lang, {
     disclaimer: "Odpovede sú informatívne a nenahrádzajú kontrolu a podpis advokáta.",
     clear: "Vymazať",
     error: "Asistent momentálne neodpovedal. Skúste to prosím znova.",
+    attachLabel: "Priložiť súbor",
+    attachNone: "Bez súboru",
     prompts: [
       "Vysvetli mi najrizikovejšiu klauzulu",
       "Ako mám vyjednávať o tejto zmluve?",
@@ -41,6 +45,8 @@ const TX: Record<Lang, {
     disclaimer: "Odpovědi jsou informativní a nenahrazují kontrolu a podpis advokáta.",
     clear: "Vymazat",
     error: "Asistent momentálně neodpověděl. Zkuste to prosím znovu.",
+    attachLabel: "Přiložit soubor",
+    attachNone: "Bez souboru",
     prompts: [
       "Vysvětli mi nejrizikovější klauzuli",
       "Jak mám vyjednávat o této smlouvě?",
@@ -55,6 +61,8 @@ const TX: Record<Lang, {
     disclaimer: "Answers are informational and do not replace review and sign-off by a lawyer.",
     clear: "Clear",
     error: "The assistant did not respond. Please try again.",
+    attachLabel: "Attach file",
+    attachNone: "No file",
     prompts: [
       "Explain the highest-risk clause",
       "How should I negotiate this contract?",
@@ -73,10 +81,13 @@ export default function ContractAssistant({
   const tx = TX[(language as Lang)] || TX.sk;
   const [messages, setMessages] = useState<Message[]>([]);
   const [model, setModel] = useState<string>(DEFAULT_ASSISTANT_MODEL);
+  const [attachmentId, setAttachmentId] = useState<number | null>(null);
 
   const historyQuery = trpc.assistant.history.useQuery({ contractId });
+  const attachmentsQuery = trpc.attachments.list.useQuery({ contractId });
   const sendMutation = trpc.assistant.send.useMutation();
   const clearMutation = trpc.assistant.clear.useMutation();
+  const attachmentOptions = attachmentsQuery.data || [];
 
   useEffect(() => {
     if (historyQuery.data) {
@@ -87,8 +98,14 @@ export default function ContractAssistant({
   const handleSend = async (content: string) => {
     setMessages((prev) => [...prev, { role: "user", content }]);
     try {
-      const res = await sendMutation.mutateAsync({ contractId, message: content, model });
+      const res = await sendMutation.mutateAsync({
+        contractId,
+        message: content,
+        model,
+        attachmentId: attachmentId ?? undefined,
+      });
       setMessages(res.messages.map((m) => ({ role: m.role as Message["role"], content: m.content })));
+      setAttachmentId(null);
     } catch {
       toast.error(tx.error);
       setMessages((prev) => prev.slice(0, -1));
@@ -140,6 +157,27 @@ export default function ContractAssistant({
         </div>
       </div>
       <p className="text-sm text-muted-foreground mb-3">{tx.subtitle}</p>
+      {attachmentOptions.length > 0 && (
+        <div className="flex items-center gap-2 mb-3 flex-wrap" data-testid="assistant-attach-row">
+          <span className="text-xs text-muted-foreground">{tx.attachLabel}:</span>
+          <Select
+            value={attachmentId ? String(attachmentId) : "none"}
+            onValueChange={(v) => setAttachmentId(v === "none" ? null : Number(v))}
+          >
+            <SelectTrigger className="h-8 w-[240px] text-xs" data-testid="assistant-attach-select">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none" data-testid="assistant-attach-none">{tx.attachNone}</SelectItem>
+              {attachmentOptions.map((a) => (
+                <SelectItem key={a.id} value={String(a.id)} data-testid={`assistant-attach-${a.id}`}>
+                  {a.fileName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
       <AIChatBox
         messages={messages}
         onSendMessage={handleSend}

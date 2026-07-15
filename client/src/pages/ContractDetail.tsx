@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import ContractAssistant from "@/components/ContractAssistant";
+import ContractAttachments from "@/components/ContractAttachments";
 import { Link, useParams, useSearch } from "wouter";
 import { FileText, ArrowLeft, Loader2, AlertTriangle, AlertCircle, CheckCircle, ExternalLink, CreditCard, Upload, Scale, FileCheck, Clock } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
@@ -437,6 +439,13 @@ export default function ContractDetail() {
                   );
                 })}
               </div>
+            </div>
+          )}
+
+          {(contract.status === "in_review" || contract.status === "completed") && (
+            <div className="mt-8">
+              <ContractAssistant contractId={contract.id} language={contract.language} />
+              <ContractAttachments contractId={contract.id} language={contract.language} />
             </div>
           )}
         </div>
