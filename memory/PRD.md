@@ -67,6 +67,21 @@ Multi-provider model support for the AI assistant, routed through the existing M
 - Verified: `tsc` 0 errors; server boots; route accepts `model`. Whether Forge actually serves
   Gemini/Claude IDs is a Manus-side dependency — the default-model fallback covers unsupported IDs.
 
+### File & media storage → contract attachments (2026-07-15)
+Reusable file/media upload built on the app's existing Forge/S3 storage (`server/storage.ts`).
+- `drizzle/schema.ts`: `attachments` table (contractId, userId, fileName, mimeType, fileKey, fileUrl, size).
+- `server/db.ts`: `ensureAttachmentsTable()` (idempotent CREATE TABLE), `createAttachment`,
+  `getAttachmentsByContract`, `getAttachmentById`, `deleteAttachment`.
+- `shared/const.ts`: `ATTACHMENT_MAX_BYTES` (20MB), `ATTACHMENT_ALLOWED_MIME` (pdf, doc/docx, png/jpeg/webp/gif).
+- `server/routers.ts`: `attachments` router — `list`, `upload` (base64 → storagePut → row), `remove`
+  (all protected + ownership-checked; server validates mime + size).
+- `client/src/components/ContractAttachments.tsx`: upload button (multi-file), list with download +
+  delete, SK/CZ/EN copy. test-ids: `contract-attachments`, `attachment-upload-button`,
+  `attachment-input`, `attachment-item-<id>`, `attachment-download-<id>`, `attachment-delete-<id>`.
+- Mounted on the Report page for full (paid) reports.
+- Verified: `tsc` 0 errors; server boots; `attachments.list`/`upload` → UNAUTHORIZED (registered/protected).
+  Live upload/download needs MySQL + Forge storage (deployed site only).
+
 ## Required config (set in the app's real env — Manus dashboard / .env)
 - GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET (Google Cloud Console, Web application OAuth client)
 - Authorized redirect URI to register (per domain): `https://<domain>/api/auth/google/callback`

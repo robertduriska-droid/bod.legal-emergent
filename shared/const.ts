@@ -48,3 +48,15 @@ export const ASSISTANT_MODELS = [
 
 export const DEFAULT_ASSISTANT_MODEL = "gpt-5-mini";
 export const ASSISTANT_MODEL_IDS: string[] = ASSISTANT_MODELS.map(m => m.id);
+
+// File & media storage: limits for contract attachments.
+export const ATTACHMENT_MAX_BYTES = 20 * 1024 * 1024; // 20 MB
+export const ATTACHMENT_ALLOWED_MIME: string[] = [
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/msword",
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+];

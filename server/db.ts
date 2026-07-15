@@ -370,3 +370,60 @@ export async function clearChatMessages(userId: number, contractId: number | nul
   await ensureChatTable();
   await db.delete(chatMessages).where(chatScope(userId, contractId));
 }
+
+// ─── Attachments (file & media storage) ──────────────────────────────────────
+
+import { attachments, Attachment, InsertAttachment } from "../drizzle/schema";
+
+let _attachmentsTableReady = false;
+
+/** Idempotently ensure the attachments table exists (avoids a migration step). */
+export async function ensureAttachmentsTable(): Promise<void> {
+  if (_attachmentsTableReady) return;
+  const db = await getDb();
+  if (!db) return;
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS attachments (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      contractId INT NOT NULL,
+      userId INT NOT NULL,
+      fileName VARCHAR(512) NOT NULL,
+      mimeType VARCHAR(128) NOT NULL,
+      fileKey VARCHAR(512) NOT NULL,
+      fileUrl VARCHAR(512) NOT NULL,
+      size INT NOT NULL DEFAULT 0,
+      createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  _attachmentsTableReady = true;
+}
+
+export async function createAttachment(data: InsertAttachment): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await ensureAttachmentsTable();
+  const result = await db.insert(attachments).values(data);
+  return Number(result[0].insertId);
+}
+
+export async function getAttachmentsByContract(contractId: number): Promise<Attachment[]> {
+  const db = await getDb();
+  if (!db) return [];
+  await ensureAttachmentsTable();
+  return db.select().from(attachments).where(eq(attachments.contractId, contractId)).orderBy(desc(attachments.createdAt));
+}
+
+export async function getAttachmentById(id: number): Promise<Attachment | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  await ensureAttachmentsTable();
+  const rows = await db.select().from(attachments).where(eq(attachments.id, id)).limit(1);
+  return rows[0];
+}
+
+export async function deleteAttachment(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await ensureAttachmentsTable();
+  await db.delete(attachments).where(eq(attachments.id, id));
+}

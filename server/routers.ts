@@ -1,4 +1,4 @@
-import { COOKIE_NAME } from "@shared/const";
+import { COOKIE_NAME, ATTACHMENT_ALLOWED_MIME, ATTACHMENT_MAX_BYTES } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
@@ -32,6 +32,10 @@ import {
   getFeedbackByContract,
   getChatMessages,
   clearChatMessages,
+  createAttachment,
+  getAttachmentsByContract,
+  getAttachmentById,
+  deleteAttachment,
 } from "./db";
 import { storagePut } from "./storage";
 import { analyzeContract } from "./analysis";
@@ -603,6 +607,70 @@ Odkaz: ${siteUrl}/${isUserComment ? 'admin/review' : 'report'}/${contract.id}`,
       .input(z.object({ contractId: z.number().nullable().optional() }))
       .mutation(async ({ ctx, input }) => {
         await clearChatMessages(ctx.user.id, input.contractId ?? null);
+        return { success: true };
+      }),
+  }),
+
+  // ─── Attachments (file & media storage) ─────────────────────────────────────
+  attachments: router({
+    /** List files attached to a contract */
+    list: protectedProcedure
+      .input(z.object({ contractId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const contract = await getContractById(input.contractId);
+        if (!contract || (contract.userId !== ctx.user.id && ctx.user.role !== "admin")) return [];
+        return getAttachmentsByContract(input.contractId);
+      }),
+
+    /** Upload a supporting file/media to a contract */
+    upload: protectedProcedure
+      .input(z.object({
+        contractId: z.number(),
+        fileName: z.string().min(1).max(400),
+        mimeType: z.string().min(1),
+        fileBase64: z.string().min(1),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const contract = await getContractById(input.contractId);
+        if (!contract || (contract.userId !== ctx.user.id && ctx.user.role !== "admin")) {
+          throw new Error("Unauthorized");
+        }
+        if (!ATTACHMENT_ALLOWED_MIME.includes(input.mimeType)) {
+          throw new Error("Unsupported file type");
+        }
+        const buffer = Buffer.from(input.fileBase64, "base64");
+        if (buffer.length === 0) throw new Error("Empty file");
+        if (buffer.length > ATTACHMENT_MAX_BYTES) throw new Error("File too large");
+
+        const safeName = input.fileName
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-zA-Z0-9._-]/g, "_")
+          .replace(/_+/g, "_");
+        const relKey = `attachments/${ctx.user.id}/${input.contractId}/${Date.now()}_${safeName}`;
+        const { key, url } = await storagePut(relKey, buffer, input.mimeType);
+
+        const id = await createAttachment({
+          contractId: input.contractId,
+          userId: ctx.user.id,
+          fileName: input.fileName,
+          mimeType: input.mimeType,
+          fileKey: key,
+          fileUrl: url,
+          size: buffer.length,
+        });
+        return { id, fileUrl: url };
+      }),
+
+    /** Remove an attachment (owner or admin) */
+    remove: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const att = await getAttachmentById(input.id);
+        if (!att || (att.userId !== ctx.user.id && ctx.user.role !== "admin")) {
+          throw new Error("Unauthorized");
+        }
+        await deleteAttachment(input.id);
         return { success: true };
       }),
   }),
