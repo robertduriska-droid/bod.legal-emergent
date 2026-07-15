@@ -6,7 +6,13 @@ import { sendEmail, emailReportReady, emailNewContractForReview } from "./email"
 import { storageGetSignedUrl } from "./storage";
 import { LEGAL_SOURCES, RISK_CATEGORIES } from "@shared/types";
 import type { ClauseAnalysis, AnalysisResult } from "@shared/types";
+import { DEFAULT_ANALYSIS_MODEL } from "@shared/const";
 import axios from "axios";
+
+// Deep contract-analysis model. Override with the ANALYSIS_MODEL env var;
+// otherwise a frontier default (see shared/const). Routed through the
+// OpenAI-compatible gateway set by BUILT_IN_FORGE_API_URL/_KEY (OpenRouter).
+const ANALYSIS_MODEL = ENV.analysisModel || DEFAULT_ANALYSIS_MODEL;
 
 /**
  * Raw LLM call that supports max_completion_tokens for GPT models.
@@ -20,13 +26,22 @@ async function callLLM(params: {
   reasoning?: any;
 }) {
   const url = `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`;
+  // OpenAI reasoning models (gpt-5*, o*) want max_completion_tokens + reasoning;
+  // Claude / Gemini via the gateway use the standard max_tokens. Strip any
+  // "provider/" prefix (OpenRouter slugs) before matching.
+  const bare = params.model.split("/").pop() || params.model;
+  const isOpenAIReasoning = /^(gpt-5|o\d)/.test(bare);
   const payload: Record<string, unknown> = {
     model: params.model,
-    max_completion_tokens: params.max_completion_tokens,
     messages: params.messages,
   };
+  if (isOpenAIReasoning) {
+    payload.max_completion_tokens = params.max_completion_tokens;
+    if (params.reasoning) payload.reasoning = params.reasoning;
+  } else {
+    payload.max_tokens = params.max_completion_tokens;
+  }
   if (params.response_format) payload.response_format = params.response_format;
-  if (params.reasoning) payload.reasoning = params.reasoning;
 
   const MAX_RETRIES = 3;
   let lastError: Error | null = null;
@@ -85,6 +100,28 @@ export async function extractDocxText(fileUrl: string): Promise<string> {
     .replace(/\n{3,}/g, "\n\n")
     .trim();
   return text;
+}
+
+/**
+ * Extract text from a PDF by downloading it and reading each page with pdf.js.
+ * Provider-neutral (works with any LLM gateway) — replaces the Manus-only
+ * `file_url` attachment path.
+ */
+export async function extractPdfText(fileUrl: string): Promise<string> {
+  const response = await axios.get(fileUrl, { responseType: "arraybuffer" });
+  // Non-literal specifier keeps the bundler/type-checker off the deep subpath;
+  // the package is external at runtime.
+  const specifier = "pdfjs-dist/legacy/build/pdf.mjs";
+  const pdfjs: any = await import(specifier);
+  const data = new Uint8Array(response.data as ArrayBuffer);
+  const doc = await pdfjs.getDocument({ data, useSystemFonts: true }).promise;
+  const pages: string[] = [];
+  for (let i = 1; i <= doc.numPages; i++) {
+    const page = await doc.getPage(i);
+    const content = await page.getTextContent();
+    pages.push(content.items.map((it: any) => it.str ?? "").join(" "));
+  }
+  return pages.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
 /**
@@ -206,46 +243,29 @@ export async function analyzeContract(contractId: number): Promise<void> {
     // Get signed URL for the file
     const fileUrl = await storageGetSignedUrl(contract.fileKey);
 
-    // Extract text from the document
+    // Extract text from the document (provider-neutral: works on any
+    // OpenAI-compatible gateway, unlike the Manus-only file_url attachment).
     const isPdf = contract.mimeType.includes("pdf");
-    let contractText: string = "";
+    const contractText = isPdf
+      ? await extractPdfText(fileUrl)
+      : await extractDocxText(fileUrl);
+    console.log(`[Analysis] Extracted ${contractText.length} chars from ${isPdf ? "PDF" : "DOCX"}`);
 
-    if (!isPdf) {
-      contractText = await extractDocxText(fileUrl);
-      console.log(`[Analysis] Extracted ${contractText.length} chars from DOCX`);
-    }
-
-    // Build user message content
-    let userContent: any[];
-    if (isPdf) {
-      // For PDF, use file_url
-      userContent = [
-        {
-          type: "file_url",
-          file_url: { url: fileUrl, mime_type: "application/pdf" },
-        },
-        {
-          type: "text",
-          text: "Analyzuj túto zmluvu. Identifikuj max 8 najrizikovejších klauzúl. Vráť JSON.",
-        },
-      ];
-    } else {
-      // For DOCX, send extracted text (truncated to prevent token overflow)
-      const maxChars = 8000;
-      const truncated = contractText.length > maxChars
-        ? contractText.substring(0, maxChars) + "\n\n[... zvyšok textu skrátený ...]"
-        : contractText;
-      userContent = [
-        {
-          type: "text",
-          text: `Text zmluvy:\n\n${truncated}\n\nAnalyzuj túto zmluvu. Identifikuj max 8 najrizikovejších klauzúl. Vráť JSON.`,
-        },
-      ];
-    }
+    // Truncate to keep the prompt within token limits.
+    const maxChars = 12000;
+    const truncated = contractText.length > maxChars
+      ? contractText.substring(0, maxChars) + "\n\n[... zvyšok textu skrátený ...]"
+      : contractText;
+    const userContent: any[] = [
+      {
+        type: "text",
+        text: `Text zmluvy:\n\n${truncated}\n\nAnalyzuj túto zmluvu. Identifikuj max 8 najrizikovejších klauzúl. Vráť JSON.`,
+      },
+    ];
 
     // Call LLM with structured output
     const response = await callLLM({
-      model: "gpt-5-mini",
+      model: ANALYSIS_MODEL,
       max_completion_tokens: 8000,
       reasoning: { effort: "low" },
       messages: [

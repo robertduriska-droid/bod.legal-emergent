@@ -71,7 +71,9 @@ function getSystemPrompt(language: string): string {
 function buildChatPayload(model: string, messages: { role: string; content: any }[]): Record<string, unknown> {
   // OpenAI reasoning models (gpt-5*, o*) require max_completion_tokens + reasoning;
   // Gemini/Claude via the OpenAI-compatible gateway use the standard max_tokens.
-  const isOpenAIReasoning = /^(gpt-5|o\d)/.test(model);
+  // Strip any "provider/" prefix (OpenRouter slugs) before matching.
+  const bare = model.split("/").pop() || model;
+  const isOpenAIReasoning = /^(gpt-5|o\d)/.test(bare);
   const payload: Record<string, unknown> = { model, messages };
   if (isOpenAIReasoning) {
     payload.max_completion_tokens = 2000;

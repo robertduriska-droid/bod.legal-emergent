@@ -36,19 +36,24 @@ export const decodeOAuthState = (state: string): OAuthState => {
   return { redirectUri: decoded };
 };
 
-// AI legal assistant model options, routed through the Manus Forge
-// (OpenAI-compatible) gateway. Adjust IDs here to match what Forge exposes.
+// AI legal assistant model options, routed through an OpenAI-compatible gateway
+// (OpenRouter — set BUILT_IN_FORGE_API_URL=https://openrouter.ai/api and
+// BUILT_IN_FORGE_API_KEY=<openrouter key>). IDs are OpenRouter slugs
+// (provider/model). Verify exact slugs at openrouter.ai/models — vendors rename
+// them over time — then adjust here. Frontier models chosen for legal-grade
+// analysis (the class of models Harvey / Moritz-tier tools run on).
 export const ASSISTANT_MODELS = [
-  { id: "gpt-5-mini", label: "GPT-5 mini", provider: "OpenAI" },
-  { id: "gpt-5", label: "GPT-5", provider: "OpenAI" },
-  { id: "gpt-4o", label: "GPT-4o", provider: "OpenAI" },
-  { id: "gemini-2.5-flash", label: "Gemini 2.5 Flash", provider: "Google" },
-  { id: "gemini-3.1-pro", label: "Gemini 3.1 Pro", provider: "Google" },
-  { id: "claude-sonnet-4-6", label: "Claude Sonnet 4.6", provider: "Anthropic" },
-  { id: "claude-haiku-4-5", label: "Claude Haiku 4.5", provider: "Anthropic" },
+  { id: "anthropic/claude-opus-4.8", label: "Claude Opus 4.8", provider: "Anthropic" },
+  { id: "anthropic/claude-sonnet-4.6", label: "Claude Sonnet 4.6", provider: "Anthropic" },
+  { id: "openai/gpt-5", label: "GPT-5", provider: "OpenAI" },
+  { id: "openai/gpt-5-mini", label: "GPT-5 mini", provider: "OpenAI" },
+  { id: "google/gemini-2.5-pro", label: "Gemini 2.5 Pro", provider: "Google" },
 ] as const;
 
-export const DEFAULT_ASSISTANT_MODEL = "gpt-5-mini";
+// Sonnet is the default chat model (fast + strong); deep contract analysis uses
+// ANALYSIS_MODEL (see server/analysis.ts), defaulting to Opus for depth.
+export const DEFAULT_ASSISTANT_MODEL = "anthropic/claude-sonnet-4.6";
+export const DEFAULT_ANALYSIS_MODEL = "anthropic/claude-opus-4.8";
 export const ASSISTANT_MODEL_IDS: string[] = ASSISTANT_MODELS.map(m => m.id);
 
 // File & media storage: limits for contract attachments.

@@ -68,18 +68,14 @@ export async function notifyOwner(
 ): Promise<boolean> {
   const { title, content } = validatePayload(payload);
 
-  if (!ENV.forgeApiUrl) {
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "Notification service URL is not configured.",
-    });
-  }
-
-  if (!ENV.forgeApiKey) {
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "Notification service API key is not configured.",
-    });
+  // Self-host: the Manus push service is optional. If the gateway isn't
+  // configured for push, skip silently instead of throwing so the core flow
+  // (analysis, review, email) is never broken by a missing push channel.
+  if (!ENV.forgeApiUrl || !ENV.forgeApiKey) {
+    console.warn(
+      "[Notification] Owner push not configured (BUILT_IN_FORGE_API_* unset); skipping.",
+    );
+    return false;
   }
 
   const endpoint = buildEndpointUrl(ENV.forgeApiUrl);
