@@ -25,6 +25,8 @@ bod.legal is an existing, mature AI contract-review platform built for the **Man
 - Frontend: `startGoogleLogin()` in `client/src/const.ts` (derives URLs from window.location.origin).
 - Header buttons (desktop + mobile) in `client/src/components/Header.tsx` with Google icon.
   test-ids: `google-signin-button`, `google-signin-button-mobile`, `signin-button`, `signin-button-mobile`.
+- Dashboard login gate (`client/src/components/DashboardLayout.tsx`) also offers Google.
+  test-ids: `dashboard-signin-button`, `dashboard-google-signin-button`.
 - i18n label `header.signInGoogle` added to types.ts + sk/cz/en.
 - `.env.example` documents required vars.
 
