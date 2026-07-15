@@ -1,0 +1,124 @@
+{
+  "theme": {
+    "mode": "system",
+    "description": "Default to Light theme for document legibility. Provide Dark mode tailored for long-session 'power users' to reduce eye strain."
+  },
+  "typography": {
+    "fonts": {
+      "headings": "'Cormorant Garamond', serif",
+      "body": "'IBM Plex Sans', sans-serif",
+      "mono": "'IBM Plex Mono', monospace"
+    },
+    "guidelines": "Use tight letter spacing (tracking-tight) for large headers (>32px). Use Uppercase + Wide Spacing (tracking-[0.2em]) for overlines and confidence labels. The jump between a heading and subheading must not exceed 2 Tailwind steps. Do NOT use Inter or Roboto."
+  },
+  "colors": {
+    "archetype": "Swiss High-Contrast mixed with Old Money Tech",
+    "primary": "#0A1128",
+    "secondary": "#E5E1D8",
+    "accent": "#C8102E",
+    "background_light": "#FCFCFB",
+    "background_dark": "#0B1120",
+    "text_light": "#0A1128",
+    "text_dark": "#F3F4F6",
+    "success": "#166534",
+    "warning": "#B45309",
+    "error": "#991B1B",
+    "guidelines": "Never use pure #000000. Ensure all text meets APCA standards. Color is function. Use accents (Red/Green) primarily to indicate AI confidence scores or validation states. DO NOT use Teal Green or Teal Blue for dashboards. Forbidden color for AI: #7351B7."
+  },
+  "visual enhancers": {
+    "borders": "1px solid border-border/40 for a 'Technical Grid' look on the dashboard.",
+    "shadows": "Minimal. Use crisp 1px borders to separate elements instead of soft fuzzy shadows.",
+    "surfaces": "Use 'Glassmorphism' (backdrop-blur-xl bg-white/80 or bg-black/60) with a 1px delicate inner stroke for floating sticky headers and overlays. Use 'Solid Background' with a hard bottom border for standard navs. DO NOT use complete transparent backgrounds for dropdowns or floating menus.",
+    "textures": "Subtle noise/grain overlay on the marketing hero section to kill 'digital flatness'."
+  },
+  "grids": {
+    "marketing_grid": "The 'Tetris' Grid (Bento) protocol. Wide gaps (gap-8). Asymmetrical structure mixing tall, square, and filler elements. Heavy typography and overlapping sections.",
+    "dashboard_grid": "High Density Grid. Tight gaps (gap-4). F-Pattern scanning. Every pixel utilized. Use h-full to stretch children."
+  },
+  "layouts": {
+    "marketing": {
+      "strategy": "High visual impact, storytelling. Overlapping elements, bento layouts, and aggressive asymmetry.",
+      "hero": "Max overlay opacity: bg-black/40. Image must breathe. Minimalist luxury."
+    },
+    "dashboard": {
+      "strategy": "Operational, action-driven layout. Drag-and-drop widgets. Top-left always features the 'North Star' metric (e.g., Document Extractions). Use visible grid lines (border-r border-b) for data-heavy sections.",
+      "sidebar": "Clean, dense navigation. Collapsible for power users."
+    }
+  },
+  "components": {
+    "buttons": "Pill-shaped or sharp rectangular depending on context. Primary buttons use the Midnight Slate background with White text. Explicit hover states (e.g., hover:bg-slate-800 hover:text-white).",
+    "cards": "Flat background, 1px subtle border, no shadow. Hover: slight lift (-translate-y-1) and shadow-lg.",
+    "charts": "Standardized charting (Line for trends, Bar for categories). Avoid donut charts unless displaying confidence distribution (<3 vars). Do not require hover for basic data.",
+    "tables": "Dense. Left-aligned data. Use IBM Plex Mono for numerical data and case citations.",
+    "status_badges": "Critical for AI transparency. Display 'Confidence Scores' explicitly next to extracted entities (High/Medium/Low)."
+  },
+  "motion": {
+    "guidelines": "Minimalist on dashboard (micro-interactions, fast hover states). High on marketing (parallax, scroll-triggered fades). Respect prefers-reduced-motion. Staggered entrances for list items."
+  },
+  "accessibility": {
+    "guidelines": "Minimum 4.5:1 contrast for normal text. Explicit focus states with ring-2. All interactive elements must include 'data-testid' (e.g., data-testid='upload-document-button'). Provide empty states with clear CTAs (e.g., 'Upload your first NDA')."
+  },
+  "media": {
+    "icons_library": "@phosphor-icons/react",
+    "icon_guidelines": "Use Phosphor Icons (Duotone for marketing, Regular for dense dashboards). Do NOT use AI emoji icons."
+  },
+  "3d libraries": {
+    "recommendation": "D3.js for 'Data Art' visualizations of case law citations and document extraction links. TS Particles for subtle, high-performance background networking effects on the marketing page.",
+    "usage": "Do NOT use D3 for simple bar charts. Use it strictly for visualizing complex legal connections (e.g., Case A cites Case B). Backgrounds should be transparent to blend with UI."
+  },
+  "image_urls": [
+    {
+      "url": "https://images.unsplash.com/photo-1505664194779-8beaceb93744?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzB8MHwxfHNlYXJjaHwzfHxsYXd5ZXIlMjBvZmZpY2V8ZW58MHx8fHwxNzg0MDcwOTMyfDA&ixlib=rb-4.1.0&q=85",
+      "category": "Marketing Hero / About",
+      "description": "Classic bookshelf. Use to represent legal heritage and trust."
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzB8MHwxfHNlYXJjaHwyfHxsYXd5ZXIlMjBvZmZpY2V8ZW58MHx8fHwxNzg0MDcwOTMyfDA&ixlib=rb-4.1.0&q=85",
+      "category": "Workspaces / Modern Firm",
+      "description": "Modern office glass doors representing the tech-forward, transparent nature of the AI platform."
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1545987796-200677ee1011",
+      "category": "AI / Abstract Data",
+      "description": "Abstract metal structure representing AI's neural connections and structural document parsing."
+    },
+    {
+      "url": "https://images.pexels.com/photos/5669602/pexels-photo-5669602.jpeg",
+      "category": "Marketing Feature",
+      "description": "Gavel and scales of justice. Good for the 'Case Law Lookup' feature highlight."
+    }
+  ],
+  "instructions_to_main_agent": {
+    "setup": "Install @phosphor-icons/react for icons. Configure Tailwind with the provided color palette and fonts (Cormorant Garamond, IBM Plex Sans, IBM Plex Mono).",
+    "file_conventions": "You have .js files not .tsx file, so share the guideline for .js files not for .tsx files. Use .jsx/.js extensions for all new components and strictly avoid TypeScript types in those files.",
+    "routing": "Create a clear separation between the Marketing landing page (/) and the App Dashboard (/app or /workspace).",
+    "testing": "Ensure EVERY interactive element has a 'data-testid' attribute (e.g., data-testid='login-submit').",
+    "ui_library": "Use Shadcn UI components but heavily customize them. Strip the 'Vercel-look'. Make them crisp (1px borders, minimal shadow)."
+  },
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
+    "You tend to converge toward generic, 'on distribution' outputs. Avoid the 'AI slop' aesthetic. Build a creative, distinct frontend.",
+    "Do not use dark colors as gradients.",
+    "Do not make generic centered layouts. Use F-Pattern for dashboards and asymmetrical Tetris grid for marketing.",
+    "Create depth through layered design elements with z-index hierarchy.",
+    "Use glass-morphism effects with backdrop filters (12-24px blur). NEVER use purely transparent backgrounds for overlays.",
+    "You MUST NOT apply universal transition (e.g., transition: all). Add transitions for specific properties to avoid breaking transforms.",
+    "You MUST NOT center align the app container. Do not add '.App { text-align: center; }' in the css file.",
+    "Always use modern button styles (pill-shaped or sharp) with interaction animations.",
+    "NEVER use AI assistant Emoji characters (like 🤖🧠) for icons. Use Phosphor Icons.",
+    "Every interaction needs micro-animations.",
+    "Use 2-3x more spacing than feels comfortable. Use padding inside bordered containers.",
+    "Main agent must use the provided image URLs. NEVER use placeholder URLs like via.placeholder.com.",
+    "Prioritize using pre-existing components from src/components/ui.",
+    "Use 'sonner' for toast notifications."
+  ],
+  "GENERAL UI UX DESIGN GUIDELINES": [
+    "Always explicitly set text color on hover. Do not rely on inheritance.",
+    "Containers with borders must have internal padding (p-6 or p-8) to prevent text collision.",
+    "Mobile Height Limit: Images MUST NOT exceed 80vh on mobile devices.",
+    "Optical alignment over geometrical alignment (e.g., button with round icon).",
+    "Subgrid Support: When wrapper elements are necessary, use subgrid to maintain layout integrity.",
+    "Ensure hover state color is a lighter hue of the active state color.",
+    "Only use primary/brand color for CTAs like buttons and forms. Limit the use of primary colors to maintain visual hierarchy.",
+    "All interactive and key informational elements MUST include a data-testid attribute to facilitate robust automated testing."
+  ]
+}
