@@ -56,10 +56,10 @@ describe("Shared types and reference data", () => {
     expect(PRICING_PLANS.map(p => p.id)).toEqual(["basic", "standard", "premium"]);
   });
 
-  it("PRICING_PLANS has correct prices", () => {
-    expect(PRICING_PLANS[0].price).toBe(149);
-    expect(PRICING_PLANS[1].price).toBe(249);
-    expect(PRICING_PLANS[2].price).toBe(399);
+  it("PRICING_PLANS has correct prices (consistent with Stripe products & marketing display)", () => {
+    expect(PRICING_PLANS[0].price).toBe(197);
+    expect(PRICING_PLANS[1].price).toBe(297);
+    expect(PRICING_PLANS[2].price).toBe(497);
   });
 
   it("LEGAL_SOURCES contains Slov-Lex and EUR-Lex sources", () => {

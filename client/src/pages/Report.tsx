@@ -6,6 +6,7 @@ import { trpc } from "@/lib/trpc";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ContractAssistant from "@/components/ContractAssistant";
+import DeepAnalysis from "@/components/DeepAnalysis";
 import ContractAttachments from "@/components/ContractAttachments";
 import { Link, useParams } from "wouter";
 import { ArrowLeft, Loader2, CheckCircle, Download, ExternalLink, Shield, FileDown, FileText, Check, X, RotateCcw, Columns2, EyeOff, MessageCircle, Send, Trash2, HelpCircle, ChevronDown, ThumbsUp, ThumbsDown, Scale } from "lucide-react";
@@ -743,6 +744,11 @@ export default function Report() {
                 <p className="font-sans text-sm leading-relaxed">{report.recommendation}</p>
               </CardContent>
             </Card>
+          )}
+
+          {/* Deep analysis (Mike OS) - hidden for basic plan */}
+          {!isLimited && data.deepAnalysis && (
+            <DeepAnalysis data={data.deepAnalysis} locale={locale} />
           )}
 
           {/* Clause Findings */}

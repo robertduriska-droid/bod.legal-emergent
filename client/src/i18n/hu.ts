@@ -27,6 +27,7 @@ export const hu: Translations = {
     subtitle: "Töltse fel, és 24 órán belül jelentést kap az azonosított kockázatokról, jogszabályi hivatkozásokról és javasolt módosításokról. Minden jelentést ügyvéd ellenőriz.",
     ctaUpload: "Szerződés feltöltése",
     ctaPricing: "Árak megtekintése",
+    ctaTrial: "Ingyenes próba",
     stat1Value: "24 ó",
     stat1Label: "Jelentés kézbesítése",
     stat2Value: "79 000 Ft-tól",

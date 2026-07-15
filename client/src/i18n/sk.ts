@@ -27,6 +27,7 @@ export const sk: Translations = {
     subtitle: "Nahrajte ju a do 24 hodín dostanete report s identifikovanými rizikami, odkazmi na právne predpisy a návrhmi úprav. Každý report overuje advokát.",
     ctaUpload: "Nahrať zmluvu",
     ctaPricing: "Pozrieť cenník",
+    ctaTrial: "Vyskúšať zadarmo",
     stat1Value: "do 24h",
     stat1Label: "Dodanie reportu",
     stat2Value: "od 197 eur",

@@ -72,6 +72,12 @@ export default function Home() {
                   {t.hero.ctaPricing}
                 </Button>
               </a>
+              <Link href={localePath("/trial")}>
+                <Button size="lg" variant="ghost" className="text-white hover:bg-white/10 font-sans px-8" data-testid="hero-trial-cta">
+                  {t.hero.ctaTrial}
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

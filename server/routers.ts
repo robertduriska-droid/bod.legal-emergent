@@ -42,6 +42,11 @@ import {
   deleteAttachment,
   setNotifyPhone,
   getNotifyPhone,
+  getDeepAnalysisByContract,
+  getTrialByUserId,
+  upsertTrialPending,
+  markTrialAnalysisUsed,
+  updateUserStripeCustomerId,
 } from "./db";
 import { storagePut } from "./storage";
 import { analyzeContract } from "./analysis";
@@ -178,9 +183,24 @@ export const appRouter = router({
           analyzeContract(contractId).catch(err =>
             console.error(`[Analysis] Failed for contract ${contractId}:`, err)
           );
+          return { contractId, status: "pending" as const, trialApplied: false };
         }
 
-        return { contractId, status: "pending" as const };
+        // Free trial: apply the one free full analysis if the user has an active
+        // trial that hasn't been used yet (non-basic plans only). Skips payment.
+        let trialApplied = false;
+        const trial = await getTrialByUserId(ctx.user.id).catch(() => null);
+        const trialActive = !!trial && trial.status === "active"
+          && !!trial.endsAt && new Date(trial.endsAt).getTime() > Date.now();
+        if (trialActive && trial!.freeAnalysisUsed === 0) {
+          await markTrialAnalysisUsed(ctx.user.id).catch(err => console.error("[Trial] mark used failed:", err));
+          trialApplied = true;
+          analyzeContract(contractId).catch(err =>
+            console.error(`[Analysis] Trial analysis failed for contract ${contractId}:`, err)
+          );
+        }
+
+        return { contractId, status: "pending" as const, trialApplied };
       }),
 
     /** Get user's contracts */
@@ -202,6 +222,14 @@ export const appRouter = router({
 
         const contractClauses = await getClausesByContractId(input.id);
         const report = await getReportByContractId(input.id);
+        const deep = await getDeepAnalysisByContract(input.id);
+        const deepAnalysisOut = deep ? {
+          riskScore: deep.riskScore,
+          dealBreakers: (deep.dealBreakers as { title: string; detail: string }[] | null) || [],
+          missingProvisions: (deep.missingProvisions as { title: string; detail: string }[] | null) || [],
+          verificationNotes: deep.verificationNotes,
+          redacted: false,
+        } : null;
 
         // For basic plan: only show top 3 high-risk clauses (free preview)
         // Redact full report data - only expose riskSummary counts
@@ -221,10 +249,18 @@ export const appRouter = router({
             lawyerName: null,
             signedAt: null,
           } : null;
-          return { contract, clauses: limitedClauses, report: limitedReport, isLimited: true };
+          // Teaser only: overall risk score, details redacted behind the paywall.
+          const limitedDeep = deep ? {
+            riskScore: deep.riskScore,
+            dealBreakers: [] as { title: string; detail: string }[],
+            missingProvisions: [] as { title: string; detail: string }[],
+            verificationNotes: null,
+            redacted: true,
+          } : null;
+          return { contract, clauses: limitedClauses, report: limitedReport, isLimited: true, deepAnalysis: limitedDeep };
         }
 
-        return { contract, clauses: contractClauses, report, isLimited: false };
+        return { contract, clauses: contractClauses, report, isLimited: false, deepAnalysis: deepAnalysisOut };
       }),
     /** Retry analysis for a pending contract (user-facing) */
     retryAnalysis: protectedProcedure
@@ -456,6 +492,70 @@ export const appRouter = router({
         // Contract is pending - check if basic plan (free preview available)
         // For standard/premium: payment required before full analysis
         return { paid: false };
+      }),
+  }),
+
+  // ─── Free Trial (15-day trial + 1 free analysis, Stripe SetupIntent) ────────
+  trial: router({
+    /** Current user's trial status */
+    status: protectedProcedure.query(async ({ ctx }) => {
+      const trial = await getTrialByUserId(ctx.user.id);
+      if (!trial) {
+        return { hasTrial: false, active: false, freeAnalysisAvailable: false, daysLeft: 0, status: "none" as const, freeAnalysisUsed: false, endsAt: null as string | null };
+      }
+      const now = Date.now();
+      const endsAtMs = trial.endsAt ? new Date(trial.endsAt).getTime() : 0;
+      const active = trial.status === "active" && endsAtMs > now;
+      const daysLeft = active ? Math.max(0, Math.ceil((endsAtMs - now) / (24 * 60 * 60 * 1000))) : 0;
+      return {
+        hasTrial: true,
+        active,
+        freeAnalysisAvailable: active && trial.freeAnalysisUsed === 0,
+        freeAnalysisUsed: trial.freeAnalysisUsed === 1,
+        daysLeft,
+        status: trial.status,
+        endsAt: trial.endsAt ? new Date(trial.endsAt).toISOString() : null,
+      };
+    }),
+
+    /** Start the free trial: save a card via Stripe Checkout (setup mode), no charge. */
+    start: protectedProcedure
+      .input(z.object({ redirectPath: z.string().max(120).default("/trial") }))
+      .mutation(async ({ ctx, input }) => {
+        const existing = await getTrialByUserId(ctx.user.id);
+        if (existing && existing.status === "active") {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Trial is already active." });
+        }
+
+        const stripe = new Stripe(ENV.stripeSecretKey);
+        const origin = ctx.req.headers.origin || "https://bod.legal";
+
+        // Reuse or create the user's Stripe customer.
+        const dbUser = await getUserById(ctx.user.id);
+        let customerId = dbUser?.stripeCustomerId || undefined;
+        if (!customerId) {
+          const customer = await stripe.customers.create({
+            email: ctx.user.email || undefined,
+            name: ctx.user.name || undefined,
+            metadata: { user_id: String(ctx.user.id) },
+          });
+          customerId = customer.id;
+          await updateUserStripeCustomerId(ctx.user.id, customerId).catch(() => {});
+        }
+
+        const path = input.redirectPath.startsWith("/") ? input.redirectPath : `/${input.redirectPath}`;
+        const session = await stripe.checkout.sessions.create({
+          mode: "setup",
+          payment_method_types: ["card"],
+          customer: customerId,
+          metadata: { user_id: String(ctx.user.id), purpose: "trial" },
+          setup_intent_data: { metadata: { user_id: String(ctx.user.id), purpose: "trial" } },
+          success_url: `${origin}${path}?setup=success`,
+          cancel_url: `${origin}${path}?setup=cancelled`,
+        });
+
+        await upsertTrialPending(ctx.user.id, customerId, session.id).catch(() => {});
+        return { checkoutUrl: session.url };
       }),
   }),
 

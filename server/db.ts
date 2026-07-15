@@ -517,3 +517,114 @@ export async function setEmailCredentialLock(email: string, failedAttempts: numb
     .set({ failedAttempts, lockedUntil, updatedAt: new Date() })
     .where(eq(emailCredentials.email, email));
 }
+
+// ─── Deep analysis (Mike OS) ──────────────────────────────────────────────────
+
+import { deepAnalysis, DeepAnalysis, InsertDeepAnalysis } from "../drizzle/schema";
+
+let _deepAnalysisTableReady = false;
+
+export async function ensureDeepAnalysisTable(): Promise<void> {
+  if (_deepAnalysisTableReady) return;
+  const db = await getDb();
+  if (!db) return;
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS deep_analysis (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      contractId INT NOT NULL,
+      riskScore INT NOT NULL DEFAULT 3,
+      dealBreakers JSON NULL,
+      missingProvisions JSON NULL,
+      verificationNotes TEXT NULL,
+      createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  _deepAnalysisTableReady = true;
+}
+
+export async function createDeepAnalysis(data: InsertDeepAnalysis): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await ensureDeepAnalysisTable();
+  // Replace any prior deep analysis for this contract (idempotent re-analysis).
+  await db.delete(deepAnalysis).where(eq(deepAnalysis.contractId, data.contractId));
+  await db.insert(deepAnalysis).values(data);
+}
+
+export async function getDeepAnalysisByContract(contractId: number): Promise<DeepAnalysis | null> {
+  const db = await getDb();
+  if (!db) return null;
+  await ensureDeepAnalysisTable();
+  const rows = await db.select().from(deepAnalysis)
+    .where(eq(deepAnalysis.contractId, contractId))
+    .orderBy(desc(deepAnalysis.createdAt))
+    .limit(1);
+  return rows[0] || null;
+}
+
+// ─── Free trials (15-day trial + one free analysis, Stripe SetupIntent) ────────
+
+import { trials, Trial } from "../drizzle/schema";
+
+let _trialsTableReady = false;
+
+export async function ensureTrialsTable(): Promise<void> {
+  if (_trialsTableReady) return;
+  const db = await getDb();
+  if (!db) return;
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS trials (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      userId INT NOT NULL,
+      stripeCustomerId VARCHAR(128) NULL,
+      paymentMethodId VARCHAR(128) NULL,
+      setupSessionId VARCHAR(256) NULL,
+      status ENUM('pending','active','expired','converted') NOT NULL DEFAULT 'pending',
+      startedAt TIMESTAMP NULL,
+      endsAt TIMESTAMP NULL,
+      freeAnalysisUsed INT NOT NULL DEFAULT 0,
+      createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_trials_userId (userId)
+    )
+  `);
+  _trialsTableReady = true;
+}
+
+export async function getTrialByUserId(userId: number): Promise<Trial | null> {
+  const db = await getDb();
+  if (!db) return null;
+  await ensureTrialsTable();
+  const rows = await db.select().from(trials).where(eq(trials.userId, userId)).limit(1);
+  return rows[0] || null;
+}
+
+export async function upsertTrialPending(userId: number, stripeCustomerId: string, setupSessionId: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await ensureTrialsTable();
+  const existing = await getTrialByUserId(userId);
+  if (existing) {
+    await db.update(trials).set({ stripeCustomerId, setupSessionId }).where(eq(trials.userId, userId));
+  } else {
+    await db.insert(trials).values({ userId, stripeCustomerId, setupSessionId, status: "pending", freeAnalysisUsed: 0 });
+  }
+}
+
+export async function activateTrial(userId: number, paymentMethodId: string | null, days = 15): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await ensureTrialsTable();
+  const now = new Date();
+  const endsAt = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+  const set: Record<string, unknown> = { status: "active", startedAt: now, endsAt };
+  if (paymentMethodId) set.paymentMethodId = paymentMethodId;
+  await db.update(trials).set(set).where(eq(trials.userId, userId));
+}
+
+export async function markTrialAnalysisUsed(userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await ensureTrialsTable();
+  await db.update(trials).set({ freeAnalysisUsed: 1 }).where(eq(trials.userId, userId));
+}

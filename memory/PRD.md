@@ -126,6 +126,61 @@ Classic auth layered on the existing session model (called integration_expert fi
 - `test_credentials.md` updated. Verified: `tsc` 0 errors; login → generic UNAUTHORIZED;
   register short password → zod validation error.
 
+### Hungarian (HU) locale — market expansion (2026-07-15)
+Full 4th language added (SK/CZ/EN/**HU**) as part of merging the parallel repo's features.
+- `client/src/i18n/hu.ts`: complete Hungarian translation of the whole `Translations` interface;
+  HUF display pricing (79 000 / 119 000 / 199 000 Ft, express +51 000 Ft — same convention as CZ's
+  CZK display while Stripe still charges EUR); legal refs point to njt.hu (Nemzeti Jogszabálytár) + EUR-Lex.
+- `i18n/types.ts` (`Locale` += "hu", `langSwitch.hu`), `i18n/index.ts` (register hu +
+  `/hu` in `detectLocaleFromPath`/`stripLocalePrefix`), `LanguageSwitcher.tsx` (+HU), sk/cz/en
+  `langSwitch.hu`, `App.tsx` (`/hu/*` routes), `Footer.tsx` (HU vop/gdpr paths + njt.hu/EUR-Lex/EKR sources).
+- Per-page local i18n maps: proper HU added to public funnel (DemoAnimation, About, SampleReport,
+  FreeSken, NotFound, NotificationBell). Post-purchase/admin screens (Report, ContractDetail,
+  AdminReview) fall back to EN for HU (`locale === "hu" ? "en" : locale`) — flagged for full HU later.
+- Hero `ctaTrial` key added to all 4 locales.
+
+### Mike OS deeper analysis (2026-07-15)
+Richer second-pass analysis on top of the existing clause-by-clause report.
+- `analysis.ts`: appended `DEEP_ANALYSIS_INSTRUCTION` to every language prompt (deal-breaker pass,
+  missing-provisions check, verification pass, 1-5 risk score); extended the strict json_schema with
+  `riskScore`, `dealBreakers[]`, `missingProvisions[]`, `verificationNotes`; added a `hu` system prompt
+  (Hungarian/EU law, njt.hu). Persists best-effort via `createDeepAnalysis`.
+- `drizzle/schema.ts` + `server/db.ts`: new `deep_analysis` table (idempotent CREATE TABLE) +
+  `ensureDeepAnalysisTable`/`createDeepAnalysis`/`getDeepAnalysisByContract`.
+- `contracts.getById` returns normalized `deepAnalysis` ({riskScore, dealBreakers, missingProvisions,
+  verificationNotes, redacted}); basic plan gets riskScore-only teaser (redacted), details behind paywall.
+- `client/src/components/DeepAnalysis.tsx` (SK/CZ/EN/HU; risk meter, deal-breakers, missing provisions,
+  verification). Mounted on Report for full (`!isLimited`) reports. test-ids: `deep-analysis`,
+  `deep-analysis-risk-score`, `deal-breaker-<i>`, `missing-provision-<i>`.
+
+### Free Trial — 15-day trial + 1 free analysis, Stripe SetupIntent (2026-07-15)
+- `drizzle/schema.ts` + `server/db.ts`: new `trials` table (idempotent, unique userId) +
+  `ensureTrialsTable`/`getTrialByUserId`/`upsertTrialPending`/`activateTrial`/`markTrialAnalysisUsed`.
+- `server/routers.ts` `trial` router: `status` (active/daysLeft/freeAnalysisAvailable), `start`
+  (creates/reuses Stripe customer + Checkout Session in **`mode:"setup"`** → saves card with no charge,
+  metadata `{user_id, purpose:"trial"}`).
+- `server/stripe-webhook.ts`: `checkout.session.completed` branches on setup/trial → retrieves the
+  SetupIntent's payment method, stores customer + pm, `activateTrial` (15 days), notifies user.
+- `contracts.upload`: if an active trial has an unused free analysis (non-basic plan) → runs the full
+  analysis immediately, marks it used, returns `trialApplied:true` (skips payment).
+- `client/src/pages/Trial.tsx` (`/trial`, `/cz|en|hu/trial`; SK/CZ/EN/HU): start CTA → Stripe redirect,
+  active-trial state (days left, free-analysis status), `?setup=success|cancelled` handling.
+  test-ids: `trial-page`, `trial-start-card`, `trial-start-button`, `trial-active-card`, `trial-upload-button`.
+- `Home.tsx` hero third CTA → `/trial` (`hero-trial-cta`). `Upload.tsx`: trial-aware banner + button
+  ("Use free trial analysis"), `trialApplied` success routing, and **HUF price display** for HU.
+
+### Pricing audit fix (2026-07-15)
+- `shared/types.ts` `PRICING_PLANS` corrected to the actually-charged/displayed prices:
+  basic 197, standard 297, premium 497 (was stale 149/249/399); `EXPRESS_ADDON` 99 → 127.
+- `server/contracts.test.ts` price assertion updated to 197/297/497.
+- HU checkout button now shows Ft (consistent with HU marketing display).
+
+### Verification (whole session)
+- `tsc --noEmit` → **0 errors**; `vitest run` → **63/63 pass**; `vite build` → **success**.
+- App is Manus-stack (MySQL + Forge) so it cannot run E2E in the Emergent pod; live behaviour
+  (Stripe setup checkout, webhook trial activation, LLM deep analysis) verifies only on the deployed site.
+
+
 ## Required config (set in the app's real env — Manus dashboard / .env)
 - GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET (Google Cloud Console, Web application OAuth client)
 - Authorized redirect URI to register (per domain): `https://<domain>/api/auth/google/callback`
@@ -133,6 +188,18 @@ Classic auth layered on the existing session model (called integration_expert fi
 - JWT_SECRET + VITE_APP_ID must be set (session signing) — already provided on Manus.
 
 ## Backlog / Next
-- P1: expose the AI assistant on the ContractDetail page and/or a standalone "general" legal Q&A + drafting page (backend already supports contractId=null).
+- P1: full HU translation for post-purchase/admin screens (Report, ContractDetail, AdminReview)
+  — currently fall back to EN for the HU locale.
+- P1: password-reset flow for the email/password login.
+- P2: standalone general legal Q&A + drafting page (assistant backend already supports contractId=null).
 - P1: optional streaming responses (currently non-streaming mutation).
-- Mike's CourtListener/US case-law feature intentionally skipped (US-only; bod.legal is SK/CZ jurisdiction).
+- Trial conversion: auto-charge / prompt to subscribe when the 15-day trial ends (endsAt is stored).
+- Mike's CourtListener/US case-law feature intentionally skipped (US-only; bod.legal is SK/CZ/HU jurisdiction).
+
+## Deployment (Manus stack — NOT Emergent)
+- This is a Node/Express + MySQL app; deploy via **Save to GitHub** → pull/deploy on the **Manus dashboard**
+  → point **bod.legal** through **Cloudflare**. Cannot be deployed by Emergent's deploy (wrong stack).
+- Required env on Manus: JWT_SECRET, VITE_APP_ID, MySQL creds, STRIPE_SECRET_KEY + STRIPE_WEBHOOK_SECRET,
+  GOOGLE_CLIENT_ID/SECRET, SENDGRID_*, TWILIO_* (see `.env.example`).
+- New Stripe webhook events to enable on the live endpoint: keep `checkout.session.completed`
+  (now also handles trial `mode:setup`). Register `https://bod.legal/api/auth/google/callback` in Google Cloud.

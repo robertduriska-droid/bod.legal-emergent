@@ -24,6 +24,7 @@ const GDPR = lazy(() => import("./pages/GDPR"));
 const Cookies = lazy(() => import("./pages/Cookies"));
 const FreeSken = lazy(() => import("./pages/FreeSken"));
 const SampleReport = lazy(() => import("./pages/SampleReport"));
+const Trial = lazy(() => import("./pages/Trial"));
 
 function PageLoader() {
   const { t } = useT();
@@ -52,6 +53,10 @@ function Router() {
         <Route path="/cookies" component={Cookies} />
         <Route path="/preview/:id" component={FreeSken} />
         <Route path="/vzorovy-report" component={SampleReport} />
+        <Route path="/trial" component={Trial} />
+        <Route path="/cz/trial" component={Trial} />
+        <Route path="/en/trial" component={Trial} />
+        <Route path="/hu/trial" component={Trial} />
 
         {/* Czech routes (/cz prefix) */}
         <Route path="/cz" component={Home} />

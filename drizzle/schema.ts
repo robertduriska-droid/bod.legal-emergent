@@ -260,3 +260,46 @@ export const emailCredentials = mysqlTable("email_credentials", {
 
 export type EmailCredential = typeof emailCredentials.$inferSelect;
 export type InsertEmailCredential = typeof emailCredentials.$inferInsert;
+
+/**
+ * Deep analysis (Mike OS) — richer second-pass analysis stored per contract:
+ * deal-breaker pass, missing-provisions check, verification pass, 1-5 risk score.
+ */
+export const deepAnalysis = mysqlTable("deep_analysis", {
+  id: int("id").autoincrement().primaryKey(),
+  contractId: int("contractId").notNull(),
+  /** Overall risk score 1 (safe) - 5 (critical) */
+  riskScore: int("riskScore").default(3).notNull(),
+  /** Critical issues that should block signing: [{title, detail}] */
+  dealBreakers: json("dealBreakers"),
+  /** Important clauses that are absent but expected: [{title, detail}] */
+  missingProvisions: json("missingProvisions"),
+  /** Verification pass notes (self-check of the findings) */
+  verificationNotes: text("verificationNotes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type DeepAnalysis = typeof deepAnalysis.$inferSelect;
+export type InsertDeepAnalysis = typeof deepAnalysis.$inferInsert;
+
+/**
+ * Free trials — 15-day trial with one free contract analysis. A card is saved
+ * (no charge) via Stripe Checkout in setup mode (SetupIntent). Kept in its own
+ * table to avoid ALTERing the existing users table.
+ */
+export const trials = mysqlTable("trials", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  stripeCustomerId: varchar("stripeCustomerId", { length: 128 }),
+  paymentMethodId: varchar("paymentMethodId", { length: 128 }),
+  setupSessionId: varchar("setupSessionId", { length: 256 }),
+  status: mysqlEnum("status", ["pending", "active", "expired", "converted"]).default("pending").notNull(),
+  startedAt: timestamp("startedAt"),
+  endsAt: timestamp("endsAt"),
+  freeAnalysisUsed: int("freeAnalysisUsed").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Trial = typeof trials.$inferSelect;
+export type InsertTrial = typeof trials.$inferInsert;

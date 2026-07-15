@@ -7,7 +7,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useState, useCallback } from "react";
 import { useLocation, useSearch } from "wouter";
-import { Upload as UploadIcon, FileText, CheckCircle, AlertCircle, Loader2, CreditCard, Zap, Lock, Shield } from "lucide-react";
+import { Upload as UploadIcon, FileText, CheckCircle, AlertCircle, Loader2, CreditCard, Zap, Lock, Shield, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { PRICING_PLANS } from "@shared/types";
 import { useT } from "@/i18n";
@@ -32,6 +32,14 @@ export default function Upload() {
       if (selectedPlan === "basic") {
         toast.success(t.upload.successBasic);
         navigate(localePath(`/preview/${data.contractId}`));
+      } else if (data.trialApplied) {
+        toast.success(
+          locale === "en" ? "Free trial analysis applied — no charge." :
+          locale === "cz" ? "Bezplatná analýza z trialu uplatněna — bez platby." :
+          locale === "hu" ? "Ingyenes próbaelemzés alkalmazva – fizetés nélkül." :
+          "Bezplatná analýza zo skúšobnej verzie uplatnená — bez platby."
+        );
+        navigate(localePath(`/contract/${data.contractId}`));
       } else {
         toast.success(t.upload.successPaid);
         navigate(localePath(`/contract/${data.contractId}`));
@@ -43,6 +51,8 @@ export default function Upload() {
       setUploading(false);
     },
   });
+
+  const trialStatusQuery = trpc.trial.status.useQuery(undefined, { enabled: isAuthenticated });
 
   const handleFileSelect = useCallback((selectedFile: File) => {
     const validTypes = [
@@ -102,11 +112,28 @@ export default function Upload() {
   // Get price for selected plan - use marketing-friendly prices from stripe-products
   const MARKETING_PRICES_EUR: Record<string, number> = { basic: 197, standard: 297, premium: 497 };
   const MARKETING_PRICES_CZK: Record<string, number> = { basic: 4990, standard: 7490, premium: 12490 };
+  const MARKETING_PRICES_HUF: Record<string, number> = { basic: 79000, standard: 119000, premium: 199000 };
   const EXPRESS_EUR = 127;
   const EXPRESS_CZK = 3190;
+  const EXPRESS_HUF = 51000;
   const selectedPlanData = PRICING_PLANS.find(p => p.id === selectedPlan);
   const totalPriceEur = (MARKETING_PRICES_EUR[selectedPlan] || 0) + (expressAddon ? EXPRESS_EUR : 0);
   const totalPriceCzk = (MARKETING_PRICES_CZK[selectedPlan] || 0) + (expressAddon ? EXPRESS_CZK : 0);
+  const totalPriceHuf = (MARKETING_PRICES_HUF[selectedPlan] || 0) + (expressAddon ? EXPRESS_HUF : 0);
+  const priceLabel = locale === "cz"
+    ? `${totalPriceCzk.toLocaleString("cs-CZ")} Kč`
+    : locale === "hu"
+      ? `${totalPriceHuf.toLocaleString("hu-HU")} Ft`
+      : `${totalPriceEur} eur`;
+  const trialFree = isAuthenticated && selectedPlan !== "basic" && trialStatusQuery.data?.freeAnalysisAvailable === true;
+  const trialCtaLabel = locale === "en" ? "Use free trial analysis"
+    : locale === "cz" ? "Použít bezplatnou analýzu z trialu"
+    : locale === "hu" ? "Ingyenes próbaelemzés használata"
+    : "Použiť bezplatnú analýzu zo skúšobnej verzie";
+  const trialBannerText = locale === "en" ? "Your free trial analysis will be applied — no charge."
+    : locale === "cz" ? "Uplatní se vaše bezplatná analýza z trialu — bez platby."
+    : locale === "hu" ? "Az ingyenes próbaelemzés kerül alkalmazásra – fizetés nélkül."
+    : "Uplatní sa vaša bezplatná analýza zo skúšobnej verzie — bez platby.";
 
   // Plan display strings are locale-specific (sk/cz/en)
   const planNames = [t.pricing.basicTitle, t.pricing.standardTitle, t.pricing.premiumTitle];
@@ -256,6 +283,12 @@ export default function Upload() {
 
           {/* Submit */}
           <div className="flex flex-col gap-3">
+            {trialFree && (
+              <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 flex items-center gap-2" data-testid="trial-banner">
+                <Sparkles className="h-4 w-4 text-primary shrink-0" />
+                <p className="text-sm font-sans">{trialBannerText}</p>
+              </div>
+            )}
             <div className="flex items-center gap-4">
               <Button
                 size="lg"
@@ -272,8 +305,10 @@ export default function Upload() {
                   <>
                     {selectedPlan === "basic" ? (
                       <><UploadIcon className="mr-2 h-4 w-4" />{t.upload.uploadFreePreview}</>
+                    ) : trialFree ? (
+                      <><Sparkles className="mr-2 h-4 w-4" />{trialCtaLabel}</>
                     ) : (
-                      <><CreditCard className="mr-2 h-4 w-4" />{isAuthenticated ? `${t.upload.uploadAndPay} (${locale === 'cz' ? `${totalPriceCzk.toLocaleString('cs-CZ')} Kč` : `${totalPriceEur} eur`})` : `${t.upload.continueLabel} (${locale === 'cz' ? `${totalPriceCzk.toLocaleString('cs-CZ')} Kč` : `${totalPriceEur} eur`})`}</>
+                      <><CreditCard className="mr-2 h-4 w-4" />{isAuthenticated ? `${t.upload.uploadAndPay} (${priceLabel})` : `${t.upload.continueLabel} (${priceLabel})`}</>
                     )}
                   </>
                 )}

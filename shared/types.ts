@@ -50,6 +50,11 @@ export interface ClauseAnalysis {
   riskCategory?: string;
 }
 
+export interface DeepFinding {
+  title: string;
+  detail: string;
+}
+
 export interface AnalysisResult {
   contractType: ContractType;
   clauses: ClauseAnalysis[];
@@ -57,6 +62,11 @@ export interface AnalysisResult {
   recommendation: string;
   riskSummary: { high: number; medium: number; low: number };
   applicableLegalSources: LegalSource[];
+  /** Deep analysis (Mike OS) — optional richer second-pass fields */
+  dealBreakers?: DeepFinding[];
+  missingProvisions?: DeepFinding[];
+  verificationNotes?: string;
+  riskScore?: number;
 }
 
 // ─── Pricing Plan Details ───────────────────────────────────────────────────
@@ -79,8 +89,8 @@ export const PRICING_PLANS: PricingPlan[] = [
     id: "basic",
     name: "Basic Review",
     nameSk: "Základná kontrola",
-    price: 149,
-    priceLabel: "149 eur",
+    price: 197,
+    priceLabel: "197 eur",
     delivery: "do 24 hodín",
     maxPages: 30,
     features: [
@@ -97,8 +107,8 @@ export const PRICING_PLANS: PricingPlan[] = [
     id: "standard",
     name: "Standard Review",
     nameSk: "Štandardná kontrola",
-    price: 249,
-    priceLabel: "249 eur",
+    price: 297,
+    priceLabel: "297 eur",
     delivery: "do 24 hodín",
     maxPages: 50,
     features: [
@@ -115,8 +125,8 @@ export const PRICING_PLANS: PricingPlan[] = [
     id: "premium",
     name: "Premium Review",
     nameSk: "Prémiová kontrola",
-    price: 399,
-    priceLabel: "399 eur",
+    price: 497,
+    priceLabel: "497 eur",
     delivery: "do 24 hodín",
     maxPages: 100,
     features: [
@@ -132,8 +142,8 @@ export const PRICING_PLANS: PricingPlan[] = [
 
 // Express add-on (not a standalone plan)
 export const EXPRESS_ADDON = {
-  price: 99,
-  priceLabel: "+99 eur",
+  price: 127,
+  priceLabel: "+127 eur",
   delivery: "do 4 hodín",
   description: "Prioritné spracovanie do 4 hodín namiesto 24",
 };

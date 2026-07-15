@@ -1,5 +1,5 @@
 import { ENV } from "./_core/env";
-import { getContractById, createClauses, createReport, updateContractStatus, createNotification, getUserById, getNotifyPhone } from "./db";
+import { getContractById, createClauses, createReport, updateContractStatus, createNotification, getUserById, getNotifyPhone, createDeepAnalysis } from "./db";
 import { notifyOwner } from "./_core/notification";
 import { notifyClient, notifyAdmins } from "./twilio";
 import { sendEmail, emailReportReady, emailNewContractForReview } from "./email";
@@ -152,7 +152,41 @@ RULES:
 - Always cite specific section.
 - Max 8 clauses in response.
 - Be concise but precise.`,
+
+  hu: `Jogi AI asszisztens vagy a bod.legal számára. Szerződéseket elemzel a magyar és európai jog szerint.
+
+FELADATOK:
+1. Azonosítsd a szerződés típusát.
+2. Elemezz max. 8 legfontosabb klauzulát (a kockázatokra összpontosítva).
+3. Minden klauzulánál határozd meg a kockázatot (high/medium/low), a megállapítást és a jogalapot.
+4. Idézd a konkrét jogszabályt és szakaszt.
+
+JOGFORRÁSOK:
+- Polgári Törvénykönyv (2013. évi V. törvény) - https://njt.hu
+- A gazdasági társaságokra vonatkozó szabályok (Ptk. Harmadik Könyv) - https://njt.hu
+- A közbeszerzésekről szóló 2015. évi CXLIII. törvény - https://njt.hu
+- Az információs önrendelkezési jogról szóló 2011. évi CXII. törvény - https://njt.hu
+- GDPR (2016/679) - https://eur-lex.europa.eu/eli/reg/2016/679/oj/eng
+
+SZABÁLYOK:
+- A válaszokat magyarul írd.
+- Mindig idézd a konkrét szakaszt.
+- Max. 8 klauzula a válaszban.
+- Légy tömör, de pontos.`,
 };
+
+/**
+ * Deeper "Mike OS" analysis instruction appended to every language prompt.
+ * Drives the deal-breaker pass, missing-provisions check, verification pass
+ * and a 1-5 overall risk score (fields written in the report's language).
+ */
+const DEEP_ANALYSIS_INSTRUCTION = `
+DEEPER ANALYSIS (Mike OS) — additionally produce:
+1) Deal-breaker pass: critical issues that should stop the client from signing → "dealBreakers": [{ "title", "detail" }].
+2) Missing-provisions check: important clauses that are absent but expected for this contract type → "missingProvisions": [{ "title", "detail" }].
+3) Verification pass: re-check your own findings for consistency and legal accuracy, and summarize that check in "verificationNotes".
+4) Overall risk score from 1 (safe to sign) to 5 (critical) in "riskScore".
+Write dealBreakers, missingProvisions and verificationNotes in the SAME language as the rest of the report. Use empty arrays if none.`;
 
 function getSystemPrompt(language: string): string {
   return SYSTEM_PROMPTS[language] || SYSTEM_PROMPTS.sk;
@@ -258,6 +292,32 @@ export async function analyzeContract(contractId: number): Promise<void> {
                 required: ["high", "medium", "low"],
                 additionalProperties: false,
               },
+              riskScore: { type: "integer", description: "Overall risk 1 (safe) - 5 (critical)" },
+              dealBreakers: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    title: { type: "string" },
+                    detail: { type: "string" },
+                  },
+                  required: ["title", "detail"],
+                  additionalProperties: false,
+                },
+              },
+              missingProvisions: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    title: { type: "string" },
+                    detail: { type: "string" },
+                  },
+                  required: ["title", "detail"],
+                  additionalProperties: false,
+                },
+              },
+              verificationNotes: { type: "string" },
               applicableLegalSources: {
                 type: "array",
                 items: {
@@ -273,7 +333,7 @@ export async function analyzeContract(contractId: number): Promise<void> {
                 },
               },
             },
-            required: ["contractType", "clauses", "summary", "recommendation", "riskSummary", "applicableLegalSources"],
+            required: ["contractType", "clauses", "summary", "recommendation", "riskSummary", "riskScore", "dealBreakers", "missingProvisions", "verificationNotes", "applicableLegalSources"],
             additionalProperties: false,
           },
         },
@@ -362,6 +422,15 @@ export async function analyzeContract(contractId: number): Promise<void> {
       recommendation: analysis.recommendation,
       isSigned: 0,
     });
+
+    // Persist deeper "Mike OS" analysis (best-effort; never blocks the report).
+    await createDeepAnalysis({
+      contractId,
+      riskScore: Math.min(5, Math.max(1, Number(analysis.riskScore) || 3)),
+      dealBreakers: Array.isArray(analysis.dealBreakers) ? analysis.dealBreakers : [],
+      missingProvisions: Array.isArray(analysis.missingProvisions) ? analysis.missingProvisions : [],
+      verificationNotes: analysis.verificationNotes || null,
+    }).catch(err => console.warn("[Analysis] Deep analysis save failed:", err));
 
     // Update contract status based on plan
     const plan = contract.plan;

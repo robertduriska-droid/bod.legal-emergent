@@ -31,6 +31,7 @@ export interface Translations {
     subtitle: string;
     ctaUpload: string;
     ctaPricing: string;
+    ctaTrial: string;
     stat1Value: string;
     stat1Label: string;
     stat2Value: string;

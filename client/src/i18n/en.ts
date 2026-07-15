@@ -27,6 +27,7 @@ export const en: Translations = {
     subtitle: "Upload it and within 24 hours you'll receive a report with identified risks, legal references, and suggested edits. Every report is verified by a lawyer.",
     ctaUpload: "Upload contract",
     ctaPricing: "View pricing",
+    ctaTrial: "Start free trial",
     stat1Value: "24h",
     stat1Label: "Report delivery",
     stat2Value: "from €197",

@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import Stripe from "stripe";
 import { ENV } from "./_core/env";
-import { updateContractStatus, getContractById, createNotification, updateUserStripeCustomerId } from "./db";
+import { updateContractStatus, getContractById, createNotification, updateUserStripeCustomerId, activateTrial } from "./db";
 import { analyzeContract } from "./analysis";
 import { notifyOwner } from "./_core/notification";
 
@@ -44,6 +44,36 @@ export function registerStripeWebhook(app: express.Express) {
             const session = event.data.object as Stripe.Checkout.Session;
             const contractId = session.metadata?.contract_id;
             const userId = session.metadata?.user_id;
+
+            // Free-trial card setup (no charge): activate the 15-day trial.
+            if (session.mode === "setup" || session.metadata?.purpose === "trial") {
+              if (userId) {
+                let paymentMethodId: string | null = null;
+                const siId = typeof session.setup_intent === "string" ? session.setup_intent : session.setup_intent?.id;
+                if (siId) {
+                  try {
+                    const si = await stripe.setupIntents.retrieve(siId);
+                    paymentMethodId = typeof si.payment_method === "string" ? si.payment_method : si.payment_method?.id ?? null;
+                  } catch (e: any) {
+                    console.warn("[Stripe Webhook] setupIntent retrieve failed:", e.message);
+                  }
+                }
+                if (session.customer) {
+                  const customerId = typeof session.customer === "string" ? session.customer : session.customer.id;
+                  updateUserStripeCustomerId(parseInt(userId), customerId).catch(() => {});
+                }
+                await activateTrial(parseInt(userId), paymentMethodId)
+                  .catch(err => console.error("[Trial] activate failed:", err));
+                await createNotification({
+                  userId: parseInt(userId),
+                  title: "Skúšobná verzia aktivovaná",
+                  message: "Vaša 15-dňová skúšobná verzia je aktívna. Máte 1 bezplatnú analýzu zmluvy.",
+                  type: "system",
+                }).catch(() => {});
+                console.log(`[Stripe Webhook] Trial activated for user ${userId}`);
+              }
+              break;
+            }
 
             // Store Stripe customer ID on user record
             if (userId && session.customer) {
