@@ -40,6 +40,8 @@ export const decodeOAuthState = (state: string): OAuthState => {
 // (OpenAI-compatible) gateway. Adjust IDs here to match what Forge exposes.
 export const ASSISTANT_MODELS = [
   { id: "gpt-5-mini", label: "GPT-5 mini", provider: "OpenAI" },
+  { id: "gpt-5", label: "GPT-5", provider: "OpenAI" },
+  { id: "gpt-4o", label: "GPT-4o", provider: "OpenAI" },
   { id: "gemini-2.5-flash", label: "Gemini 2.5 Flash", provider: "Google" },
   { id: "gemini-3.1-pro", label: "Gemini 3.1 Pro", provider: "Google" },
   { id: "claude-sonnet-4-6", label: "Claude Sonnet 4.6", provider: "Anthropic" },

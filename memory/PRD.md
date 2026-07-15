@@ -55,7 +55,7 @@ Mike (OSS AI legal platform) rebuilt as a native feature in bod.legal's own stac
 ### Gemini + Anthropic chat models (2026-07-15)
 Multi-provider model support for the AI assistant, routed through the existing Manus Forge
 (OpenAI-compatible) gateway — no new API keys (user chose "route through Forge").
-- `shared/const.ts`: `ASSISTANT_MODELS` (OpenAI gpt-5-mini, Gemini 2.5 Flash / 3.1 Pro,
+- `shared/const.ts`: `ASSISTANT_MODELS` (OpenAI gpt-5-mini [default] / gpt-5 / gpt-4o, Gemini 2.5 Flash / 3.1 Pro,
   Claude Sonnet 4.6 / Haiku 4.5), `DEFAULT_ASSISTANT_MODEL`, `ASSISTANT_MODEL_IDS`.
 - `server/assistant.ts`: `buildChatPayload()` branches params by provider (gpt-5*/o* use
   max_completion_tokens + reasoning; Gemini/Claude use max_tokens). `runAssistant` takes a
