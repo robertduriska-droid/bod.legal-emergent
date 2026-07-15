@@ -14,6 +14,7 @@ export const sk: Translations = {
     admin: "Admin",
     uploadContract: "Nahrať zmluvu",
     signIn: "Prihlásiť sa",
+    signInGoogle: "Prihlásiť sa cez Google",
   },
   splash: {
     trustBar: "Bez záväzkov \u00B7 Paušálna cena \u00B7 Výsledok do 24h",

@@ -29,3 +29,17 @@ export const startLogin = () => {
 
   window.location.href = url.toString();
 };
+
+// Start the standard "Sign in with Google" flow (owner's own Google Cloud
+// OAuth credentials). Self-contained: the backend handles the code exchange and
+// mints the same session cookie used everywhere else.
+//
+// REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS,
+// THIS BREAKS THE AUTH. We derive both URLs from window.location.origin so we
+// always return to the exact domain the user is on (Manus, Emergent, or custom).
+export const startGoogleLogin = () => {
+  const redirectUri = `${window.location.origin}/api/auth/google/callback`;
+  const url = new URL(`${window.location.origin}/api/auth/google/login`);
+  url.searchParams.set("redirect_uri", redirectUri);
+  window.location.href = url.toString();
+};

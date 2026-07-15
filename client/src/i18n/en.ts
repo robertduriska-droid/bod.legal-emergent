@@ -14,6 +14,7 @@ export const en: Translations = {
     admin: "Admin",
     uploadContract: "Upload contract",
     signIn: "Sign in",
+    signInGoogle: "Sign in with Google",
   },
   splash: {
     trustBar: "No commitment \u00B7 Flat fee \u00B7 Results in 24h",

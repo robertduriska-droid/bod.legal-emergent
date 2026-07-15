@@ -16,6 +16,7 @@ export interface Translations {
     admin: string;
     uploadContract: string;
     signIn: string;
+    signInGoogle: string;
   };
   // Splash
   splash: {

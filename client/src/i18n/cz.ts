@@ -14,6 +14,7 @@ export const cz: Translations = {
     admin: "Admin",
     uploadContract: "Nahrát smlouvu",
     signIn: "Přihlásit se",
+    signInGoogle: "Přihlásit se přes Google",
   },
   splash: {
     trustBar: "Bez závazků \u00B7 Paušální cena \u00B7 Výsledek do 24h",
