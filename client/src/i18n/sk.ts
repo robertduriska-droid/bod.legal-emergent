@@ -363,5 +363,6 @@ export const sk: Translations = {
     sk: "SK",
     cz: "CZ",
     en: "EN",
+    hu: "HU",
   },
 };

@@ -117,7 +117,7 @@ const TX = {
 export default function AdminReview() {
   const { user } = useAuth({ redirectOnUnauthenticated: true });
   const { locale } = useT();
-  const tx = TX[locale];
+  const tx = TX[locale === "hu" ? "en" : locale];
   const params = useParams<{ id: string }>();
   const [, navigate] = useLocation();
   const contractId = parseInt(params.id || "0");

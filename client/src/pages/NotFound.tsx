@@ -24,6 +24,12 @@ const TX = {
     home: "Na úvodní stránku",
     upload: "Nahrát smlouvu",
   },
+  hu: {
+    title: "Az oldal nem található",
+    desc: "Ez az oldal nem létezik, vagy áthelyezték.",
+    home: "Vissza a főoldalra",
+    upload: "Szerződés feltöltése",
+  },
 };
 
 export default function NotFound() {

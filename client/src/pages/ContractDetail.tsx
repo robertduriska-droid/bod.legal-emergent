@@ -160,7 +160,7 @@ function DeliveryCountdown({ createdAt, expressAddon, tx }: { createdAt: string 
 export default function ContractDetail() {
   const { isAuthenticated } = useAuth({ redirectOnUnauthenticated: true });
   const { locale, localePath } = useT();
-  const tx = TX[locale];
+  const tx = TX[locale === "hu" ? "en" : locale];
   const params = useParams<{ id: string }>();
   const contractId = parseInt(params.id || "0");
   const searchString = useSearch();

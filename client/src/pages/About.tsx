@@ -107,6 +107,38 @@ export default function About() {
         { url: "https://smlouvy.gov.cz", name: "Registr smluv", desc: "Registr smluv České republiky" },
       ],
     },
+    hu: {
+      title: "Rólunk",
+      intro: "A bod.legal a KILIAN LEGAL s.r.o. ügyvédi iroda terméke. A jogi szakértelmet AI-technológiával ötvözzük az üzleti szerződések ellenőrzéséhez.",
+      whatWeDoTitle: "Mit csinálunk",
+      whatWeDoText: "Üzleti szerződéseket ellenőrzünk cégek és vállalkozók számára. Az AI minden klauzulát elemez, azonosítja a kockázatokat, és hivatkozásokat ad a magyar és európai jogszabályok konkrét szakaszaira. A Standard és Prémium csomagoknál ügyvéd ellenőrzi a megállapításokat, és aláírja a jelentést.",
+      features: [
+        { icon: Scale, title: "Ügyvédi ellenőrzés", desc: "A Standard és Prémium csomagok jelentéseit a Magyar Ügyvédi Kamarában bejegyzett ügyvéd ellenőrzi." },
+        { icon: Brain, title: "AI-elemzés", desc: "A nyelvi modellek klauzuláról klauzulára elemzik a szerződést, njt.hu és EUR-Lex hivatkozásokkal." },
+        { icon: Shield, title: "Biztonság", desc: "Titkosított tárolás, GDPR-megfelelőség és ügyvédi titoktartás." },
+        { icon: Users, title: "Cégeknek", desc: "Üzleti szerződésekre összpontosítunk: szállítási, keret-, licenc-, SPA- és hasonló szerződések." },
+      ],
+      companyTitle: "KILIAN LEGAL s.r.o.",
+      tableRows: [
+        { label: "Cégnév", value: "KILIAN LEGAL s.r.o.", type: "text" as TableRowType },
+        { label: "Cégjegyzékszám", value: "53 957 008", type: "text" as TableRowType },
+        { label: "Székhely", value: "Hrudky 1401/46A, Chorvátsky Grob 900 25, Szlovákia", type: "text" as TableRowType },
+        { label: "Bejegyzés dátuma", value: "2021.07.20.", type: "text" as TableRowType },
+        { label: "Jogi forma", value: "Korlátolt felelősségű társaság", type: "text" as TableRowType },
+        { label: "Ügyvezető", value: "Michal Kilian", type: "text" as TableRowType },
+        { label: "Jegyzett tőke", value: "5 000 EUR (befizetve: 5 000 EUR)", type: "text" as TableRowType },
+        { label: "E-mail", value: "robert.duriska@bod.legal", type: "email" as TableRowType },
+        { label: "Telefon", value: "+421 917 333 692", type: "phone" as TableRowType },
+        { label: "Weboldal", value: "bod.legal", type: "web" as TableRowType },
+      ],
+      sourcesTitle: "Jogforrások",
+      sourcesIntro: "Az AI-elemzés hivatalos jogforrásokra hivatkozik:",
+      sources: [
+        { url: "https://njt.hu", name: "Nemzeti Jogszabálytár", desc: "Magyarország hivatalos jogszabály-nyilvántartása" },
+        { url: "https://eur-lex.europa.eu", name: "EUR-Lex", desc: "Az Európai Unió joga" },
+        { url: "https://ekr.gov.hu", name: "EKR", desc: "Elektronikus Közbeszerzési Rendszer" },
+      ],
+    },
   };
 
   const content = contentByLocale[locale];

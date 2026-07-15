@@ -517,7 +517,7 @@ function SatisfactionSurvey({ contractId, tx }: { contractId: number; tx: typeof
 export default function Report() {
   const { isAuthenticated, user: authUser } = useAuth({ redirectOnUnauthenticated: true });
   const { locale, localePath } = useT();
-  const tx = TX[locale];
+  const tx = TX[locale === "hu" ? "en" : locale];
   const params = useParams<{ id: string }>();
   const contractId = parseInt(params.id || "0");
 

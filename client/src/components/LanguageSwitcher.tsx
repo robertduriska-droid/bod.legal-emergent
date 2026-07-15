@@ -5,6 +5,7 @@ const LOCALES: { code: Locale; label: string }[] = [
   { code: "sk", label: "SK" },
   { code: "cz", label: "CZ" },
   { code: "en", label: "EN" },
+  { code: "hu", label: "HU" },
 ];
 
 export default function LanguageSwitcher() {

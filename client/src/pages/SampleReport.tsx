@@ -134,6 +134,26 @@ const TX = {
     ctaUpload: "Nahrát smlouvu",
     ctaPricing: "Zobrazit ceník",
   },
+  hu: {
+    riskLabels: { high: "Magas", medium: "Közepes", low: "Alacsony" } as Record<string, string>,
+    bannerTitle: "Ez egy mintajelentés",
+    bannerDesc: "Példa arra, amit a szerződés feltöltése után kap. Az adatok szemléltető jellegűek (a megállapítások szlovák nyelven).",
+    title: "Szerződéselemzés: IT-szolgáltatási keretszerződés",
+    date: "Dátum: 2025. július 9.",
+    plan: "Csomag: Standard ellenőrzés",
+    pages: "Oldalak: 12",
+    highRisk: "Magas kockázat",
+    mediumRisk: "Közepes kockázat",
+    lowRisk: "Alacsony kockázat",
+    summary: "Összefoglaló",
+    clauseAnalysis: (n: number) => `Klauzulaelemzés (${n})`,
+    legalBasis: "Jogalap:",
+    suggestedEdit: "Javasolt módosítás:",
+    ctaTitle: "Ilyen jelentést szeretne a saját szerződéséhez?",
+    ctaDesc: "Töltse fel szerződését, és 24 órán belül teljes jelentést kap jogszabályi hivatkozásokkal.",
+    ctaUpload: "Szerződés feltöltése",
+    ctaPricing: "Árak megtekintése",
+  },
 };
 
 export default function SampleReport() {

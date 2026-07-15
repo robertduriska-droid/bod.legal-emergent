@@ -33,6 +33,13 @@ const TX = {
     viewContract: "Zobrazit smlouvu \u2192",
     dateLocale: "cs-CZ",
   },
+  hu: {
+    title: "Értesítések",
+    markAll: "Összes olvasottnak jelölése",
+    empty: "Nincsenek értesítések",
+    viewContract: "Szerződés megtekintése \u2192",
+    dateLocale: "hu-HU",
+  },
 };
 
 const TYPE_ICONS: Record<string, typeof Bell> = {

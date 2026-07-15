@@ -1,4 +1,4 @@
-export type Locale = "sk" | "cz" | "en";
+export type Locale = "sk" | "cz" | "en" | "hu";
 
 export interface Translations {
   // Meta
@@ -284,5 +284,6 @@ export interface Translations {
     sk: string;
     cz: string;
     en: string;
+    hu: string;
   };
 }

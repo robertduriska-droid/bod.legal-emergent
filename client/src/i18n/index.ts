@@ -3,11 +3,12 @@ import type { Locale, Translations } from "./types";
 import { sk } from "./sk";
 import { cz } from "./cz";
 import { en } from "./en";
+import { hu } from "./hu";
 
 export type { Locale, Translations };
-export { sk, cz, en };
+export { sk, cz, en, hu };
 
-const translations: Record<Locale, Translations> = { sk, cz, en };
+const translations: Record<Locale, Translations> = { sk, cz, en, hu };
 
 export function getTranslations(locale: Locale): Translations {
   return translations[locale];
@@ -44,6 +45,9 @@ export function detectLocaleFromPath(path: string): Locale {
   if (path.startsWith("/cz") && (path === "/cz" || path.startsWith("/cz/"))) {
     return "cz";
   }
+  if (path.startsWith("/hu") && (path === "/hu" || path.startsWith("/hu/"))) {
+    return "hu";
+  }
   return "sk";
 }
 
@@ -58,6 +62,12 @@ export function stripLocalePrefix(path: string): string {
     return path.slice(3); // Remove "/cz" prefix, keep the "/"
   }
   if (path === "/cz") {
+    return "/";
+  }
+  if (path.startsWith("/hu/")) {
+    return path.slice(3); // Remove "/hu" prefix, keep the "/"
+  }
+  if (path === "/hu") {
     return "/";
   }
   return path;

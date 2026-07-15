@@ -5,8 +5,8 @@ export default function Footer() {
   const { t, locale, localePath } = useT();
 
   // VOP/GDPR use different slugs in English (terms/privacy); cookies keeps the same slug everywhere.
-  const vopPath = locale === "en" ? "/en/terms" : locale === "cz" ? "/cz/vop" : "/vop";
-  const privacyPath = locale === "en" ? "/en/privacy" : locale === "cz" ? "/cz/gdpr" : "/gdpr";
+  const vopPath = locale === "en" ? "/en/terms" : locale === "cz" ? "/cz/vop" : locale === "hu" ? "/hu/vop" : "/vop";
+  const privacyPath = locale === "en" ? "/en/privacy" : locale === "cz" ? "/cz/gdpr" : locale === "hu" ? "/hu/gdpr" : "/gdpr";
   const cookiesPath = localePath("/cookies");
 
   return (
@@ -69,6 +69,14 @@ export default function Footer() {
                 <a href="https://eur-lex.europa.eu" target="_blank" rel="noopener noreferrer" className="underline hover:text-hero-text">EUR-Lex</a>
                 {" | "}
                 <a href="https://smlouvy.gov.cz" target="_blank" rel="noopener noreferrer" className="underline hover:text-hero-text">Registr smluv</a>
+              </>
+            ) : locale === "hu" ? (
+              <>
+                <a href="https://njt.hu" target="_blank" rel="noopener noreferrer" className="underline hover:text-hero-text">Nemzeti Jogszabálytár</a>
+                {" | "}
+                <a href="https://eur-lex.europa.eu" target="_blank" rel="noopener noreferrer" className="underline hover:text-hero-text">EUR-Lex</a>
+                {" | "}
+                <a href="https://ekr.gov.hu" target="_blank" rel="noopener noreferrer" className="underline hover:text-hero-text">EKR</a>
               </>
             ) : (
               <>

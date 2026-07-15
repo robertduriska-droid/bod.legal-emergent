@@ -83,6 +83,21 @@ function Router() {
         <Route path="/en/preview/:id" component={FreeSken} />
         <Route path="/en/sample-report" component={SampleReport} />
 
+        {/* Hungarian routes (/hu prefix) */}
+        <Route path="/hu" component={Home} />
+        <Route path="/hu/dashboard" component={Dashboard} />
+        <Route path="/hu/upload" component={Upload} />
+        <Route path="/hu/contract/:id" component={ContractDetail} />
+        <Route path="/hu/report/:id" component={Report} />
+        <Route path="/hu/admin" component={AdminPanel} />
+        <Route path="/hu/admin/review/:id" component={AdminReview} />
+        <Route path="/hu/about" component={About} />
+        <Route path="/hu/vop" component={VOP} />
+        <Route path="/hu/gdpr" component={GDPR} />
+        <Route path="/hu/cookies" component={Cookies} />
+        <Route path="/hu/preview/:id" component={FreeSken} />
+        <Route path="/hu/sample-report" component={SampleReport} />
+
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>
