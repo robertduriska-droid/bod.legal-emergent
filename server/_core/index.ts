@@ -13,6 +13,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { runMigrations } from "./migrate";
 import { startRetentionJob } from "./retentionJob";
+import { registerEmailDebug } from "./emailDebug";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -46,6 +47,7 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   registerStorageProxy(app);
   registerGoogleAuthRoutes(app);
+  registerEmailDebug(app);
   registerPdfExport(app);
   registerDocxExport(app);
   // tRPC API
