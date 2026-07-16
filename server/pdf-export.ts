@@ -6,6 +6,7 @@ import { invokeLLM } from "./_core/llm";
 import { getContractById, getClausesByContractId, getReportByContractId, isClauseExcluded } from "./db";
 import { getInterRegularBase64, getInterBoldBase64 } from "./fonts/font-data";
 import { signOffLine } from "@shared/advokat";
+import { aiOutputStatement, AI_MARKING_KEYWORDS, AI_MARKING_CREATOR } from "@shared/aiMarking";
 
 type Lang = "sk" | "en";
 
@@ -247,6 +248,17 @@ async function generateReportPdf(
   // Verification is only claimed once the lawyer signed the report.
   const isSigned = !!report.isSigned;
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+  // Machine-readable AI marking per art. 50(2) of Regulation (EU) 2024/1689;
+  // our Transparentnost AI document promises exactly this.
+  doc.setDocumentProperties({
+    title: `bod.legal report: ${contract.fileName || "zmluva"}`,
+    subject: aiOutputStatement(isSigned),
+    author: AI_MARKING_CREATOR,
+    keywords: AI_MARKING_KEYWORDS,
+    creator: AI_MARKING_CREATOR,
+  });
+
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 20;

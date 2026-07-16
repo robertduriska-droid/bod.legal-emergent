@@ -22,6 +22,7 @@ import {
 import { sdk } from "./_core/sdk";
 import { getContractById, getClausesByContractId, getReportByContractId, isClauseExcluded } from "./db";
 import { signOffLine } from "@shared/advokat";
+import { aiOutputStatement, AI_MARKING_KEYWORDS, AI_MARKING_CREATOR } from "@shared/aiMarking";
 
 type Lang = "sk" | "en";
 
@@ -407,6 +408,11 @@ async function generateReportDocx(
 
   // ─── Create Document ───────────────────────────────────────────────────────
   const doc = new Document({
+    // Machine-readable AI marking per art. 50(2) of Regulation (EU) 2024/1689.
+    title: `bod.legal report: ${contract.fileName || "zmluva"}`,
+    description: aiOutputStatement(isSigned),
+    creator: AI_MARKING_CREATOR,
+    keywords: AI_MARKING_KEYWORDS,
     features: {
       trackRevisions: true,
     },
@@ -631,6 +637,12 @@ async function generateFinalDocx(
   );
 
   const doc = new Document({
+    // The final version is assembled from AI-proposed clause wordings, so it
+    // carries the same art. 50(2) machine-readable marking as the report.
+    title: `bod.legal finalna verzia: ${contract.fileName || "zmluva"}`,
+    description: aiOutputStatement(isSigned),
+    creator: AI_MARKING_CREATOR,
+    keywords: AI_MARKING_KEYWORDS,
     features: { trackRevisions: false },
     styles: {
       default: {
