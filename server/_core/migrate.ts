@@ -28,6 +28,7 @@ export async function runMigrations(): Promise<void> {
     const db = drizzle(connection);
     await migrate(db, { migrationsFolder: "./drizzle" });
     console.log("[Migrate] Database migrations up to date.");
+    await recoverOrphanedAnalyses(connection);
   } catch (err) {
     console.error("[Migrate] Migration failed (continuing to boot):", err);
   } finally {
@@ -36,5 +37,31 @@ export async function runMigrations(): Promise<void> {
     } catch {
       // ignore close errors
     }
+  }
+}
+
+/**
+ * Analysis runs in-process, so a deploy or crash mid-analysis leaves the
+ * contract stuck on "analyzing" forever: the work is gone but the status says
+ * it is still running, and the client sees a spinner that never resolves.
+ *
+ * On boot, nothing can legitimately be analyzing yet, so any such row is an
+ * orphan from the previous container. Send it back to "pending", which is the
+ * state the retry path already understands.
+ *
+ * Only rows older than a couple of minutes are touched, so a rolling deploy
+ * where the old container is still finishing a contract cannot be disturbed.
+ */
+async function recoverOrphanedAnalyses(connection: mysql.Connection): Promise<void> {
+  try {
+    const [res] = await connection.execute(
+      "UPDATE contracts SET status = 'pending' WHERE status = 'analyzing' AND updatedAt < (NOW() - INTERVAL 2 MINUTE)",
+    );
+    const n = (res as { affectedRows?: number }).affectedRows ?? 0;
+    if (n > 0) {
+      console.warn(`[Migrate] Recovered ${n} contract(s) orphaned mid-analysis, reset to pending.`);
+    }
+  } catch (err) {
+    console.error("[Migrate] Orphan recovery failed (continuing to boot):", err);
   }
 }
