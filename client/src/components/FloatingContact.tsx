@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { MessageCircle, Phone, X } from "lucide-react";
 import { useT } from "@/i18n";
+import { CONTACT, whatsappUrl } from "@/lib/contact";
 
 const TX = {
   sk: {
@@ -34,7 +35,7 @@ export default function FloatingContact() {
   const { locale } = useT();
   const tx = TX[locale] ?? TX.sk;
 
-  const whatsappUrl = `https://wa.me/421917333692?text=${encodeURIComponent(tx.whatsappPrefill)}`;
+  const waUrl = whatsappUrl(tx.whatsappPrefill);
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
@@ -44,7 +45,7 @@ export default function FloatingContact() {
             {tx.availability}
           </p>
           <a
-            href={whatsappUrl}
+            href={waUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 bg-green-600 text-white px-4 py-2.5 rounded-full shadow-lg hover:bg-green-700 transition-colors text-sm font-sans font-medium"
@@ -53,11 +54,11 @@ export default function FloatingContact() {
             WhatsApp
           </a>
           <a
-            href="tel:+421917333692"
+            href={`tel:${CONTACT.phoneNumber}`}
             className="flex items-center gap-2 bg-foreground text-background px-4 py-2.5 rounded-full shadow-lg hover:bg-foreground/90 transition-colors text-sm font-sans font-medium"
           >
             <Phone className="h-4 w-4" />
-            +421 917 333 692
+            {CONTACT.phoneDisplay}
           </a>
         </div>
       )}

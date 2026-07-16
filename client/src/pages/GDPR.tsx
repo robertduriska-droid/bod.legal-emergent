@@ -2,6 +2,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useT } from "@/i18n";
 import { Info } from "lucide-react";
+import { CONTACT } from "@/lib/contact";
 
 export default function GDPR() {
   const { locale } = useT();
@@ -36,7 +37,7 @@ export default function GDPR() {
             <section>
               <h2 className="text-xl font-serif text-foreground">1. Prevádzkovateľ</h2>
               <p>Prevádzkovateľom osobných údajov je KILIAN LEGAL s.r.o., IČO: 53 957 008, so sídlom Hrudky 1401/46A, Chorvátsky Grob 900 25, Slovenská republika (ďalej len „Prevádzkovateľ").</p>
-              <p>Kontakt: robert.duriska@bod.legal | Tel: +421 917 333 692</p>
+              <p>Kontakt: {CONTACT.email} | Tel: {CONTACT.phoneDisplay}</p>
             </section>
 
             <section>

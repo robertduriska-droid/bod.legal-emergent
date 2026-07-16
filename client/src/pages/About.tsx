@@ -6,6 +6,7 @@ import { useT } from "@/i18n";
 // section renders in generic mode; access is guarded below so empty fields
 // never produce a fabricated identity.
 import { ADVOKAT, SAK_REGISTER_SEARCH_URL, isAdvokatConfigured } from "@/lib/advokat";
+import { CONTACT } from "@/lib/contact";
 
 // Table row types drive which rows get mailto:/tel:/website link treatment,
 // independent of locale-specific label text (e.g. "Telefón" vs "Telefon").
@@ -104,8 +105,8 @@ export default function About() {
         { label: "Legal form", value: "Limited liability company", type: "text" as TableRowType },
         { label: "Director", value: "Michal Kilian", type: "text" as TableRowType },
         { label: "Share capital", value: "€5,000 (paid up: €5,000)", type: "text" as TableRowType },
-        { label: "Email", value: "robert.duriska@bod.legal", type: "email" as TableRowType },
-        { label: "Phone", value: "+421 917 333 692", type: "phone" as TableRowType },
+        { label: "Email", value: CONTACT.email, type: "email" as TableRowType },
+        { label: "Phone", value: CONTACT.phoneDisplay, type: "phone" as TableRowType },
         { label: "Website", value: "bod.legal", type: "web" as TableRowType },
       ],
       sourcesTitle: "Legal sources",
@@ -136,8 +137,8 @@ export default function About() {
         { label: "Právna forma", value: "Spoločnosť s ručením obmedzeným", type: "text" as TableRowType },
         { label: "Konateľ", value: "Michal Kilian", type: "text" as TableRowType },
         { label: "Základné imanie", value: "5 000 eur (splatené: 5 000 eur)", type: "text" as TableRowType },
-        { label: "E-mail", value: "robert.duriska@bod.legal", type: "email" as TableRowType },
-        { label: "Telefón", value: "+421 917 333 692", type: "phone" as TableRowType },
+        { label: "E-mail", value: CONTACT.email, type: "email" as TableRowType },
+        { label: "Telefón", value: CONTACT.phoneDisplay, type: "phone" as TableRowType },
         { label: "Web", value: "bod.legal", type: "web" as TableRowType },
       ],
       sourcesTitle: "Právne zdroje",
@@ -168,8 +169,8 @@ export default function About() {
         { label: "Právní forma", value: "Společnost s ručením omezeným", type: "text" as TableRowType },
         { label: "Jednatel", value: "Michal Kilian", type: "text" as TableRowType },
         { label: "Základní kapitál", value: "5 000 EUR (splaceno: 5 000 EUR)", type: "text" as TableRowType },
-        { label: "E-mail", value: "robert.duriska@bod.legal", type: "email" as TableRowType },
-        { label: "Telefon", value: "+421 917 333 692", type: "phone" as TableRowType },
+        { label: "E-mail", value: CONTACT.email, type: "email" as TableRowType },
+        { label: "Telefon", value: CONTACT.phoneDisplay, type: "phone" as TableRowType },
         { label: "Web", value: "bod.legal", type: "web" as TableRowType },
       ],
       sourcesTitle: "Právní zdroje",
@@ -200,8 +201,8 @@ export default function About() {
         { label: "Jogi forma", value: "Korlátolt felelősségű társaság", type: "text" as TableRowType },
         { label: "Ügyvezető", value: "Michal Kilian", type: "text" as TableRowType },
         { label: "Jegyzett tőke", value: "5 000 EUR (befizetve: 5 000 EUR)", type: "text" as TableRowType },
-        { label: "E-mail", value: "robert.duriska@bod.legal", type: "email" as TableRowType },
-        { label: "Telefon", value: "+421 917 333 692", type: "phone" as TableRowType },
+        { label: "E-mail", value: CONTACT.email, type: "email" as TableRowType },
+        { label: "Telefon", value: CONTACT.phoneDisplay, type: "phone" as TableRowType },
         { label: "Weboldal", value: "bod.legal", type: "web" as TableRowType },
       ],
       sourcesTitle: "Jogforrások",
@@ -309,7 +310,7 @@ export default function About() {
                         {row.type === "email" ? (
                           <a href={`mailto:${row.value}`} className="text-primary hover:underline">{row.value}</a>
                         ) : row.type === "phone" ? (
-                          <a href="tel:+421917333692" className="text-primary hover:underline">{row.value}</a>
+                          <a href={`tel:${CONTACT.phoneNumber}`} className="text-primary hover:underline">{row.value}</a>
                         ) : row.type === "web" ? (
                           <a href="https://bod.legal" className="text-primary hover:underline">{row.value}</a>
                         ) : (

@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { useT } from "@/i18n";
+import { CONTACT } from "@/lib/contact";
 
 export default function Footer() {
   const { t, locale, localePath } = useT();
@@ -52,8 +53,8 @@ export default function Footer() {
               <li><Link href={localePath("/about")} className="hover:text-hero-text transition-colors">{t.header.about}</Link></li>
               <li>KILIAN LEGAL s.r.o.</li>
               <li>IČO: 53 957 008</li>
-              <li><a href="mailto:robert.duriska@bod.legal" className="hover:text-hero-text transition-colors">robert.duriska@bod.legal</a></li>
-              <li><a href="tel:+421917333692" className="hover:text-hero-text transition-colors">+421 917 333 692</a></li>
+              <li><a href={`mailto:${CONTACT.email}`} className="hover:text-hero-text transition-colors">{CONTACT.email}</a></li>
+              <li><a href={`tel:${CONTACT.phoneNumber}`} className="hover:text-hero-text transition-colors">{CONTACT.phoneDisplay}</a></li>
             </ul>
           </div>
         </div>
