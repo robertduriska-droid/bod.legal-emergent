@@ -91,7 +91,7 @@ export const sk: Translations = {
     row1Bod: "do 24 hodín",
     row1Trad: "5 až 14 dní",
     row2Label: "Cena za kontrolu",
-    row2Bod: "od 297 eur, top 3 riziká zadarmo",
+    row2Bod: "od 249 eur, top 3 riziká zadarmo",
     row2Trad: "typicky od 500 eur",
     row3Label: "Právne zdroje v reporte",
     row3Bod: "Slov-Lex, EUR-Lex odkazy",
@@ -119,7 +119,7 @@ export const sk: Translations = {
       "Do 30 strán",
     ],
     standardTitle: "Štandardná kontrola",
-    standardPrice: "297 eur",
+    standardPrice: "249 eur",
     standardTime: "do 24 hodín",
     standardFeatures: [
       "Všetko zo Základnej kontroly",
@@ -317,7 +317,7 @@ export const sk: Translations = {
     tiers: [
       {
         name: "Check",
-        price: "od 297 eur",
+        price: "od 249 eur",
         desc: "Jednorazová kontrola jednej zmluvy",
         features: ["AI analýza + overenie advokátom", "Report do 24 hodín", "Slov-Lex a EUR-Lex citácie", "PDF + DOCX export"],
         cta: "Nahrať zmluvu",

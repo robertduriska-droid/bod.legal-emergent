@@ -91,7 +91,7 @@ export const en: Translations = {
     row1Bod: "within 24 hours",
     row1Trad: "5 to 14 days",
     row2Label: "Price per review",
-    row2Bod: "from €297, top 3 risks free",
+    row2Bod: "from €249, top 3 risks free",
     row2Trad: "typically from \u20AC500",
     row3Label: "Legal sources in report",
     row3Bod: "Slov-Lex, EUR-Lex links",
@@ -119,7 +119,7 @@ export const en: Translations = {
       "Up to 30 pages",
     ],
     standardTitle: "Standard review",
-    standardPrice: "€297",
+    standardPrice: "€249",
     standardTime: "within 24 hours",
     standardFeatures: [
       "Everything from Basic review",
@@ -317,7 +317,7 @@ export const en: Translations = {
     tiers: [
       {
         name: "Check",
-        price: "from 297 EUR",
+        price: "from 249 EUR",
         desc: "One-time review of a single contract",
         features: ["AI analysis + lawyer verification", "Report within 24 hours", "Slov-Lex & EUR-Lex citations", "PDF + DOCX export"],
         cta: "Upload contract",

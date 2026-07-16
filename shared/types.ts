@@ -106,8 +106,8 @@ export const PRICING_PLANS: PricingPlan[] = [
     id: "standard",
     name: "Standard Review",
     nameSk: "Štandardná kontrola",
-    price: 297,
-    priceLabel: "297 eur",
+    price: 249,
+    priceLabel: "249 eur",
     delivery: "do 24 hodín",
     maxPages: 50,
     features: [
@@ -131,6 +131,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     features: [
       "Všetko zo Štandardnej kontroly",
       "Redline dokument s navrhovanými úpravami",
+      "Zložitejšie a neštandardné zmluvy",
       "Analýza pozície oboch strán",
       "Do 100 strán",
     ],

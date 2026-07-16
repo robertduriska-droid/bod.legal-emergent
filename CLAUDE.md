@@ -21,7 +21,7 @@ as advokát; the signing advokát is Kilian.
 - **What it does:** AI reviews a contract clause by clause, personal data is redacted before processing, an SAK-registered advokát verifies and signs the result, delivered within 24h at a fixed price.
 - **Market:** Slovakia. All client-facing copy is Slovak. English is a parallel version, same Slovak law.
 - **Buyer:** B2B konateľ and agencies. Not consumers, not residential.
-- **Flagship deliverable (locked):** clause report + redline with tracked changes + drafted counterparty email, **249 eur**. (See §8.2: production currently prices differently.)
+- **Flagship deliverable:** clause report + advokát verification + suggested edits, **249 eur**, up to 50 pages. **Redline is NOT in the flagship** (decided 2026-07-16, amends the original brief): the redline document, non-standard/complex contracts and up to 100 pages are what **Prémium 497 eur** adds. Express is a +127 eur add-on.
 - **Ladder:** free AI scan (lead magnet) → Express upsell → bundle → negotiation-to-signature add-on → subscription 449 eur/mesiac (founding rate 349 eur for the first 20).
 - **Growth:** lead-getters (accountants, invoicing platforms), not paid social.
 - **Reference model:** general.legal (AI first pass, licensed attorney signs, flat-fee productized menu, free template funnel).
@@ -34,7 +34,7 @@ advokát capacity or heavy recurring usage from low-velocity users.**
 ## 2. Non-negotiables
 
 1. **The advokát signature is the moat.** Every paid deliverable is verified and signed by an SAK-registered advokát, and that sign-off is visible in the output. Never ship a paid deliverable without it. Never blur AI-only output and advokát-verified output.
-2. **Redact personal data before any AI call.** PII redaction happens upstream of the model. Never send un-redacted client data to an external model. Surface it to the client as a trust feature. **(See §8.1: NOT IMPLEMENTED.)**
+2. **Redact personal data before any AI call.** PII redaction happens upstream of the model. Never send un-redacted client data to an external model. Surface it to the client as a trust feature only once it is real. **(Implemented, see §8.1.)**
 3. **`[SAK GATE]` on anything regulated:** published fixed-fee price menu, any comparison-to-a-lawyer framing, guarantee wording, subscription and auto-renewal terms, referral / fee-share with non-lawyer lead-getters. Build behind a flag or mark `DRAFT — SAK REVIEW PENDING`.
 4. **No fabricated proof.** No invented accuracy percentages, testimonials, logos, review counts, or scarcity. Only real, earned numbers. If a metric is not measured, omit it. Never claim membership of a bar we are not in.
 5. **Stay narrow.** One job (pre-signature contract review), one jurisdiction, one buyer. No horizontal "legal OS". Reject scope creep into consumer/residential, litigation, general practice.
@@ -99,31 +99,42 @@ client-facing legal claim or comparison not cleared by Kilian / SAK.
 Recorded 2026-07-16 against the live deployment at **https://app.bod.legal**
 (Railway, EU West, branch `selfhost`). Verified in code, not assumed.
 
-### 8.1 PII redaction does not exist — non-negotiable #2 is violated in production
-`server/analysis.ts` extracts the full contract text (`extractPdfText` /
-`extractDocxText`), truncates it to a character limit, and sends it **verbatim**
-to OpenRouter. There is no redaction anywhere in `server/`. The only `redact*`
-symbols in the codebase (`server/routers.ts`) gate report detail behind the
-paywall, which is unrelated.
+### 8.1 PII redaction — SHIPPED 2026-07-16 (was violated in production)
+`server/redact.ts` scrubs personal data before any external model call. Patterns
+are ported from the predecessor Python tool (`~/Dolozka/dolozka_engine.py`):
+IBAN, rodné číslo, e-mail and telefón are replaced outright; IČO, DIČ and IČ DPH
+keep their label and lose the value; party names can be scrubbed on request.
 
-The predecessor Python tool (private repo `robertduriska-droid/bod.legal`,
-`dolozka_engine.py`) *did* redact IBAN, rodné číslo, e-mail, telefón, IČO/DIČ by
-default. That capability was never ported to this web app.
+Wired into `buildAnalysisRequest` in `server/analysis.ts`, the single choke point
+where contract text enters a model request, so no code path can bypass it, and
+into `server/assistant.ts` for attachment text. Redaction runs before truncation
+so counts describe the whole document. Counts are logged, values never are.
 
-Consequence: every contract uploaded to the live site, including via the
-anonymous free scan, reaches a third-party model in full. For a service run by an
-advokátska kancelária under mlčanlivosť (§ 23 zákona č. 586/2003 Z. z.) this is
-the highest-priority gap in the repo. **Treat as P0 before any marketing work.**
+**Ordering matters:** LABELLED patterns run BEFORE PATTERNS. A Slovak
+`IČ DPH: SK2121545919` also matches the IBAN shape, so IBAN first would swallow
+the VAT number and mislabel it `[IBAN]`. The Python original still has this bug.
 
-The site does not currently *claim* redaction, so there is no false statement
-live. Do not add the P1.5 trust block until redaction actually exists.
+Verified on production with a contract carrying real PII shapes: nothing leaked,
+and the analysis quality held (§ 574 ods. 2 OZ, § 544 a nasl., § 536 a nasl. ObZ).
+`server/redact.test.ts` asserts no PII survives into the outgoing prompt.
 
-### 8.2 Pricing does not match
-Brief says flagship **249 eur** + subscription **449 eur/mesiac** (349 founding).
-Production (`shared/types.ts`, `server/stripe-products.ts`, i18n) ships:
-free scan (0 eur) / **Štandardná 297 eur** / **Prémiová 497 eur** / Express +127 eur.
-No subscription exists; there is a 15-day trial (`Trial.tsx`, Stripe SetupIntent).
-The `[SAK GATE]` price menu (P1.1) cannot be built until this is resolved.
+Until this was shipped, every contract, including anonymous free scans, reached
+OpenRouter in full. The site never claimed redaction, so no false statement went
+out. P1.5's trust block is now truthful and may ship.
+
+### 8.2 Pricing RESOLVED (2026-07-16)
+Robert decided: free scan (0 eur) / **Štandardná 249 eur** (was 297) / **Prémiová
+497 eur** / Express +127 eur. Changed in all 20 places incl. VOP and tests.
+
+Two decisions that amend the original brief:
+- the **249 flagship does NOT include the redline**. Redline stays a Prémium
+  feature (`includesRedline: false` on standard, `true` on premium).
+- **Prémium 497 justifies itself with scope, not redline alone**: bigger
+  (up to 100 pages) and non-standard/complex contracts.
+
+Still open: the **449 eur/mesiac subscription** does not exist in the app (there
+is only a 15-day trial in `Trial.tsx` via Stripe SetupIntent), and the flagship
+has no container name yet (see §8.5).
 
 ### 8.3 `[SAK GATE]` items are already published
 Live on app.bod.legal right now, none behind a flag:

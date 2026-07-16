@@ -12,7 +12,7 @@ import {
 // ─── Pure template tests: run WITHOUT any API keys ───────────────────────────
 
 const DASH_RE = /[–—]/; // en dash, em dash: forbidden in SK/CZ copy
-const RAILWAY_FALLBACK = "https://bodlegal-emergent-production.up.railway.app";
+const RAILWAY_FALLBACK = "https://app.bod.legal";
 
 const ORIGINAL_APP_BASE_URL = process.env.APP_BASE_URL;
 afterEach(() => {

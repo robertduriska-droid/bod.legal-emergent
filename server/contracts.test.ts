@@ -59,7 +59,7 @@ describe("Shared types and reference data", () => {
   it("PRICING_PLANS has correct prices (basic is the free scan, paid tiers unchanged)", () => {
     expect(PRICING_PLANS[0].price).toBe(0);
     expect(PRICING_PLANS[0].includesLawyer).toBe(false);
-    expect(PRICING_PLANS[1].price).toBe(297);
+    expect(PRICING_PLANS[1].price).toBe(249);
     expect(PRICING_PLANS[2].price).toBe(497);
   });
 

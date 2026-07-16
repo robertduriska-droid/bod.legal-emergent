@@ -7,7 +7,7 @@ import { ENV } from "./_core/env";
  */
 export function getAppBaseUrl(): string {
   const fromEnv = (process.env.APP_BASE_URL || "").trim();
-  const base = fromEnv || "https://bodlegal-emergent-production.up.railway.app";
+  const base = fromEnv || "https://app.bod.legal";
   return base.replace(/\/+$/, "");
 }
 
