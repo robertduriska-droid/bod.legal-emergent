@@ -2,6 +2,8 @@
   "contractType": "Zmluva o mlčanlivosti (NDA)",
   "contractTypeCode": "nda",
   "jurisdiction": "SK",
+  "jurisdictionBasis": "Čl. 12.1 Táto zmluva sa riadi právnym poriadkom Slovenskej republiky.",
+  "jurisdictionExplicit": true,
   "clauses": [
     {
       "clauseNumber": 1,

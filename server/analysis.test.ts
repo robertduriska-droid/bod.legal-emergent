@@ -197,6 +197,20 @@ describe("SYSTEM_PROMPTS playbook regression", () => {
     expect(SYSTEM_PROMPTS[lang]).not.toMatch(DASH_RE);
   });
 
+  // Governing law drives the whole analysis, so every prompt must ask the model
+  // to read it off the contract's choice-of-law clause and record the evidence.
+  it.each(Object.keys(SYSTEM_PROMPTS))("%s prompt derives the governing law from the contract", (lang) => {
+    for (const token of ["jurisdictionBasis", "jurisdictionExplicit", '"SK"', '"CZ"', '"HU"']) {
+      expect(SYSTEM_PROMPTS[lang]).toContain(token);
+    }
+  });
+
+  it.each(Object.keys(SYSTEM_PROMPTS))("%s prompt cites njt.hu for Hungarian law", (lang) => {
+    expect(SYSTEM_PROMPTS[lang]).toContain("njt.hu");
+    // Ptk. is the backbone of Hungarian contract law; keep the real link handy.
+    expect(SYSTEM_PROMPTS[lang]).toContain("https://njt.hu/jogszabaly/2013-5-00-00");
+  });
+
   it("sk and cz prompts state the no-dash output rule", () => {
     expect(SYSTEM_PROMPTS.sk).toContain("Nepoužívaj pomlčky");
     expect(SYSTEM_PROMPTS.cz).toContain("Nepoužívej pomlčky");

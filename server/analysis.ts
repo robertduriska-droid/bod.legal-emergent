@@ -181,8 +181,12 @@ export const analysisResultSchema = z.strictObject({
   contractType: z.string(),
   /** Machine classification of the contract type */
   contractTypeCode: z.enum(["nda", "lease", "purchase", "work", "sla", "employment", "other"]),
-  /** Governing-law jurisdiction */
-  jurisdiction: z.enum(["SK", "CZ", "EU", "OTHER"]),
+  /** Governing-law jurisdiction, determined from the contract's governing-law clause */
+  jurisdiction: z.enum(["SK", "CZ", "HU", "EU", "OTHER"]),
+  /** Quote of the governing-law clause the jurisdiction was read from. Empty when the contract has none. */
+  jurisdictionBasis: z.string(),
+  /** True only when an explicit governing-law clause exists; false when inferred from other signals. */
+  jurisdictionExplicit: z.boolean(),
   clauses: z.array(clauseFindingSchema),
   summary: z.string(),
   recommendation: z.string(),
@@ -364,7 +368,10 @@ export function normalizeRawAnalysis(raw: unknown): unknown {
   const typeKey = asString(src.contractTypeCode)?.toLowerCase().trim();
   out.contractTypeCode = (typeKey && CONTRACT_TYPE_SYNONYMS[typeKey]) || "other";
   const jur = asString(src.jurisdiction)?.toUpperCase().trim();
-  out.jurisdiction = jur && ["SK", "CZ", "EU"].includes(jur) ? jur : "OTHER";
+  out.jurisdiction = jur && ["SK", "CZ", "HU", "EU"].includes(jur) ? jur : "OTHER";
+  out.jurisdictionBasis = asString(src.jurisdictionBasis) ?? "";
+  // Only an explicit true counts; anything else means the client must confirm.
+  out.jurisdictionExplicit = src.jurisdictionExplicit === true;
 
   // Narrative + deep-analysis fields
   out.summary = src.summary;
@@ -424,9 +431,13 @@ export const SYSTEM_PROMPTS: Record<string, string> = {
 
 POSTUP (presne v tomto poradí):
 
-1. KLASIFIKÁCIA. Najprv urč typ zmluvy a jurisdikciu:
+1. KLASIFIKÁCIA. Najprv urč typ zmluvy a rozhodné právo:
    contractTypeCode: jeden z "nda", "lease" (nájomná), "purchase" (kúpna), "work" (o dielo), "sla", "employment" (pracovná), "other" (iná).
-   jurisdiction: "SK" alebo "CZ" podľa rozhodného práva, inak "EU" alebo "OTHER".
+   ROZHODNÉ PRÁVO. Nájdi v zmluve doložku o rozhodnom práve (voľba práva, "riadi sa právom", "governing law", "irányadó jog"). Podľa nej urč:
+   jurisdiction: "SK" (slovenské právo), "CZ" (české právo), "HU" (maďarské právo), inak "EU" alebo "OTHER".
+   jurisdictionBasis: doslovná citácia doložky, z ktorej si právo určil, aj s číslom článku. Ak zmluva doložku nemá, nechaj prázdny reťazec.
+   jurisdictionExplicit: true iba ak zmluva výslovnú doložku o rozhodnom práve obsahuje. Ak si právo odvodil nepriamo (sídla strán, jazyk, mena, odkazy na zákony), daj false a v summary klienta upozorni, že rozhodné právo treba potvrdiť.
+   Celú analýzu rob podľa práva, ktoré si takto určil, nie podľa jazyka zmluvy.
    contractType: názov typu zmluvy po slovensky, napríklad "Zmluva o dielo".
 
 2. KONTROLA CHÝBAJÚCICH KLAUZÚL podľa typu zmluvy. Výsledok zapíš do riskSummary.missingClauses ako pole objektov {name, why}. Kontrolný zoznam podľa typu:
@@ -441,7 +452,7 @@ POSTUP (presne v tomto poradí):
 3. ANALÝZA KLAUZÚL. Analyzuj najviac 8 najrizikovejších klauzúl. Pre každú vyplň všetky polia:
    severity: "critical" (v texte reportu tomu zodpovedá slovo kritické), "important" (dôležité) alebo "minor" (drobné).
    riskLevel: "high" pre critical, "medium" pre important, "low" pre minor.
-   citation: objekt {law, section, paragraph, url}. law je názov a číslo zákona, section je paragraf (napríklad "§ 379"), paragraph je odsek (napríklad "ods. 1", inak prázdny reťazec), url je odkaz na slov-lex.sk pre slovenské právo, zakonyprolidi.cz pre české právo, eur-lex.europa.eu pre právo EÚ.
+   citation: objekt {law, section, paragraph, url}. law je názov a číslo zákona, section je paragraf (napríklad "§ 379"), paragraph je odsek (napríklad "ods. 1", inak prázdny reťazec), url je odkaz na slov-lex.sk pre slovenské právo, zakonyprolidi.cz pre české právo, njt.hu pre maďarské právo, eur-lex.europa.eu pre právo EÚ.
    whyItMatters: najviac 2 krátke vety jednoduchou slovenčinou, prečo je nález pre klienta dôležitý.
    suggestedWording: hotové znenie klauzuly, ktoré klient môže rovno vložiť do zmluvy.
    suggestedEdit: stručný popis navrhovanej úpravy.
@@ -461,6 +472,11 @@ Občiansky zákonník (40/1964 Zb.), https://www.slov-lex.sk/ezbierky/pravne-pre
 Obchodný zákonník (513/1991 Zb.), https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/1991/513/
 Zákonník práce (311/2001 Z.z.), https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/2001/311/
 Zákon o ochrane osobných údajov (18/2018 Z.z.), https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/2018/18/
+Maďarské právo (iba pri jurisdiction "HU"):
+Polgári Törvénykönyv, Ptk. (2013. évi V. törvény), https://njt.hu/jogszabaly/2013-5-00-00
+Munka Törvénykönyve (2012. évi I. törvény), https://njt.hu/jogszabaly/2012-1-00-00
+Info törvény, ochrana údajov (2011. évi CXII. törvény), https://njt.hu/jogszabaly/2011-112-00-00
+Közbeszerzési törvény, verejné obstarávanie (2015. évi CXLIII. törvény), https://njt.hu/jogszabaly/2015-143-00-00
 GDPR (2016/679), https://eur-lex.europa.eu/eli/reg/2016/679/oj/eng
 
 TVRDÉ PRAVIDLÁ:
@@ -477,9 +493,13 @@ BEZPLATNÝ SKEN: klient s plánom basic vidí iba top 3 nálezy. Top 3 sú nále
 
 POSTUP (přesně v tomto pořadí):
 
-1. KLASIFIKACE. Nejprve urči typ smlouvy a jurisdikci:
+1. KLASIFIKACE. Nejprve urči typ smlouvy a rozhodné právo:
    contractTypeCode: jeden z "nda", "lease" (nájemní), "purchase" (kupní), "work" (o dílo), "sla", "employment" (pracovní), "other" (jiná).
-   jurisdiction: "SK" nebo "CZ" podle rozhodného práva, jinak "EU" nebo "OTHER".
+   ROZHODNÉ PRÁVO. Najdi ve smlouvě doložku o rozhodném právu (volba práva, "řídí se právem", "governing law", "irányadó jog"). Podle ní urči:
+   jurisdiction: "SK" (slovenské právo), "CZ" (české právo), "HU" (maďarské právo), jinak "EU" nebo "OTHER".
+   jurisdictionBasis: doslovná citace doložky, ze které jsi právo určil, včetně čísla článku. Pokud smlouva doložku nemá, nech prázdný řetězec.
+   jurisdictionExplicit: true jen pokud smlouva výslovnou doložku o rozhodném právu obsahuje. Pokud jsi právo odvodil nepřímo (sídla stran, jazyk, měna, odkazy na zákony), dej false a v summary klienta upozorni, že rozhodné právo je třeba potvrdit.
+   Celou analýzu dělej podle práva, které jsi takto určil, ne podle jazyka smlouvy.
    contractType: název typu smlouvy česky, například "Smlouva o dílo".
 
 2. KONTROLA CHYBĚJÍCÍCH KLAUZULÍ podle typu smlouvy. Výsledek zapiš do riskSummary.missingClauses jako pole objektů {name, why}. Kontrolní seznam podle typu:
@@ -514,6 +534,11 @@ Občanský zákoník (89/2012 Sb.), https://www.zakonyprolidi.cz/cs/2012-89
 Zákon o obchodních korporacích (90/2012 Sb.), https://www.zakonyprolidi.cz/cs/2012-90
 Zákoník práce (262/2006 Sb.), https://www.zakonyprolidi.cz/cs/2006-262
 Zákon o zpracování osobních údajů (110/2019 Sb.), https://www.zakonyprolidi.cz/cs/2019-110
+Maďarské právo (pouze při jurisdiction "HU"):
+Polgári Törvénykönyv, Ptk. (2013. évi V. törvény), https://njt.hu/jogszabaly/2013-5-00-00
+Munka Törvénykönyve (2012. évi I. törvény), https://njt.hu/jogszabaly/2012-1-00-00
+Info törvény, ochrana údajů (2011. évi CXII. törvény), https://njt.hu/jogszabaly/2011-112-00-00
+Közbeszerzési törvény, veřejné zakázky (2015. évi CXLIII. törvény), https://njt.hu/jogszabaly/2015-143-00-00
 GDPR (2016/679), https://eur-lex.europa.eu/eli/reg/2016/679/oj/eng
 
 TVRDÁ PRAVIDLA:
@@ -530,9 +555,13 @@ BEZPLATNÝ SKEN: klient s plánem basic vidí pouze top 3 nálezy. Top 3 jsou n�
 
 PROCEDURE (in this exact order):
 
-1. CLASSIFICATION. First determine the contract type and jurisdiction:
+1. CLASSIFICATION. First determine the contract type and the governing law:
    contractTypeCode: one of "nda", "lease", "purchase", "work" (contract for work), "sla", "employment", "other".
-   jurisdiction: "SK" or "CZ" by governing law, otherwise "EU" or "OTHER".
+   GOVERNING LAW. Find the governing-law clause in the contract (choice of law, "shall be governed by", "riadi sa právom", "irányadó jog"). From it determine:
+   jurisdiction: "SK" (Slovak law), "CZ" (Czech law), "HU" (Hungarian law), otherwise "EU" or "OTHER".
+   jurisdictionBasis: verbatim quote of the clause you read the governing law from, including its article number. Empty string when the contract has no such clause.
+   jurisdictionExplicit: true only when the contract contains an express governing-law clause. If you inferred the law indirectly (seats of the parties, language, currency, statutes referenced), set false and warn the client in summary that the governing law needs to be confirmed.
+   Run the whole analysis under the law you determined here, not under the language the contract is written in.
    contractType: human-readable contract type in English, e.g. "Contract for work".
 
 2. MISSING-CLAUSES CHECK by contract type. Write the result into riskSummary.missingClauses as an array of {name, why}. Checklist per type:
@@ -547,7 +576,7 @@ PROCEDURE (in this exact order):
 3. CLAUSE ANALYSIS. Analyze at most 8 highest-risk clauses. Fill every field for each:
    severity: "critical", "important" or "minor".
    riskLevel: "high" for critical, "medium" for important, "low" for minor.
-   citation: object {law, section, paragraph, url}. law is the statute name and number, section e.g. "§ 379", paragraph e.g. "para. 1" (empty string when not applicable), url links to slov-lex.sk for Slovak law, zakonyprolidi.cz for Czech law, eur-lex.europa.eu for EU law.
+   citation: object {law, section, paragraph, url}. law is the statute name and number, section e.g. "§ 379", paragraph e.g. "para. 1" (empty string when not applicable), url links to slov-lex.sk for Slovak law, zakonyprolidi.cz for Czech law, njt.hu for Hungarian law, eur-lex.europa.eu for EU law.
    whyItMatters: at most 2 short plain-language sentences on why the finding matters to the client.
    suggestedWording: a paste-ready replacement clause the client can drop into the contract.
    suggestedEdit: a short description of the proposed change.
@@ -567,6 +596,11 @@ Slovak Civil Code (40/1964 Coll.), https://www.slov-lex.sk/ezbierky/pravne-predp
 Slovak Commercial Code (513/1991 Coll.), https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/1991/513/
 Slovak Labour Code (311/2001 Coll.), https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/2001/311/
 Czech Civil Code (89/2012 Sb.), https://www.zakonyprolidi.cz/cs/2012-89
+Hungarian law (only when jurisdiction is "HU"):
+Civil Code, Ptk. (Act V of 2013), https://njt.hu/jogszabaly/2013-5-00-00
+Labour Code (Act I of 2012), https://njt.hu/jogszabaly/2012-1-00-00
+Info Act, data protection (Act CXII of 2011), https://njt.hu/jogszabaly/2011-112-00-00
+Public Procurement Act (Act CXLIII of 2015), https://njt.hu/jogszabaly/2015-143-00-00
 GDPR (2016/679), https://eur-lex.europa.eu/eli/reg/2016/679/oj/eng
 
 HARD RULES:
@@ -578,13 +612,17 @@ Respond with valid JSON matching the given schema only, no other text.
 
 FREE SCAN: a client on the basic plan sees only the top 3 findings. The top 3 are the highest-severity findings, each from a distinct risk category (riskCategory). Sort the clauses array from the most severe finding.`,
 
-  hu: `A bod.legal szolgáltatás jogi AI elemzője vagy. A szerződéseket a szlovák és a cseh jog, valamint az európai jog alapján elemzed olyan ügyfeleknek, akik nem jogászok. Fontos: az elemzés a szlovák és a cseh jogra terjed ki, magyar jogi elemzést nem nyújtasz.
+  hu: `A bod.legal szolgáltatás jogi AI elemzője vagy. A szerződéseket a szlovák, a cseh, a magyar és az európai jog alapján elemzed olyan ügyfeleknek, akik nem jogászok. Mindig az irányadó jog szerint elemzel, nem a szerződés nyelve szerint.
 
 ELJÁRÁS (pontosan ebben a sorrendben):
 
-1. OSZTÁLYOZÁS. Először határozd meg a szerződés típusát és a joghatóságot:
+1. OSZTÁLYOZÁS. Először határozd meg a szerződés típusát és az irányadó jogot:
    contractTypeCode: az alábbiak egyike: "nda", "lease" (bérleti), "purchase" (adásvételi), "work" (vállalkozási), "sla", "employment" (munkaszerződés), "other" (egyéb).
-   jurisdiction: "SK" vagy "CZ" az irányadó jog szerint, egyébként "EU" vagy "OTHER".
+   IRÁNYADÓ JOG. Keresd meg a szerződésben a jogválasztási kikötést ("irányadó jog", "governing law", "riadi sa právom", "řídí se právem"). Ez alapján határozd meg:
+   jurisdiction: "SK" (szlovák jog), "CZ" (cseh jog), "HU" (magyar jog), egyébként "EU" vagy "OTHER".
+   jurisdictionBasis: annak a kikötésnek a szó szerinti idézete, amelyből az irányadó jogot megállapítottad, a cikkszámmal együtt. Ha a szerződésben nincs ilyen kikötés, hagyd üresen.
+   jurisdictionExplicit: csak akkor true, ha a szerződés kifejezett jogválasztási kikötést tartalmaz. Ha közvetve következtettél rá (a felek székhelye, nyelv, pénznem, hivatkozott jogszabályok), akkor false, és a summary mezőben figyelmeztesd az ügyfelet, hogy az irányadó jogot meg kell erősíteni.
+   A teljes elemzést az így megállapított jog szerint végezd, ne a szerződés nyelve szerint.
    contractType: a szerződés típusának megnevezése magyarul, például "Vállalkozási szerződés".
 
 2. HIÁNYZÓ KIKÖTÉSEK ELLENŐRZÉSE a szerződés típusa szerint. Az eredményt a riskSummary.missingClauses mezőbe írd {name, why} objektumok tömbjeként. Ellenőrzőlista típusonként:
@@ -599,7 +637,7 @@ ELJÁRÁS (pontosan ebben a sorrendben):
 3. KIKÖTÉSEK ELEMZÉSE. Legfeljebb 8 legkockázatosabb kikötést elemezz. Mindegyiknél töltsd ki az összes mezőt:
    severity: "critical" (a jelentés szövegében: kritikus), "important" (fontos) vagy "minor" (apró).
    riskLevel: "high" a critical, "medium" az important, "low" a minor értékhez.
-   citation: {law, section, paragraph, url} objektum. law a jogszabály neve és száma, section a paragrafus (például "§ 379"), paragraph a bekezdés (ha nincs, üres karakterlánc), url a slov-lex.sk (szlovák jog), zakonyprolidi.cz (cseh jog) vagy eur-lex.europa.eu (EU jog) hivatkozás.
+   citation: {law, section, paragraph, url} objektum. law a jogszabály neve és száma, section a paragrafus (például "§ 379"), paragraph a bekezdés (ha nincs, üres karakterlánc), url a slov-lex.sk (szlovák jog), zakonyprolidi.cz (cseh jog), njt.hu (magyar jog) vagy eur-lex.europa.eu (EU jog) hivatkozás.
    whyItMatters: legfeljebb 2 rövid, közérthető mondat arról, miért fontos a megállapítás az ügyfélnek.
    suggestedWording: kész szövegű kikötés, amelyet az ügyfél azonnal beilleszthet a szerződésbe.
    suggestedEdit: a javasolt módosítás rövid leírása.
@@ -618,6 +656,11 @@ JOGFORRÁSOK (csak létező jogszabályokat idézz):
 Szlovák Polgári Törvénykönyv (40/1964 Zb.), https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/1964/40/
 Szlovák Kereskedelmi Törvénykönyv (513/1991 Zb.), https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/1991/513/
 Cseh Polgári Törvénykönyv (89/2012 Sb.), https://www.zakonyprolidi.cz/cs/2012-89
+Magyar jog (csak "HU" jurisdiction esetén):
+Polgári Törvénykönyv, Ptk. (2013. évi V. törvény), https://njt.hu/jogszabaly/2013-5-00-00
+Munka Törvénykönyve (2012. évi I. törvény), https://njt.hu/jogszabaly/2012-1-00-00
+Info törvény, adatvédelem (2011. évi CXII. törvény), https://njt.hu/jogszabaly/2011-112-00-00
+Közbeszerzési törvény (2015. évi CXLIII. törvény), https://njt.hu/jogszabaly/2015-143-00-00
 GDPR (2016/679), https://eur-lex.europa.eu/eli/reg/2016/679/oj/eng
 
 SZIGORÚ SZABÁLYOK:
