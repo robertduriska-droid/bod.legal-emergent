@@ -15,6 +15,7 @@ import { runMigrations } from "./migrate";
 import { startRetentionJob } from "./retentionJob";
 import { registerEmailDebug } from "./emailDebug";
 import { registerMarketingSite } from "./marketingSite";
+import { startAnalysisWatchdog } from "./analysisWatchdog";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -77,8 +78,9 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
-    // After listen: retention must never delay or block serving.
+    // After listen: background jobs must never delay or block serving.
     startRetentionJob();
+    startAnalysisWatchdog();
   });
 }
 
