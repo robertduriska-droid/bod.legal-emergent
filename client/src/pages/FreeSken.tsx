@@ -136,7 +136,7 @@ const TX = {
     whatsIncluded: "Mit tartalmaz a teljes jelentés?",
     included: [
       "Minden klauzula elemzése kockázati besorolással",
-      "Hivatkozások az njt.hu-ra és az EUR-Lexre",
+      "Hivatkozások a Slov-Lexre, a zakonyprolidi.cz-re és az EUR-Lexre",
       "Konkrét módosítási javaslatok a problémás klauzulákhoz",
       "Letölthető PDF-jelentés",
       "Ügyvédi ellenőrzés (Standard és Prémium)",

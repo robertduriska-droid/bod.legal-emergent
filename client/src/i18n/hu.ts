@@ -32,7 +32,7 @@ export const hu: Translations = {
     stat1Label: "Jelentés kézbesítése",
     stat2Value: "Top 3 kockázat",
     stat2Label: "Ingyen, bejelentkezés nélkül",
-    stat3Value: "njt.hu",
+    stat3Value: "Slov-Lex",
     stat3Label: "Jogszabályi hivatkozások",
   },
   demo: {
@@ -66,14 +66,14 @@ export const hu: Translations = {
     step1Title: "1. Töltse fel a szerződést",
     step1Desc: "Töltsön fel PDF- vagy DOCX-fájlt. Válasszon csomagot a szerződés terjedelme alapján, és fizessen online.",
     step2Title: "2. AI-elemzés",
-    step2Desc: "Az AI minden klauzulát elemez, azonosítja a kockázatokat, és hivatkozásokat ad az njt.hu-ra és az EUR-Lexre.",
+    step2Desc: "Az AI minden klauzulát elemez, azonosítja a kockázatokat, és hivatkozásokat ad a Slov-Lexre, a zakonyprolidi.cz-re és az EUR-Lexre.",
     step3Title: "3. Ügyvédi ellenőrzés",
     step3Desc: "A Standard és Prémium csomagoknál ügyvéd ellenőrzi a megállapításokat, megjegyzéseket fűz hozzájuk, és aláírja a jelentést.",
   },
   whyNot: {
     title: "Miért ne a ChatGPT?",
-    subtitle: "Az általános AI-eszközök nem ismerik a magyar jogrendszert. A bod.legal a magyar és európai jogszabályokra épül.",
-    feature1Title: "njt.hu hivatkozások",
+    subtitle: "Az általános AI-eszközök nem ismerik a szlovák és a cseh jogrendszert. A bod.legal a szlovák, a cseh és az európai jogszabályokra épül.",
+    feature1Title: "Slov-Lex hivatkozások",
     feature1Desc: "Minden megállapítás az alkalmazandó jogszabály konkrét szakaszára hivatkozik.",
     feature2Title: "Ügyvédi ellenőrzés",
     feature2Desc: "A Standard és Prémium csomagnál ügyvéd ellenőrzi az AI kimeneteit, és felelősséget vállal a pontosságért.",
@@ -94,7 +94,7 @@ export const hu: Translations = {
     row2Bod: "119 000 Ft-tól, top 3 kockázat ingyen",
     row2Trad: "jellemzően 200 000 Ft-tól",
     row3Label: "Jogforrások a jelentésben",
-    row3Bod: "njt.hu, EUR-Lex hivatkozások",
+    row3Bod: "Slov-Lex, zakonyprolidi.cz, EUR-Lex hivatkozások",
     row3Trad: "Az ügyvédtől függ",
     row4Label: "Elemzés formátuma",
     row4Bod: "Klauzuláról klauzulára",
@@ -158,11 +158,11 @@ export const hu: Translations = {
       },
       {
         question: "Milyen szerződésformátumokat fogadnak el?",
-        answer: "PDF- és DOCX-fájlokat legfeljebb 50 MB méretben. Magyar és angol nyelvű, magyar jog szerinti szerződéseket támogatunk.",
+        answer: "PDF- és DOCX-fájlokat legfeljebb 50 MB méretben. Szlovák, cseh és angol nyelvű szerződéseket támogatunk, szlovák és cseh jog szerint. Magyar jog szerinti szerződéseket nem vizsgálunk.",
       },
       {
         question: "Jogilag kötelező érvényű az elemzés?",
-        answer: "A jelentés tájékoztató alapként szolgál a döntéséhez. A Standard és Prémium csomagoknál a Magyar Ügyvédi Kamarában bejegyzett ügyvéd ellenőrzi.",
+        answer: "A jelentés tájékoztató alapként szolgál a döntéséhez. A Standard és Prémium csomagoknál a Szlovák Ügyvédi Kamarában (SAK) bejegyzett ügyvéd ellenőrzi.",
       },
       {
         question: "Hogyan biztosított a titoktartás?",
@@ -224,7 +224,7 @@ export const hu: Translations = {
   },
   upload: {
     title: "Szerződés feltöltése",
-    subtitle: "Töltse fel szerződését PDF- vagy DOCX-formátumban (legfeljebb 50 MB). Magyar és angol nyelvű, magyar jog szerinti szerződéseket támogatunk.",
+    subtitle: "Töltse fel szerződését PDF- vagy DOCX-formátumban (legfeljebb 50 MB). Szlovák, cseh és angol nyelvű szerződéseket támogatunk, szlovák és cseh jog szerint.",
     dragDrop: "Húzza ide a fájlt",
     dragDropHint: "vagy kattintson a tallózáshoz. PDF, DOCX. Max. 50 MB",
     fileTypes: "PDF, DOCX – max. 50 MB",
@@ -319,7 +319,7 @@ export const hu: Translations = {
         name: "Check",
         price: "119 000 Ft-tól",
         desc: "Egyetlen szerződés egyszeri ellenőrzése",
-        features: ["AI-elemzés + ügyvédi ellenőrzés", "Jelentés 24 órán belül", "njt.hu és EUR-Lex hivatkozások", "PDF + DOCX exportálás"],
+        features: ["AI-elemzés + ügyvédi ellenőrzés", "Jelentés 24 órán belül", "Slov-Lex és EUR-Lex hivatkozások", "PDF + DOCX exportálás"],
         cta: "Szerződés feltöltése",
       },
       {

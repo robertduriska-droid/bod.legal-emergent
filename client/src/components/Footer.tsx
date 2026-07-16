@@ -71,12 +71,14 @@ export default function Footer() {
                 <a href="https://smlouvy.gov.cz" target="_blank" rel="noopener noreferrer" className="underline hover:text-hero-text">Registr smluv</a>
               </>
             ) : locale === "hu" ? (
+              // The service covers Slovak and Czech law, so the Hungarian
+              // locale cites the same Slovak/Czech sources, never njt.hu.
               <>
-                <a href="https://njt.hu" target="_blank" rel="noopener noreferrer" className="underline hover:text-hero-text">Nemzeti Jogszabálytár</a>
+                <a href="https://www.slov-lex.sk" target="_blank" rel="noopener noreferrer" className="underline hover:text-hero-text">Slov-Lex</a>
+                {" | "}
+                <a href="https://www.zakonyprolidi.cz" target="_blank" rel="noopener noreferrer" className="underline hover:text-hero-text">Zákony pro lidi</a>
                 {" | "}
                 <a href="https://eur-lex.europa.eu" target="_blank" rel="noopener noreferrer" className="underline hover:text-hero-text">EUR-Lex</a>
-                {" | "}
-                <a href="https://ekr.gov.hu" target="_blank" rel="noopener noreferrer" className="underline hover:text-hero-text">EKR</a>
               </>
             ) : (
               <>
