@@ -66,7 +66,7 @@ FOOTER = """<footer class="site-footer">
       <div>
         <h4>Kontakt</h4>
         <ul>
-          <li><a href="mailto:robert.duriska@bod.legal">robert.duriska@bod.legal</a></li>
+          <li><a href="mailto:info@bod.legal">info@bod.legal</a></li>
           <li><a href="tel:+421917333692">+421 917 333 692</a></li>
           <li>KILIAN LEGAL s. r. o.</li>
           <li>IČO: 53 957 008</li>
@@ -87,9 +87,8 @@ def page(title: str, body_html: str) -> str:
   <title>{title} | bod.legal</title>
   <meta name="description" content="{title} služby bod.legal, ktorú prevádzkuje advokátska kancelária KILIAN LEGAL s. r. o.">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <!-- Pisma servujeme sami: ziadna IP navstevnika neodchadza do Google. -->
+  <link rel="stylesheet" href="fonts/fonts.css">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>

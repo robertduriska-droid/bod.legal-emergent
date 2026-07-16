@@ -15,7 +15,7 @@ export const CONTACT = {
   phoneNumber: "+421917333692",
   phoneDisplay: "+421 917 333 692",
 
-  email: "robert.duriska@bod.legal",
+  email: "info@bod.legal",
 } as const;
 
 /** wa.me deep link with a prefilled message in the client's language. */

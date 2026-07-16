@@ -1014,8 +1014,10 @@ export async function analyzeContract(contractId: number): Promise<void> {
       });
       sendEmail({ to: user.email, subject, html }).catch(err => console.warn("[Email] Report ready failed:", err));
     } else if (plan !== "basic") {
-      // Paid plan: email lawyer that new contract needs review
-      const lawyerEmail = ENV.sendgridFromEmail; // lawyer = owner for now
+      // Paid plan: email lawyer that new contract needs review. Review work
+      // collects in the shared inbox (OWNER_EMAIL, info@bod.legal), not in the
+      // technical sender address; the fallback only covers a missing config.
+      const lawyerEmail = process.env.OWNER_EMAIL || ENV.sendgridFromEmail;
       const { subject, html } = emailNewContractForReview({
         contractName: contract.fileName,
         reviewUrl: `${baseUrl}/admin/review/${contract.id}`,

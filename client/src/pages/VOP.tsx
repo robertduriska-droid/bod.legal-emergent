@@ -17,7 +17,7 @@ export default function VOP() {
             <div className="flex items-start gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4 mb-6">
               <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
               <p className="text-sm font-sans text-muted-foreground">
-                This legal document is available in Slovak only. The Slovak version below is the legally binding text. For questions in English, contact us at robert.duriska@bod.legal.
+                This legal document is available in Slovak only. The Slovak version below is the legally binding text. For questions in English, contact us at info@bod.legal.
               </p>
             </div>
           )}
@@ -25,7 +25,7 @@ export default function VOP() {
             <div className="flex items-start gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4 mb-6">
               <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
               <p className="text-sm font-sans text-muted-foreground">
-                Tento právní dokument je dostupný pouze ve slovenštině. Níže uvedená slovenská verze je právně závazným textem. V případě otázek v češtině nás kontaktujte na robert.duriska@bod.legal.
+                Tento právní dokument je dostupný pouze ve slovenštině. Níže uvedená slovenská verze je právně závazným textem. V případě otázek v češtině nás kontaktujte na info@bod.legal.
               </p>
             </div>
           )}
@@ -83,7 +83,7 @@ export default function VOP() {
 
             <section>
               <h2 className="text-xl font-serif text-foreground">7. Reklamácie</h2>
-              <p>Klient má právo reklamovať poskytnutú službu do 14 dní od jej dodania. Reklamáciu je možné podať elektronicky na adrese robert.duriska@bod.legal.</p>
+              <p>Klient má právo reklamovať poskytnutú službu do 14 dní od jej dodania. Reklamáciu je možné podať elektronicky na adrese info@bod.legal.</p>
             </section>
 
             <section>
