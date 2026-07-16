@@ -9,6 +9,7 @@ import {
 } from "./db";
 import { storageGetSignedUrl } from "./storage";
 import { extractDocxText } from "./analysis";
+import { redact, summarizeRedaction } from "./redact";
 import type { ChatMessage } from "../drizzle/schema";
 import { ASSISTANT_MODEL_IDS, DEFAULT_ASSISTANT_MODEL } from "@shared/const";
 
@@ -250,7 +251,11 @@ export async function runAssistant(opts: {
           ];
         } else {
           const text = await extractDocxText(signedUrl);
-          const truncated = text.length > 6000 ? text.slice(0, 6000) + "\n[... skrátené / truncated ...]" : text;
+          // Attachment content reaches an external model, so it is redacted
+          // exactly like the contract text in analysis.ts (CLAUDE.md §2.2).
+          const { text: safeText, counts } = redact(text);
+          console.log(`[Assistant] Redacted attachment before model call: ${summarizeRedaction(counts)}`);
+          const truncated = safeText.length > 6000 ? safeText.slice(0, 6000) + "\n[... skrátené / truncated ...]" : safeText;
           docxTextNote = `\n\n[Priložený súbor / attached file: ${att.fileName}]\nObsah / content:\n${truncated}`;
         }
       } catch (err) {

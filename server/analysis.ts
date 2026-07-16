@@ -7,6 +7,7 @@ import { sendEmail, emailReportReady, emailAnalysisAwaitingReview, emailNewContr
 import { storageGetSignedUrl } from "./storage";
 import { RISK_CATEGORIES } from "@shared/types";
 import { DEFAULT_ANALYSIS_MODEL } from "@shared/const";
+import { redact, summarizeRedaction, type RedactionCounts } from "./redact";
 import axios from "axios";
 
 // Deep contract-analysis model. Override with the ANALYSIS_MODEL env var;
@@ -705,12 +706,19 @@ export function buildAnalysisRequest(opts: {
   contractText: string;
   plan: string;
   maxChars?: number;
-}): { messages: { role: string; content: any }[]; responseFormat: any } {
+}): { messages: { role: string; content: any }[]; responseFormat: any; redaction: RedactionCounts } {
   const { language, contractText, plan } = opts;
+
+  // PII redaction happens HERE, at the single choke point where contract text
+  // enters a model request, so no code path can reach the model with personal
+  // data intact (CLAUDE.md §2.2). Redact before truncating so the counts
+  // describe the whole document, not just the part we send.
+  const { text: safeText, counts: redaction } = redact(contractText);
+
   const maxChars = opts.maxChars ?? 12000;
-  const truncated = contractText.length > maxChars
-    ? contractText.substring(0, maxChars) + "\n\n[... zvyšok textu skrátený ...]"
-    : contractText;
+  const truncated = safeText.length > maxChars
+    ? safeText.substring(0, maxChars) + "\n\n[... zvyšok textu skrátený ...]"
+    : safeText;
 
   const t = USER_INSTRUCTIONS[language] || USER_INSTRUCTIONS.sk;
   const jsonSchema = getAnalysisJsonSchema();
@@ -724,6 +732,7 @@ export function buildAnalysisRequest(opts: {
   parts.push(`${t.schemaNote}\n${JSON.stringify(jsonSchema)}`);
 
   return {
+    redaction,
     messages: [
       { role: "system", content: getSystemPrompt(language) },
       { role: "user", content: [{ type: "text", text: parts.join("\n\n") }] },
@@ -869,11 +878,13 @@ export async function analyzeContract(contractId: number): Promise<void> {
     console.log(`[Analysis] Extracted ${contractText.length} chars from ${isPdf ? "PDF" : "DOCX"}`);
 
     const language = contract.language || "sk";
-    const { messages, responseFormat } = buildAnalysisRequest({
+    const { messages, responseFormat, redaction } = buildAnalysisRequest({
       language,
       contractText,
       plan: contract.plan,
     });
+    // Log what was scrubbed, never the values themselves.
+    console.log(`[Analysis] Redacted before model call: ${summarizeRedaction(redaction)}`);
 
     // Call the model; output is zod-validated with one repair retry.
     const analysis = await runAnalysisModel({ messages, responseFormat });
