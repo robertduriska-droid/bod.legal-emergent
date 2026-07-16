@@ -56,11 +56,13 @@ describe("Shared types and reference data", () => {
     expect(PRICING_PLANS.map(p => p.id)).toEqual(["basic", "standard", "premium"]);
   });
 
-  it("PRICING_PLANS has correct prices (basic is the free scan, paid tiers unchanged)", () => {
+  it("PRICING_PLANS has the locked prices (free scan, 249, 490)", () => {
     expect(PRICING_PLANS[0].price).toBe(0);
     expect(PRICING_PLANS[0].includesLawyer).toBe(false);
     expect(PRICING_PLANS[1].price).toBe(249);
-    expect(PRICING_PLANS[2].price).toBe(497);
+    // Locked 2026-07-16 with the public price list; the Stripe amount in
+    // server/stripe-products.ts must move together with this.
+    expect(PRICING_PLANS[2].price).toBe(490);
   });
 
   it("LEGAL_SOURCES contains Slov-Lex and EUR-Lex sources", () => {
