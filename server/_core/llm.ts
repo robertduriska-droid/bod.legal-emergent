@@ -212,14 +212,24 @@ const normalizeToolChoice = (
   return toolChoice;
 };
 
-const resolveApiUrl = () =>
-  ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
-    ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
-    : "https://forge.manus.im/v1/chat/completions";
+// The gateway base MUST come from config. This used to fall back to
+// https://forge.manus.im, which meant a missing env var would quietly ship
+// client contract text to Manus. Fail loudly instead: no gateway, no call.
+const resolveApiBase = (): string => {
+  const base = ENV.forgeApiUrl?.trim();
+  if (!base) {
+    throw new Error(
+      "LLM gateway is not configured: set BUILT_IN_FORGE_API_URL (e.g. https://openrouter.ai/api)",
+    );
+  }
+  return base.replace(/\/$/, "");
+};
+
+const resolveApiUrl = () => `${resolveApiBase()}/v1/chat/completions`;
 
 const assertApiKey = () => {
   if (!ENV.forgeApiKey) {
-    throw new Error("OPENAI_API_KEY is not configured");
+    throw new Error("LLM gateway key is not configured: set BUILT_IN_FORGE_API_KEY");
   }
 };
 
@@ -435,9 +445,7 @@ export type ModelsResponse = {
 export async function listLLMModels(): Promise<ModelsResponse> {
   assertApiKey();
 
-  const url = ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
-    ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/models`
-    : "https://forge.manus.im/v1/models";
+  const url = `${resolveApiBase()}/v1/models`;
 
   const response = await fetchWithBackoff(url, {
     headers: { authorization: `Bearer ${ENV.forgeApiKey}` },

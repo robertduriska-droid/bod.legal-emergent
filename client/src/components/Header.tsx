@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { startLogin, startGoogleLogin } from "@/const";
+import { startGoogleLogin } from "@/const";
 import { Link } from "wouter";
 import { Menu, X } from "lucide-react";
 
@@ -20,10 +20,6 @@ import EmailAuthForm from "@/components/EmailAuthForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
 import { useT } from "@/i18n";
-
-// The Manus OAuth portal button only makes sense when the portal env is
-// configured; otherwise startLogin() would navigate to "undefined/app-auth".
-const HAS_OAUTH_PORTAL = Boolean(import.meta.env.VITE_OAUTH_PORTAL_URL);
 
 export default function Header() {
   const { isAuthenticated, user } = useAuth();
@@ -69,10 +65,7 @@ export default function Header() {
             </>
           ) : (
             <>
-              {HAS_OAUTH_PORTAL && (
-                <Button variant="ghost" size="sm" className="font-sans text-[13px] uppercase tracking-wide" onClick={() => startLogin()} data-testid="signin-button">{t.header.signIn}</Button>
-              )}
-              <Button variant="outline" size="sm" className="font-sans text-[13px] gap-2" onClick={() => startGoogleLogin()} data-testid="google-signin-button"><GoogleIcon />{t.header.signInGoogle}</Button>
+                            <Button variant="outline" size="sm" className="font-sans text-[13px] gap-2" onClick={() => startGoogleLogin()} data-testid="google-signin-button"><GoogleIcon />{t.header.signInGoogle}</Button>
               <button
                 type="button"
                 className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 font-sans"
@@ -118,10 +111,7 @@ export default function Header() {
             </>
           ) : (
             <>
-              {HAS_OAUTH_PORTAL && (
-                <Button variant="ghost" className="w-full font-sans" onClick={() => startLogin()} data-testid="signin-button-mobile">{t.header.signIn}</Button>
-              )}
-              <Button variant="outline" className="w-full font-sans mt-2 gap-2" onClick={() => startGoogleLogin()} data-testid="google-signin-button-mobile"><GoogleIcon />{t.header.signInGoogle}</Button>
+                            <Button variant="outline" className="w-full font-sans mt-2 gap-2" onClick={() => startGoogleLogin()} data-testid="google-signin-button-mobile"><GoogleIcon />{t.header.signInGoogle}</Button>
               <button
                 type="button"
                 className="block w-full text-center text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 font-sans mt-2"

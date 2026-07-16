@@ -1,110 +1,56 @@
-import { TRPCError } from "@trpc/server";
+// Owner notifications: tell the advokát that something needs their attention.
+//
+// This used to POST to the Manus notification service, which does not exist on
+// a self-hosted deployment, so every alert silently went nowhere. That matters:
+// these are the messages that tell the advokát a contract is waiting, and the
+// 24h promise depends on them being seen.
+//
+// It now sends an ordinary email through SendGrid. The signature is unchanged,
+// so the six call sites did not have to move.
+
+import { sendEmail, escapeHtml } from "../email";
 import { ENV } from "./env";
 
-export type NotificationPayload = {
+export interface NotificationPayload {
   title: string;
   content: string;
-};
+}
 
-const TITLE_MAX_LENGTH = 1200;
-const CONTENT_MAX_LENGTH = 20000;
-
-const trimValue = (value: string): string => value.trim();
-const isNonEmptyString = (value: unknown): value is string =>
-  typeof value === "string" && value.trim().length > 0;
-
-const buildEndpointUrl = (baseUrl: string): string => {
-  const normalizedBase = baseUrl.endsWith("/")
-    ? baseUrl
-    : `${baseUrl}/`;
-  return new URL(
-    "webdevtoken.v1.WebDevService/SendNotification",
-    normalizedBase
-  ).toString();
-};
-
-const validatePayload = (input: NotificationPayload): NotificationPayload => {
-  if (!isNonEmptyString(input.title)) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Notification title is required.",
-    });
-  }
-  if (!isNonEmptyString(input.content)) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Notification content is required.",
-    });
-  }
-
-  const title = trimValue(input.title);
-  const content = trimValue(input.content);
-
-  if (title.length > TITLE_MAX_LENGTH) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: `Notification title must be at most ${TITLE_MAX_LENGTH} characters.`,
-    });
-  }
-
-  if (content.length > CONTENT_MAX_LENGTH) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: `Notification content must be at most ${CONTENT_MAX_LENGTH} characters.`,
-    });
-  }
-
-  return { title, content };
-};
+/** Where owner alerts go. OWNER_EMAIL wins; otherwise the verified sender. */
+function ownerEmail(): string {
+  return process.env.OWNER_EMAIL || ENV.sendgridFromEmail || "";
+}
 
 /**
- * Dispatches a project-owner notification through the Manus Notification Service.
- * Returns `true` if the request was accepted, `false` when the upstream service
- * cannot be reached (callers can fall back to email/slack). Validation errors
- * bubble up as TRPC errors so callers can fix the payload.
+ * Notify the owner/advokát. Returns true when the message was accepted for
+ * delivery, false when notifications are not configured or delivery failed.
+ * Never throws: an alert failing must not break the flow that triggered it.
  */
-export async function notifyOwner(
-  payload: NotificationPayload
-): Promise<boolean> {
-  const { title, content } = validatePayload(payload);
+export async function notifyOwner(payload: NotificationPayload): Promise<boolean> {
+  const title = (payload.title || "").trim();
+  const content = (payload.content || "").trim();
+  if (!title && !content) {
+    console.warn("[Notification] Empty payload, nothing sent.");
+    return false;
+  }
 
-  // Self-host: the Manus push service is optional. If the gateway isn't
-  // configured for push, skip silently instead of throwing so the core flow
-  // (analysis, review, email) is never broken by a missing push channel.
-  if (!ENV.forgeApiUrl || !ENV.forgeApiKey) {
+  const to = ownerEmail();
+  if (!to || !ENV.sendgridApiKey) {
     console.warn(
-      "[Notification] Owner push not configured (BUILT_IN_FORGE_API_* unset); skipping.",
+      `[Notification] Not configured (need SENDGRID_API_KEY and OWNER_EMAIL or SENDGRID_FROM_EMAIL), skipping: ${title}`,
     );
     return false;
   }
 
-  const endpoint = buildEndpointUrl(ENV.forgeApiUrl);
+  const html = `<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#111">
+  <p style="font-weight:bold;margin:0 0 12px">${escapeHtml(title)}</p>
+  <p style="white-space:pre-line;margin:0">${escapeHtml(content)}</p>
+</div>`;
 
   try {
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        accept: "application/json",
-        authorization: `Bearer ${ENV.forgeApiKey}`,
-        "content-type": "application/json",
-        "connect-protocol-version": "1",
-      },
-      body: JSON.stringify({ title, content }),
-    });
-
-    if (!response.ok) {
-      const detail = await response.text().catch(() => "");
-      console.warn(
-        `[Notification] Failed to notify owner (${response.status} ${response.statusText})${
-          detail ? `: ${detail}` : ""
-        }`
-      );
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    console.warn("[Notification] Error calling notification service:", error);
+    return await sendEmail({ to, subject: `bod.legal: ${title}`, html });
+  } catch (err) {
+    console.error("[Notification] Owner email failed:", err);
     return false;
   }
 }
