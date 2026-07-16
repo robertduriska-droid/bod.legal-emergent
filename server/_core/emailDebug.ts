@@ -14,6 +14,7 @@
 
 import type { Express, Request, Response } from "express";
 import { ENV } from "./env";
+import { getEmailSendLog } from "../email";
 
 let lastSendAt = 0;
 const THROTTLE_MS = 5 * 60 * 1000;
@@ -25,6 +26,8 @@ export function registerEmailDebug(app: Express) {
       sendgridKeySet: Boolean(ENV.sendgridApiKey),
       fromEmail: ENV.sendgridFromEmail || null,
       ownerEmail: process.env.OWNER_EMAIL || null,
+      // Newest first; survives until the next deploy restarts the process.
+      recentSends: getEmailSendLog(),
     };
 
     if (!ENV.sendgridApiKey) {

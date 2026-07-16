@@ -1013,7 +1013,11 @@ export async function analyzeContract(contractId: number): Promise<void> {
           ? `bod.legal: Vaše smlouva "${contract.fileName}" byla analyzována. ${plan === "basic" ? "Report: " + reportUrl : "Čeká na kontrolu advokátem."}`
           : `bod.legal: Vaša zmluva "${contract.fileName}" bola analyzovaná. ${plan === "basic" ? "Report: " + reportUrl : "Čaká na kontrolu advokátom."}`;
       notifyClient(notifyPhone, clientMsg).catch(() => {});
-      notifyAdmins(`bod.legal: Analýza dokončená pre "${contract.fileName}" (${riskStr}).`).catch(() => {});
+      notifyAdmins(
+        plan === "basic"
+          ? `bod.legal: Analýza dokončená pre "${contract.fileName}" (${riskStr}).`
+          : `bod.legal: Zmluva "${contract.fileName}" čaká na kontrolu advokátom (${riskStr}). ${baseUrl}/admin/review/${contract.id}`
+      ).catch(() => {});
     }
 
     // Email notifications via SendGrid

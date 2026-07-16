@@ -17,9 +17,31 @@ interface EmailParams {
   html: string;
 }
 
+/**
+ * Ring buffer of recent send attempts, readable via /api/debug/email.
+ * "The e-mail did not arrive" is undebuggable from outside without this:
+ * Railway logs are click-ops, so the app remembers its own last attempts.
+ */
+export type EmailAttempt = {
+  at: string;
+  to: string;
+  subject: string;
+  outcome: "sent" | "rejected" | "error" | "skipped_no_key";
+  detail?: string;
+};
+const sendLog: EmailAttempt[] = [];
+function logAttempt(a: EmailAttempt) {
+  sendLog.push(a);
+  if (sendLog.length > 20) sendLog.shift();
+}
+export function getEmailSendLog(): EmailAttempt[] {
+  return [...sendLog].reverse();
+}
+
 export async function sendEmail({ to, subject, html }: EmailParams): Promise<boolean> {
   if (!ENV.sendgridApiKey) {
     console.warn("[Email] SendGrid API key not configured, skipping email");
+    logAttempt({ at: new Date().toISOString(), to, subject, outcome: "skipped_no_key" });
     return false;
   }
 
@@ -40,14 +62,17 @@ export async function sendEmail({ to, subject, html }: EmailParams): Promise<boo
 
     if (res.status === 202) {
       console.log(`[Email] Sent to ${to}: "${subject}"`);
+      logAttempt({ at: new Date().toISOString(), to, subject, outcome: "sent" });
       return true;
     } else {
       const body = await res.text();
       console.error(`[Email] Failed (${res.status}): ${body}`);
+      logAttempt({ at: new Date().toISOString(), to, subject, outcome: "rejected", detail: `${res.status}: ${body.slice(0, 300)}` });
       return false;
     }
   } catch (err) {
     console.error("[Email] Error:", err);
+    logAttempt({ at: new Date().toISOString(), to, subject, outcome: "error", detail: String(err).slice(0, 300) });
     return false;
   }
 }
