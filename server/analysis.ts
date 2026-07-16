@@ -669,26 +669,34 @@ export function getSystemPrompt(language: string): string {
 }
 
 // Per-language user-instruction snippets for prompt assembly.
-const USER_INSTRUCTIONS: Record<string, { intro: string; basicNote: string; categories: string; schemaNote: string }> = {
+const USER_INSTRUCTIONS: Record<string, { intro: string; basicNote: string; categories: string; schemaNote: string; perspectiveKnown: (party: string) => string; perspectiveUnknown: string }> = {
   sk: {
+    perspectiveKnown: (party: string) => `Klient, pre ktorého analyzuješ, zastupuje túto stranu zmluvy: ${party}. Všetky riziká hodnoť z pohľadu tejto strany: čo ju zaväzuje, čo ju vystavuje zodpovednosti a čo ju znevýhodňuje. Návrhy úprav formuluj v jej prospech.`,
+    perspectiveUnknown: "Nie je známe, ktorú stranu zmluvy klient zastupuje. Vyhodnoť riziká pre obe strany a pri KAŽDOM náleze výslovne uveď, ktorú stranu riziko zaťažuje (napríklad: nevýhodné pre objednávateľa).",
     intro: "Text zmluvy:",
     basicNote: "Tento klient má bezplatný sken (plán basic). Zobrazia sa mu iba top 3 nálezy, každý z inej rizikovej kategórie. Pole clauses zoraď od najzávažnejšieho nálezu.",
     categories: "Pre riskCategory použi jednu z týchto hodnôt:",
     schemaNote: "Analyzuj túto zmluvu podľa postupu v systémovej inštrukcii. Vráť IBA validný JSON presne podľa tejto schémy:",
   },
   cz: {
+    perspectiveKnown: (party: string) => `Klient, pro kterého analyzuješ, zastupuje tuto stranu smlouvy: ${party}. Všechna rizika hodnoť z pohledu této strany a návrhy úprav formuluj v její prospěch.`,
+    perspectiveUnknown: "Není známo, kterou stranu smlouvy klient zastupuje. Vyhodnoť rizika pro obě strany a u KAŽDÉHO nálezu výslovně uveď, kterou stranu riziko zatěžuje.",
     intro: "Text smlouvy:",
     basicNote: "Tento klient má bezplatný sken (plán basic). Zobrazí se mu pouze top 3 nálezy, každý z jiné rizikové kategorie. Pole clauses seřaď od nejzávažnějšího nálezu.",
     categories: "Pro riskCategory použij jednu z těchto hodnot:",
     schemaNote: "Analyzuj tuto smlouvu podle postupu v systémové instrukci. Vrať POUZE validní JSON přesně podle tohoto schématu:",
   },
   en: {
+    perspectiveKnown: (party: string) => `The client you are analysing for represents this party to the contract: ${party}. Assess every risk from that party's perspective: what binds them, what exposes them to liability, what disadvantages them. Phrase suggested edits in their favour.`,
+    perspectiveUnknown: "It is not known which party the client represents. Assess risks for both sides and state explicitly for EVERY finding which party it burdens (for example: unfavourable for the customer).",
     intro: "Contract text:",
     basicNote: "This client is on the free scan (basic plan). They will only see the top 3 findings, each from a distinct risk category. Sort the clauses array from the most severe finding.",
     categories: "For riskCategory use one of these values:",
     schemaNote: "Analyze this contract following the procedure in the system instruction. Return ONLY valid JSON matching exactly this schema:",
   },
   hu: {
+    perspectiveKnown: (party: string) => `Az ügyfél, akinek elemzel, a szerződés ezen felét képviseli: ${party}. Minden kockázatot ennek a félnek a szemszögéből értékelj.`,
+    perspectiveUnknown: "Nem ismert, melyik felet képviseli az ügyfél. Értékeld a kockázatokat mindkét fél szempontjából, és minden megállapításnál jelezd, melyik felet terheli.",
     intro: "A szerződés szövege:",
     basicNote: "Ez az ügyfél ingyenes ellenőrzést használ (basic csomag). Csak a top 3 megállapítást látja, mindegyiket más kockázati kategóriából. A clauses tömböt a legsúlyosabb megállapítással kezdve rendezd.",
     categories: "A riskCategory mezőhöz az alábbi értékek egyikét használd:",
@@ -705,9 +713,10 @@ export function buildAnalysisRequest(opts: {
   language: string;
   contractText: string;
   plan: string;
+  clientParty?: string | null;
   maxChars?: number;
 }): { messages: { role: string; content: any }[]; responseFormat: any; redaction: RedactionCounts } {
-  const { language, contractText, plan } = opts;
+  const { language, contractText, plan, clientParty } = opts;
 
   // PII redaction happens HERE, at the single choke point where contract text
   // enters a model request, so no code path can reach the model with personal
@@ -724,7 +733,16 @@ export function buildAnalysisRequest(opts: {
   const jsonSchema = getAnalysisJsonSchema();
   const categoryIds = RISK_CATEGORIES.map(c => c.id).join(", ");
 
+  // Risk is directional: a clause that protects one side burdens the other,
+  // so the model is told whose side it is on, or told to say who each risk
+  // burdens when the client did not specify. The party label passes through
+  // redact() too in case someone typed an e-mail or phone into it.
+  const perspective = clientParty && clientParty.trim()
+    ? t.perspectiveKnown(redact(clientParty.trim()).text)
+    : t.perspectiveUnknown;
+
   const parts = [
+    perspective,
     `${t.intro}\n\n${truncated}`,
     `${t.categories} ${categoryIds}.`,
   ];
@@ -882,6 +900,7 @@ export async function analyzeContract(contractId: number): Promise<void> {
       language,
       contractText,
       plan: contract.plan,
+      clientParty: contract.clientParty,
     });
     // Log what was scrubbed, never the values themselves.
     console.log(`[Analysis] Redacted before model call: ${summarizeRedaction(redaction)}`);

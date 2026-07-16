@@ -1,0 +1,1 @@
+ALTER TABLE `contracts` ADD `clientParty` varchar(200);

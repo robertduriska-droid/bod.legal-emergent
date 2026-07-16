@@ -266,6 +266,39 @@ describe("SYSTEM_PROMPTS playbook regression", () => {
 });
 
 describe("buildAnalysisRequest (prompt assembly, no model call)", () => {
+  // Risk is directional: the model must know whose side it is on, or must be
+  // told to label who each risk burdens when the client did not say.
+  it("tells the model whose side it is on when the client says so", () => {
+    const { messages } = buildAnalysisRequest({
+      language: "sk", contractText: skNdaText, plan: "standard", clientParty: "objednávateľ",
+    });
+    const userText = messages[1].content[0].text as string;
+    expect(userText).toContain("zastupuje túto stranu zmluvy: objednávateľ");
+    expect(userText).toContain("Návrhy úprav formuluj v jej prospech");
+    expect(userText).not.toContain("Nie je známe");
+  });
+
+  it("demands per-finding burden labels when the party is unknown", () => {
+    const { messages } = buildAnalysisRequest({
+      language: "sk", contractText: skNdaText, plan: "standard",
+    });
+    const userText = messages[1].content[0].text as string;
+    expect(userText).toContain("Nie je známe, ktorú stranu zmluvy klient zastupuje");
+    expect(userText).toContain("ktorú stranu riziko zaťažuje");
+  });
+
+  // The party label is client-typed text; if someone pastes an e-mail or
+  // phone number into it, redaction must strip it like everywhere else.
+  it("redacts identifiers inside the party label", () => {
+    const { messages } = buildAnalysisRequest({
+      language: "sk", contractText: skNdaText, plan: "standard",
+      clientParty: "objednávateľ, kontakt jan@firma.sk",
+    });
+    const userText = messages[1].content[0].text as string;
+    expect(userText).not.toContain("jan@firma.sk");
+    expect(userText).toContain("zastupuje túto stranu zmluvy: objednávateľ");
+  });
+
   it("assembles the SK NDA request for the basic plan", () => {
     const { messages, responseFormat } = buildAnalysisRequest({ language: "sk", contractText: skNdaText, plan: "basic" });
     expect(messages[0].role).toBe("system");

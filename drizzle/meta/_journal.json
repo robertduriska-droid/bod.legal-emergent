@@ -85,6 +85,13 @@
       "when": 1784218379183,
       "tag": "0011_gray_giant_man",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1784236426466,
+      "tag": "0012_productive_firebrand",
+      "breakpoints": true
     }
   ]
 }

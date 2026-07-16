@@ -42,6 +42,7 @@ export default function Upload() {
   const [expressAddon, setExpressAddon] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [phone, setPhone] = useState("");
+  const [clientParty, setClientParty] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [consent, setConsent] = useState(false);
   const [pageEstimate, setPageEstimate] = useState<number | null>(null);
@@ -154,6 +155,7 @@ export default function Upload() {
           plan: selectedPlan as "basic" | "standard" | "premium",
           expressAddon: expressAddon,
           language: locale,
+          clientParty: clientParty.trim() || undefined,
           phone: phone || undefined,
         });
       };
@@ -344,6 +346,35 @@ export default function Upload() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Whose side the client is on. Risk is directional: a liability cap
+              protects the drafter and burdens the other party, so the analysis
+              needs to know whose perspective to take. Optional: without it the
+              report labels who each risk burdens. */}
+          <div className="mb-4" data-testid="upload-party-block">
+            <label className="text-sm font-sans font-medium block mb-1" htmlFor="client-party">
+              {locale === 'en' ? 'Which party do you represent? (recommended)'
+                : locale === 'cz' ? 'Kterou stranu zastupujete? (doporučené)'
+                : 'Ktorú stranu zastupujete? (odporúčané)'}
+            </label>
+            <input
+              id="client-party"
+              type="text"
+              maxLength={200}
+              value={clientParty}
+              onChange={(e) => setClientParty(e.target.value)}
+              placeholder={locale === 'en' ? 'e.g. customer, tenant, buyer, or your company name'
+                : locale === 'cz' ? 'např. objednatel, nájemce, kupující, nebo název vaší firmy'
+                : 'napr. objednávateľ, nájomca, kupujúci, alebo názov vašej firmy'}
+              className="w-full max-w-sm rounded-md border border-input bg-background px-3 py-2 text-sm font-sans focus:outline-none focus:ring-2 focus:ring-primary/40"
+              data-testid="upload-party-input"
+            />
+            <p className="text-xs text-muted-foreground font-sans mt-1">
+              {locale === 'en' ? 'We assess every risk from your side of the contract. Without this, the report labels who each risk burdens.'
+                : locale === 'cz' ? 'Rizika hodnotíme z pohledu vaší strany smlouvy. Bez údaje report u každého nálezu označí, koho zatěžuje.'
+                : 'Riziká hodnotíme z pohľadu vašej strany zmluvy. Bez údaja report pri každom náleze označí, koho zaťažuje.'}
+            </p>
+          </div>
 
           {/* Optional SMS/WhatsApp notifications (paid plans only: the copy
               promises a lawyer-signed report, which the free scan has not) */}

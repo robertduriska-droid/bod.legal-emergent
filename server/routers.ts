@@ -180,6 +180,7 @@ export const appRouter = router({
         plan: z.enum(["basic", "standard", "premium"]),
         expressAddon: z.boolean().default(false),
         language: z.string().default("sk"),
+        clientParty: z.string().max(200).optional(),
         phone: z.string().max(32).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
@@ -212,6 +213,7 @@ export const appRouter = router({
           plan: input.plan,
           expressAddon: input.expressAddon ? 1 : 0,
           language: input.language,
+          clientParty: input.clientParty?.trim() || null,
           status: "pending",
         });
 

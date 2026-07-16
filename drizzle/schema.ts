@@ -45,6 +45,14 @@ export const contracts = mysqlTable("contracts", {
   /** Language for analysis output */
   language: varchar("language", { length: 5 }).default("sk").notNull(),
   /**
+   * Which party the client represents (e.g. "objednávateľ", "nájomca",
+   * "Alfa s. r. o."). Risk is directional: a liability cap is great for the
+   * side that wrote it and terrible for the other, so the analysis has to
+   * know whose side it is on. NULL means the client did not say; the
+   * analysis then assesses both ways and labels who each risk burdens.
+   */
+  clientParty: varchar("clientParty", { length: 200 }),
+  /**
    * When the uploaded source file was purged from object storage.
    *
    * We promise clients, in the FAQ, on the About page and in the email they
