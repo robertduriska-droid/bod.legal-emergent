@@ -88,8 +88,8 @@ def page(title: str, body_html: str) -> str:
   <meta name="description" content="{title} služby bod.legal, ktorú prevádzkuje advokátska kancelária KILIAN LEGAL s. r. o.">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <!-- Pisma servujeme sami: ziadna IP navstevnika neodchadza do Google. -->
-  <link rel="stylesheet" href="fonts/fonts.css">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="fonts/fonts.css?v=4">
+  <link rel="stylesheet" href="styles.css?v=4">
 </head>
 <body>
 {HEADER}
