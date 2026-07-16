@@ -13,8 +13,8 @@
 // fallback mode.
 
 import { randomUUID } from "crypto";
-import { r2PutObject, r2PresignGet, isR2Configured } from "./_core/r2";
-import { diskPutObject } from "./_core/diskStorage";
+import { r2PutObject, r2PresignGet, r2DeleteObject, isR2Configured } from "./_core/r2";
+import { diskPutObject, diskDeleteObject } from "./_core/diskStorage";
 
 function normalizeKey(relKey: string): string {
   return relKey.replace(/^\/+/, "");
@@ -57,6 +57,22 @@ export async function storagePut(
     await diskPutObject(key, body, contentType);
   }
   return { key, url: `/manus-storage/${key}` };
+}
+
+/**
+ * Permanently delete a stored object, whichever backend holds it.
+ *
+ * Retention calls this to honour the 30-day deletion promised to clients. Both
+ * backends treat an already-missing key as success, so a re-run after a partial
+ * pass is safe.
+ */
+export async function storageDelete(relKey: string): Promise<void> {
+  const key = normalizeKey(relKey);
+  if (isR2Configured()) {
+    await r2DeleteObject(key);
+  } else {
+    await diskDeleteObject(key);
+  }
 }
 
 export async function storageGet(relKey: string): Promise<{ key: string; url: string }> {

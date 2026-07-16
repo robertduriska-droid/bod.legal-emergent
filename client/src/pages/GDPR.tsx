@@ -67,7 +67,7 @@ export default function GDPR() {
               <ul className="list-disc pl-6 space-y-1">
                 <li>Údaje súvisiace s poskytnutím služby: 5 rokov od ukončenia poskytovania služby</li>
                 <li>Účtovné doklady: 10 rokov v súlade so zákonom o účtovníctve</li>
-                <li>Nahrané dokumenty: 1 rok od dokončenia analýzy, pokiaľ klient nepožiada o skoršie vymazanie</li>
+                <li>Nahrané dokumenty: 30 dní od dokončenia analýzy, pokiaľ klient nepožiada o skoršie vymazanie</li>
               </ul>
             </section>
 

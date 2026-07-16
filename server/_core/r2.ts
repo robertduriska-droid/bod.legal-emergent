@@ -8,7 +8,7 @@
 // (see storageProxy.ts) which 307-redirects to a short-lived presigned GET URL,
 // so the bucket itself stays private.
 
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { ENV } from "./env";
 
@@ -53,6 +53,19 @@ export async function r2PutObject(
       ContentType: contentType,
     }),
   );
+}
+
+/**
+ * Permanently remove an object. Used by retention (see server/retention.ts) to
+ * honour the 30-day deletion we promise clients in the FAQ, on the About page
+ * and in the email they receive.
+ *
+ * S3 delete is idempotent: removing a key that is already gone succeeds, so a
+ * retry after a partial run is safe.
+ */
+export async function r2DeleteObject(key: string): Promise<void> {
+  const s3 = getClient();
+  await s3.send(new DeleteObjectCommand({ Bucket: ENV.r2Bucket, Key: key }));
 }
 
 /** Short-lived presigned GET URL. Used both server-side (to read a file for

@@ -44,6 +44,16 @@ export const contracts = mysqlTable("contracts", {
   status: mysqlEnum("status", ["pending", "analyzing", "in_review", "completed"]).default("pending").notNull(),
   /** Language for analysis output */
   language: varchar("language", { length: 5 }).default("sk").notNull(),
+  /**
+   * When the uploaded source file was purged from object storage.
+   *
+   * We promise clients, in the FAQ, on the About page and in the email they
+   * actually receive, that uploaded documents are deleted within 30 days. NULL
+   * means the file is still in the bucket; a timestamp means retention has run
+   * and fileKey no longer resolves. The report is deliberately kept: the
+   * promise covers the uploaded document, and the client paid for the report.
+   */
+  fileDeletedAt: timestamp("fileDeletedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

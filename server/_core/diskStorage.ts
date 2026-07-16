@@ -33,6 +33,17 @@ export async function diskPutObject(key: string, body: Buffer, contentType: stri
   await fs.writeFile(file + ".meta.json", JSON.stringify({ contentType }), "utf8");
 }
 
+/**
+ * Remove an object and its sidecar. Missing files are not an error: retention
+ * must be safe to re-run, and on this backend the file may already be gone
+ * because the host wiped the disk on redeploy.
+ */
+export async function diskDeleteObject(key: string): Promise<void> {
+  const file = safePath(key);
+  await fs.rm(file, { force: true });
+  await fs.rm(file + ".meta.json", { force: true });
+}
+
 export async function diskGetObject(key: string): Promise<{ body: Buffer; contentType: string } | null> {
   const file = safePath(key);
   try {
