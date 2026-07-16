@@ -1,58 +1,42 @@
 # Nasadenie marketingového webu na bod.legal
 
 Tento priečinok (`marketing/`) je celý marketingový web koreňovej domény
-bod.legal. Statické HTML bez zostavovania: `index.html`, štyri právne
-dokumenty, `styles.css`, `favicon.svg`. Aplikácia beží oddelene na
-app.bod.legal (Railway) a tento web sa jej nijako nedotýka.
+bod.legal: `index.html`, štyri právne dokumenty, `styles.css`, vlastné
+písma a `favicon.svg`. Statické HTML bez zostavovania.
 
-Hostiť budeme na Cloudflare Pages: DNS domény už je v Cloudflare, hosting
-statických stránok je bezplatný a nasadzuje sa automaticky pri každom pushi
-do GitHubu.
+Web servuje priamo aplikačný server (server/_core/marketingSite.ts) podľa
+domény v požiadavke: `bod.legal` dostane tento web, `app.bod.legal` dostane
+aplikáciu. Žiadny ďalší hosting, žiadne ďalšie konto, žiadna ďalšia
+pipeline. Nasadzuje sa spolu s appkou pri každom pushi do vetvy `selfhost`.
 
-## Krok 1: Vytvor projekt v Cloudflare Pages
+## Jednorazové zapojenie domény (klikačka, asi 5 minút)
 
-1. Prihlás sa na `dash.cloudflare.com`.
-2. V ľavom menu klikni **Workers & Pages**, potom **Create**, karta **Pages**.
-3. Zvoľ **Connect to Git** a vyber repozitár `robertduriska-droid/bod.legal-emergent`.
-4. Nastav presne toto:
-   - **Production branch**: `selfhost`
-   - **Framework preset**: `None`
-   - **Build command**: nechaj prázdne
-   - **Build output directory**: `marketing`
-5. Klikni **Save and Deploy**. Prvé nasadenie dostane adresu
-   `nieco.pages.dev`, na ktorej si web hneď pozrieš.
+1. **Railway**: otvor službu `bod.legal-emergent` → **Settings** →
+   **Networking** → **+ Custom Domain**. Pridaj `bod.legal`. Railway ukáže
+   cieľ pre DNS záznam (tvar `xyz.up.railway.app`). Zopakuj pre
+   `www.bod.legal`.
+2. **Cloudflare** → doména bod.legal → **DNS** → **Records**:
+   - zmaž starý záznam `bod.legal → cname.manus.space` (spôsoboval chybu 403),
+   - zmaž starý záznam `www → cname.manus.space`,
+   - pridaj `CNAME`, Name `@`, Target podľa Railway, **DNS only (sivý oblak)**,
+   - pridaj `CNAME`, Name `www`, Target podľa Railway, **DNS only**.
+   - Oranžový oblak by zablokoval overenie domény v Railway, presne ako
+     kedysi pri app.bod.legal. MX a poštových záznamov sa nedotýkaj.
+3. Počkaj, kým Railway pri oboch doménach ukáže zelené overenie.
 
-## Krok 2: Uprac staré DNS záznamy
+## Overenie
 
-V Cloudflare otvor doménu bod.legal, záložka **DNS**.
-
-1. Nájdi záznam pre koreň (`bod.legal` alebo `@`). Ak ukazuje na
-   `cname.manus.space` alebo čokoľvek manusové, **zmaž ho**. Presne tento
-   starý záznam je dôvod, prečo koreň dnes vracia chybu 403.
-2. To isté sprav so záznamom `www`, ak ukazuje na Manus.
-3. Záznamu `app` sa **nedotýkaj**: ten vedie na Railway a drží aplikáciu.
-
-## Krok 3: Pripoj doménu k Pages
-
-1. V projekte Pages otvor záložku **Custom domains**.
-2. Klikni **Set up a custom domain**, zadaj `bod.legal`, potvrď. Cloudflare
-   sám vytvorí správny DNS záznam.
-3. Zopakuj pre `www.bod.legal`.
-
-Do pár minút bude web živý na https://bod.legal aj https://www.bod.legal.
-
-## Krok 4: Over
-
-- `https://bod.legal` načíta úvodnú stránku bez chyby a s vysvietenou ikonou.
+- `https://bod.legal` načíta úvodnú stránku.
+- `https://www.bod.legal` presmeruje na `https://bod.legal` (301).
 - `https://bod.legal/vop.html` načíta obchodné podmienky.
 - Odkaz **Nahrať zmluvu** vedie na `https://app.bod.legal/`.
+- Neznáma cesta (`/hocico`) presmeruje na úvod.
 
 ## Aktualizácie webu
 
-Zmeň súbory v `marketing/`, commitni a pushni do vetvy `selfhost`.
-Cloudflare Pages nasadí novú verziu sám, zvyčajne do minúty. Právne
-dokumenty sa negenerujú ručne: uprav `docs.json` a spusti
-`python build_docs.py` (podrobnosti v hlavičke toho súboru).
+Zmeň súbory v `marketing/`, commitni a pushni do `selfhost`. Railway nasadí
+web spolu s appkou. Právne dokumenty sa negenerujú ručne: uprav `docs.json`
+a spusti `python build_docs.py` (podrobnosti v hlavičke toho súboru).
 
 ## Čo tu zámerne nie je
 

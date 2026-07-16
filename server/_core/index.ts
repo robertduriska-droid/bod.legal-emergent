@@ -14,6 +14,7 @@ import { serveStatic, setupVite } from "./vite";
 import { runMigrations } from "./migrate";
 import { startRetentionJob } from "./retentionJob";
 import { registerEmailDebug } from "./emailDebug";
+import { registerMarketingSite } from "./marketingSite";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -42,6 +43,8 @@ async function startServer() {
   const server = createServer(app);
   // Stripe webhook MUST be registered before express.json() for signature verification
   registerStripeWebhook(app);
+  // Root-domain marketing site (host-based; app.bod.legal is untouched)
+  registerMarketingSite(app);
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
