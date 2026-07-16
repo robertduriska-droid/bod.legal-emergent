@@ -211,19 +211,23 @@ class SDKServer {
       });
       const { openId, appId, name } = payload as Record<string, unknown>;
 
-      if (
-        !isNonEmptyString(openId) ||
-        !isNonEmptyString(appId) ||
-        !isNonEmptyString(name)
-      ) {
-        console.warn("[Auth] Session payload missing required fields");
+      // Only openId decides who the caller is. appId and name are metadata and
+      // must never invalidate a session:
+      //   - appId comes from VITE_APP_ID, a Manus platform variable that is
+      //     intentionally unset when self-hosting, so it is always empty here.
+      //   - name is empty whenever the identity provider gives us no display
+      //     name (a Google account without one, an email signup without a name).
+      // Requiring all three non-empty rejected every session this app issued,
+      // which broke login entirely, for Google and email/password alike.
+      if (!isNonEmptyString(openId)) {
+        console.warn("[Auth] Session payload has no openId");
         return null;
       }
 
       return {
         openId,
-        appId,
-        name,
+        appId: isNonEmptyString(appId) ? appId : "",
+        name: isNonEmptyString(name) ? name : "",
       };
     } catch (error) {
       console.warn("[Auth] Session verification failed", String(error));
