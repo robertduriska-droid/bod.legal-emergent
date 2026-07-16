@@ -130,7 +130,7 @@ export const en: Translations = {
     ],
     standardBadge: "Most Popular",
     premiumTitle: "Premium review",
-    premiumPrice: "€497",
+    premiumPrice: "€490",
     premiumTime: "within 24 hours",
     premiumFeatures: [
       "Everything from Standard review",

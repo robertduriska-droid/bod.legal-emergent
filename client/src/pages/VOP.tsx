@@ -55,7 +55,7 @@ export default function VOP() {
               <ul className="list-disc pl-6 space-y-1">
                 <li><strong>Základná kontrola (197 eur)</strong> - AI analýza bez advokátskeho overenia, do 30 strán</li>
                 <li><strong>Štandardná kontrola (249 eur)</strong> - AI analýza s overením advokátom, do 50 strán</li>
-                <li><strong>Prémiová kontrola (497 eur)</strong> - AI analýza, overenie advokátom a redline dokument, do 100 strán</li>
+                <li><strong>Prémiová kontrola (490 eur)</strong> - AI analýza, overenie advokátom a redline dokument, do 100 strán</li>
                 <li><strong>Express dodanie (+127 eur)</strong> - Prioritné spracovanie do 4 hodín (doplnok k ľubovolnému plánu)</li>
               </ul>
             </section>

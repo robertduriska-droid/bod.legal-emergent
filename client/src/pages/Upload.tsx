@@ -172,7 +172,7 @@ export default function Upload() {
 
   // Get price for selected plan - use marketing-friendly prices from stripe-products
   // (basic is the free scan, so it carries no price anywhere)
-  const MARKETING_PRICES_EUR: Record<string, number> = { basic: 0, standard: 249, premium: 497 };
+  const MARKETING_PRICES_EUR: Record<string, number> = { basic: 0, standard: 249, premium: 490 };
   const MARKETING_PRICES_CZK: Record<string, number> = { basic: 0, standard: 7490, premium: 12490 };
   const MARKETING_PRICES_HUF: Record<string, number> = { basic: 0, standard: 119000, premium: 199000 };
   const EXPRESS_EUR = 127;

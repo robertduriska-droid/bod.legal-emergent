@@ -130,7 +130,7 @@ export const sk: Translations = {
     ],
     standardBadge: "Najobľúbenejšie",
     premiumTitle: "Prémiová kontrola",
-    premiumPrice: "497 eur",
+    premiumPrice: "490 eur",
     premiumTime: "do 24 hodín",
     premiumFeatures: [
       "Všetko zo Štandardnej kontroly",

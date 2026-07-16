@@ -16,7 +16,7 @@ export const STRIPE_PRODUCTS = {
   premium: {
     name: "Prémiová kontrola",
     description: "AI analýza + advokát + redline dokument s navrhovanými úpravami (do 100 strán, do 24h)",
-    priceAmount: 49700, // 497 €
+    priceAmount: 49000, // 490 €
     currency: "eur",
   },
   express: {

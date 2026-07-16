@@ -113,12 +113,12 @@ export default function Dashboard() {
     : { basic: "Základná", standard: "Štandardná", premium: "Prémiová" };
 
   // Price labels per plan, currency depends on contract language
-  // Source of truth: server/stripe-products.ts (basic is the free scan, standard=249€, premium=497€)
+  // Source of truth: server/stripe-products.ts (basic is the free scan, standard=249€, premium=490€)
   // CZK: marketing-friendly rounded equivalents
   const planPrices: Record<string, { eur: string; czk: string }> = {
-    basic: { eur: "197 €", czk: "4 990 Kč" },
+    basic: { eur: locale === "en" ? "free" : "zadarmo", czk: "zdarma" },
     standard: { eur: "249 €", czk: "6 290 Kč" },
-    premium: { eur: "497 €", czk: "12 490 Kč" },
+    premium: { eur: "490 €", czk: "12 490 Kč" },
   };
 
   function getPlanDisplay(plan: string, language: string) {
