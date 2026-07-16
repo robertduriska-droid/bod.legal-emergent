@@ -4,44 +4,81 @@ import { useT } from "@/i18n";
 /**
  * SplashIntro - Full-screen intro animation with large bod.legal logo.
  * Shows on first visit per session, then fades out to reveal the page.
- * Uses sessionStorage so it only plays once per browser session.
+ * Uses sessionStorage (in Home.tsx) so it only plays once per browser session.
  *
- * Timeline:
- *   0ms      → "enter" phase starts (logo fades in from scale 0.95)
- *   800ms    → "hold" phase (logo fully visible, tagline appears)
- *   2200ms   → "exit" phase (entire overlay fades out + slides up)
- *   2900ms   → "done" (overlay removed from DOM)
+ * Timeline (~1.5s total):
+ *   0ms      → "enter" phase (logo fades in from scale 0.95)
+ *   400ms    → "hold" phase (logo fully visible, tagline appears)
+ *   1000ms   → "exit" phase (entire overlay fades out + slides up)
+ *   1500ms   → "done" (overlay removed from DOM)
+ *
+ * Skipped entirely (finishes immediately) when:
+ *   - the visitor prefers reduced motion, or
+ *   - the URL contains ad-campaign parameters (utm_).
+ * A click anywhere on the overlay, or the "Preskočiť" button, jumps to exit.
  */
+
+const SKIP_TX: Record<string, string> = {
+  sk: "Preskočiť",
+  cz: "Přeskočit",
+  en: "Skip",
+  hu: "Kihagyás",
+};
+
+function shouldSkipEntirely(): boolean {
+  if (typeof window === "undefined") return false;
+  if (window.location.search.includes("utm_")) return true;
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return true;
+  return false;
+}
+
 export default function SplashIntro({ onComplete }: { onComplete: () => void }) {
-  const [phase, setPhase] = useState<"enter" | "hold" | "exit" | "done">("enter");
-  const { t } = useT();
+  const [phase, setPhase] = useState<"enter" | "hold" | "exit" | "done">(() =>
+    shouldSkipEntirely() ? "done" : "enter"
+  );
+  const { t, locale } = useT();
 
   const stableOnComplete = useCallback(onComplete, []);
 
+  // When skipped entirely, notify the parent right away so the page content
+  // is visible immediately and the session flag still gets set.
   useEffect(() => {
-    const enterTimer = setTimeout(() => setPhase("hold"), 800);
-    return () => clearTimeout(enterTimer);
+    if (phase === "done") {
+      stableOnComplete();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
+    if (phase !== "enter") return;
+    const enterTimer = setTimeout(() => setPhase("hold"), 400);
+    return () => clearTimeout(enterTimer);
+  }, [phase]);
+
+  useEffect(() => {
     if (phase === "hold") {
-      const holdTimer = setTimeout(() => setPhase("exit"), 1400);
+      const holdTimer = setTimeout(() => setPhase("exit"), 600);
       return () => clearTimeout(holdTimer);
     }
     if (phase === "exit") {
       const exitTimer = setTimeout(() => {
         setPhase("done");
         stableOnComplete();
-      }, 700);
+      }, 500);
       return () => clearTimeout(exitTimer);
     }
   }, [phase, stableOnComplete]);
+
+  const skipToExit = useCallback(() => {
+    setPhase((p) => (p === "enter" || p === "hold" ? "exit" : p));
+  }, []);
 
   if (phase === "done") return null;
 
   return (
     <div
-      className={`fixed inset-0 z-[200] flex flex-col items-center justify-center pointer-events-auto ${
+      onClick={skipToExit}
+      className={`fixed inset-0 z-[200] flex flex-col items-center justify-center pointer-events-auto cursor-pointer ${
         phase === "exit"
           ? "opacity-0 -translate-y-6"
           : "opacity-100 translate-y-0"
@@ -49,7 +86,7 @@ export default function SplashIntro({ onComplete }: { onComplete: () => void }) 
       style={{
         backgroundColor: "#141414",
         transition: phase === "exit"
-          ? "opacity 700ms cubic-bezier(0.23, 1, 0.32, 1), transform 700ms cubic-bezier(0.23, 1, 0.32, 1)"
+          ? "opacity 500ms cubic-bezier(0.23, 1, 0.32, 1), transform 500ms cubic-bezier(0.23, 1, 0.32, 1)"
           : "none",
       }}
     >
@@ -59,8 +96,8 @@ export default function SplashIntro({ onComplete }: { onComplete: () => void }) 
         style={{
           opacity: phase === "enter" ? 0 : 1,
           transform: phase === "enter" ? "translateY(6px)" : "translateY(0)",
-          transition: "opacity 600ms cubic-bezier(0.23, 1, 0.32, 1), transform 600ms cubic-bezier(0.23, 1, 0.32, 1)",
-          transitionDelay: "100ms",
+          transition: "opacity 400ms cubic-bezier(0.23, 1, 0.32, 1), transform 400ms cubic-bezier(0.23, 1, 0.32, 1)",
+          transitionDelay: "50ms",
         }}
       >
         <p
@@ -76,7 +113,7 @@ export default function SplashIntro({ onComplete }: { onComplete: () => void }) 
         style={{
           opacity: phase === "enter" ? 0 : 1,
           transform: phase === "enter" ? "scale(0.95)" : "scale(1)",
-          transition: "opacity 700ms cubic-bezier(0.23, 1, 0.32, 1), transform 700ms cubic-bezier(0.23, 1, 0.32, 1)",
+          transition: "opacity 400ms cubic-bezier(0.23, 1, 0.32, 1), transform 400ms cubic-bezier(0.23, 1, 0.32, 1)",
         }}
       >
         <h1
@@ -93,8 +130,8 @@ export default function SplashIntro({ onComplete }: { onComplete: () => void }) 
         style={{
           opacity: phase === "hold" || phase === "exit" ? 1 : 0,
           transform: phase === "enter" ? "translateY(8px)" : "translateY(0)",
-          transition: "opacity 500ms cubic-bezier(0.23, 1, 0.32, 1), transform 500ms cubic-bezier(0.23, 1, 0.32, 1)",
-          transitionDelay: phase === "hold" ? "200ms" : "0ms",
+          transition: "opacity 300ms cubic-bezier(0.23, 1, 0.32, 1), transform 300ms cubic-bezier(0.23, 1, 0.32, 1)",
+          transitionDelay: phase === "hold" ? "50ms" : "0ms",
         }}
       >
         <p
@@ -111,8 +148,8 @@ export default function SplashIntro({ onComplete }: { onComplete: () => void }) 
         style={{
           opacity: phase === "hold" || phase === "exit" ? 1 : 0,
           transform: phase === "enter" ? "translateY(10px)" : "translateY(0)",
-          transition: "opacity 600ms cubic-bezier(0.23, 1, 0.32, 1), transform 600ms cubic-bezier(0.23, 1, 0.32, 1)",
-          transitionDelay: phase === "hold" ? "400ms" : "0ms",
+          transition: "opacity 300ms cubic-bezier(0.23, 1, 0.32, 1), transform 300ms cubic-bezier(0.23, 1, 0.32, 1)",
+          transitionDelay: phase === "hold" ? "100ms" : "0ms",
         }}
       >
         <p
@@ -122,6 +159,23 @@ export default function SplashIntro({ onComplete }: { onComplete: () => void }) 
           {t.splash.motto}
         </p>
       </div>
+
+      {/* Visible skip button */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          skipToExit();
+        }}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 font-sans text-xs tracking-widest uppercase px-4 py-2 rounded-full border transition-colors"
+        style={{
+          color: "rgba(255,255,255,0.55)",
+          borderColor: "rgba(255,255,255,0.25)",
+          backgroundColor: "transparent",
+        }}
+      >
+        {SKIP_TX[locale] ?? SKIP_TX.sk}
+      </button>
     </div>
   );
 }

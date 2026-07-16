@@ -1,0 +1,110 @@
+{
+  "contractType": "Zmluva o mlčanlivosti (NDA)",
+  "contractTypeCode": "nda",
+  "jurisdiction": "SK",
+  "clauses": [
+    {
+      "clauseNumber": 1,
+      "title": "Zmluvná pokuta za porušenie mlčanlivosti",
+      "excerpt": "Za každé porušenie povinnosti mlčanlivosti zaplatí prijímajúca strana zmluvnú pokutu 50000 eur.",
+      "riskLevel": "high",
+      "severity": "critical",
+      "finding": "Zmluvná pokuta 50000 eur je neprimerane vysoká vzhľadom na povahu spolupráce a nie je nijako odstupňovaná podľa závažnosti porušenia.",
+      "whyItMatters": "Pri drobnom administratívnom pochybení môžete zaplatiť sumu, ktorá ohrozí chod firmy. Súd môže pokutu znížiť, ale spor trvá roky.",
+      "suggestedEdit": "Znížiť pokutu a naviazať ju na závažnosť porušenia.",
+      "suggestedWording": "Za preukázané porušenie povinnosti mlčanlivosti zaplatí porušujúca strana zmluvnú pokutu 5000 eur za každé jednotlivé porušenie. Zaplatením zmluvnej pokuty nie je dotknutý nárok na náhradu škody prevyšujúcej zmluvnú pokutu.",
+      "negotiationLine": "Navrhujeme pokutu 5000 eur za preukázané porušenie, čo je v našom odvetví obvyklá úroveň.",
+      "legalBasis": "Obchodný zákonník (513/1991 Zb.), § 301",
+      "legalSourceUrl": "https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/1991/513/",
+      "citation": {
+        "law": "Obchodný zákonník (513/1991 Zb.)",
+        "section": "§ 301",
+        "paragraph": "",
+        "url": "https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/1991/513/"
+      },
+      "riskCategory": "liability_indemnity"
+    },
+    {
+      "clauseNumber": 2,
+      "title": "Doba trvania mlčanlivosti",
+      "excerpt": "Povinnosť mlčanlivosti trvá bez časového obmedzenia aj po skončení spolupráce.",
+      "riskLevel": "medium",
+      "severity": "important",
+      "finding": "Časovo neobmedzená mlčanlivosť je pre prijímajúcu stranu nevýhodná a v praxi ťažko splniteľná.",
+      "whyItMatters": "Neobmedzený záväzok vás viaže navždy, aj keď informácie časom stratia hodnotu. Bežný štandard je 3 až 5 rokov po skončení zmluvy.",
+      "suggestedEdit": "Obmedziť trvanie mlčanlivosti na 5 rokov po skončení zmluvy.",
+      "suggestedWording": "Povinnosť mlčanlivosti podľa tejto zmluvy trvá počas trvania zmluvy a 5 rokov po jej skončení.",
+      "negotiationLine": "Žiadame obmedziť mlčanlivosť na 5 rokov po skončení zmluvy, čo zodpovedá bežnej praxi.",
+      "legalBasis": "Obchodný zákonník (513/1991 Zb.), § 271",
+      "legalSourceUrl": "https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/1991/513/",
+      "citation": {
+        "law": "Obchodný zákonník (513/1991 Zb.)",
+        "section": "§ 271",
+        "paragraph": "",
+        "url": "https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/1991/513/"
+      },
+      "riskCategory": "dates_effectiveness"
+    },
+    {
+      "clauseNumber": 3,
+      "title": "Definícia dôverných informácií",
+      "excerpt": "Dôvernými informáciami sú všetky informácie, ktoré si strany pri spolupráci vymenia.",
+      "riskLevel": "low",
+      "severity": "minor",
+      "finding": "Definícia je príliš široká a zahŕňa aj verejne dostupné informácie, chýbajú obvyklé výnimky. Presný rozsah je na overenie advokátom.",
+      "whyItMatters": "Bez výnimiek porušíte zmluvu aj použitím informácie, ktorá je verejne známa. Výnimky chránia bežnú prevádzku firmy.",
+      "suggestedEdit": "Doplniť obvyklé výnimky z dôvernosti.",
+      "suggestedWording": "Za dôverné informácie sa nepovažujú informácie, ktoré sú verejne dostupné, ktoré prijímajúca strana preukázateľne poznala pred ich sprístupnením, alebo ktoré je povinná sprístupniť na základe zákona alebo rozhodnutia orgánu verejnej moci.",
+      "negotiationLine": "Doplňme štandardné výnimky z dôvernosti pre verejne dostupné a zákonom vyžadované informácie.",
+      "legalBasis": "Občiansky zákonník (40/1964 Zb.), § 39",
+      "legalSourceUrl": "https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/1964/40/",
+      "citation": {
+        "law": "Občiansky zákonník (40/1964 Zb.)",
+        "section": "§ 39",
+        "paragraph": "",
+        "url": "https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/1964/40/"
+      },
+      "riskCategory": "scope_performance"
+    }
+  ],
+  "summary": "Zmluva o mlčanlivosti obsahuje neprimerane vysokú zmluvnú pokutu, časovo neobmedzenú mlčanlivosť a príliš širokú definíciu dôverných informácií. Pred podpisom odporúčame upraviť tri klauzuly.",
+  "recommendation": "Pred podpisom vyjednajte zníženie zmluvnej pokuty, časové obmedzenie mlčanlivosti a doplnenie výnimiek z dôvernosti.",
+  "riskSummary": {
+    "high": 1,
+    "medium": 1,
+    "low": 1,
+    "negotiationChecklist": [
+      "Znížiť zmluvnú pokutu na 5000 eur za preukázané porušenie.",
+      "Obmedziť trvanie mlčanlivosti na 5 rokov po skončení zmluvy.",
+      "Doplniť výnimky z dôvernosti pre verejne dostupné informácie."
+    ],
+    "missingClauses": [
+      {
+        "name": "Vrátenie alebo zničenie podkladov",
+        "why": "Zmluva neupravuje, čo sa stane s dôvernými podkladmi po skončení spolupráce."
+      }
+    ]
+  },
+  "riskScore": 4,
+  "dealBreakers": [
+    {
+      "title": "Zmluvná pokuta 50000 eur bez odstupňovania",
+      "detail": "Pokuta v tejto výške bez väzby na závažnosť porušenia môže existenčne ohroziť menšiu firmu."
+    }
+  ],
+  "verificationNotes": "Nálezy sú vzájomne konzistentné, počty rizík zodpovedajú klauzulám, citácie odkazujú na platné predpisy.",
+  "applicableLegalSources": [
+    {
+      "id": "commercial_code",
+      "name": "Obchodný zákonník",
+      "instrument": "Zákon č. 513/1991 Zb.",
+      "url": "https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/1991/513/"
+    },
+    {
+      "id": "civil_code",
+      "name": "Občiansky zákonník",
+      "instrument": "Zákon č. 40/1964 Zb.",
+      "url": "https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/1964/40/"
+    }
+  ]
+}

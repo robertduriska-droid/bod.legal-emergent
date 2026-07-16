@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="AI analyza rizik">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0D1B33"/>
+      <stop offset="1" stop-color="#0A1428"/>
+    </linearGradient>
+    <linearGradient id="gold2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E8C776"/>
+      <stop offset="1" stop-color="#C9973F"/>
+    </linearGradient>
+    <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#E8C776" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#E8C776" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#E8C776" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg2)"/>
+  <g stroke="#FFFFFF" stroke-opacity="0.03">
+    <path d="M0 150 H800 M0 300 H800 M0 450 H800"/>
+    <path d="M200 0 V600 M400 0 V600 M600 0 V600"/>
+  </g>
+  <text x="400" y="565" text-anchor="middle" font-family="Georgia, serif" font-size="26" fill="#FFFFFF" fill-opacity="0.08">bod.legal</text>
+  <!-- document -->
+  <rect x="250" y="105" width="300" height="390" rx="16" fill="#101F3C" stroke="#2A3B5E" stroke-width="2"/>
+  <!-- clause lines with risk highlights -->
+  <g stroke-linecap="round">
+    <path d="M280 160 H520" stroke="#3D4F76" stroke-width="8"/>
+    <path d="M280 196 H480" stroke="#3D4F76" stroke-width="8"/>
+    <!-- high risk -->
+    <rect x="272" y="222" width="256" height="30" rx="8" fill="#D96A6A" fill-opacity="0.16" stroke="#D96A6A" stroke-opacity="0.6"/>
+    <path d="M284 237 H448" stroke="#D96A6A" stroke-width="8"/>
+    <path d="M280 288 H510" stroke="#3D4F76" stroke-width="8"/>
+    <!-- medium risk -->
+    <rect x="272" y="314" width="216" height="30" rx="8" fill="#E0A94F" fill-opacity="0.16" stroke="#E0A94F" stroke-opacity="0.6"/>
+    <path d="M284 329 H420" stroke="#E0A94F" stroke-width="8"/>
+    <path d="M280 380 H500" stroke="#3D4F76" stroke-width="8"/>
+    <!-- low risk -->
+    <rect x="272" y="406" width="196" height="30" rx="8" fill="#7CB98A" fill-opacity="0.16" stroke="#7CB98A" stroke-opacity="0.6"/>
+    <path d="M284 421 H400" stroke="#7CB98A" stroke-width="8"/>
+    <path d="M280 466 H460" stroke="#3D4F76" stroke-width="8"/>
+  </g>
+  <!-- scanning beam -->
+  <rect x="250" y="212" width="300" height="52" fill="url(#beam)"/>
+  <path d="M250 238 H550" stroke="#E8C776" stroke-width="2" stroke-opacity="0.75"/>
+  <!-- magnifier -->
+  <g>
+    <circle cx="565" cy="380" r="58" fill="#0A1428" fill-opacity="0.85" stroke="url(#gold2)" stroke-width="5"/>
+    <path d="M607 422 l40 40" stroke="url(#gold2)" stroke-width="12" stroke-linecap="round"/>
+    <!-- exclamation inside lens -->
+    <path d="M565 352 v34" stroke="#E8C776" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="565" cy="408" r="6.5" fill="#E8C776"/>
+  </g>
+  <!-- risk legend dots -->
+  <g>
+    <circle cx="330" cy="530" r="7" fill="#D96A6A"/>
+    <circle cx="400" cy="530" r="7" fill="#E0A94F"/>
+    <circle cx="470" cy="530" r="7" fill="#7CB98A"/>
+  </g>
+</svg>

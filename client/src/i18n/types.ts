@@ -287,4 +287,40 @@ export interface Translations {
     en: string;
     hu: string;
   };
+  // --- WP1 keys ---
+  wp1: {
+    /** Hero: single primary CTA (free scan) */
+    heroCtaFree: string;
+    /** Pricing section: contextual trial card for companies */
+    trialCardTitle: string;
+    trialCardDesc: string;
+    trialCardCta: string;
+    /** Advokat trust block (between pricing and FAQ) */
+    advokatTitle: string;
+    advokatGeneric: string;
+    advokatRegisteredPrefix: string;
+    advokatVerifyLink: string;
+    /** Header: e-mail sign-in link */
+    signInEmail: string;
+    /** Reviews: attribution as part of the heading */
+    reviewsHeading: string;
+    /** Comparison table: screen-reader label for the empty first column */
+    comparisonSrLabel: string;
+    /** Upload: consent checkbox, assembled as text1 [VOP] text2 [GDPR] text3 */
+    consentText1: string;
+    consentVop: string;
+    consentText2: string;
+    consentGdpr: string;
+    consentText3: string;
+    /** Upload: soft page-count warning, placeholders {pages} and {max} */
+    pagesWarning: string;
+    /** Upload: restore notice after login, placeholder {fileName} */
+    restoreNotice: string;
+    /** Free-scan preview: e-mail capture at the paywall */
+    freeScanEmailTitle: string;
+    freeScanEmailDesc: string;
+    freeScanEmailButton: string;
+    freeScanEmailSaved: string;
+    freeScanEmailInvalid: string;
+  };
 }

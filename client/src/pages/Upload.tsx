@@ -5,12 +5,29 @@ import { Card, CardContent } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useLocation, useSearch } from "wouter";
+import { Link } from "wouter";
 import { Upload as UploadIcon, FileText, CheckCircle, AlertCircle, Loader2, CreditCard, Zap, Lock, Shield, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { PRICING_PLANS } from "@shared/types";
 import { useT } from "@/i18n";
+
+// sessionStorage key for form-state persistence across the login redirect
+const UPLOAD_STASH_KEY = "bod_upload_stash";
+
+/** Soft page-count heuristic for PDFs: counts "/Type /Page" objects in the raw
+ * bytes. Informational only, never blocks the upload. */
+async function estimatePdfPages(f: File): Promise<number | null> {
+  try {
+    const buf = await f.arrayBuffer();
+    const text = new TextDecoder("latin1").decode(new Uint8Array(buf));
+    const matches = text.match(/\/Type\s*\/Page(?![a-zA-Z])/g);
+    return matches && matches.length > 0 ? matches.length : null;
+  } catch {
+    return null;
+  }
+}
 
 export default function Upload() {
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -26,6 +43,26 @@ export default function Upload() {
   const [uploading, setUploading] = useState(false);
   const [phone, setPhone] = useState("");
   const [dragOver, setDragOver] = useState(false);
+  const [consent, setConsent] = useState(false);
+  const [pageEstimate, setPageEstimate] = useState<number | null>(null);
+  const [restoredFileName, setRestoredFileName] = useState<string | null>(null);
+
+  // Restore stashed selections after the login redirect (paid plans only stash).
+  useEffect(() => {
+    if (authLoading || !isAuthenticated) return;
+    try {
+      const raw = sessionStorage.getItem(UPLOAD_STASH_KEY);
+      if (!raw) return;
+      const stash = JSON.parse(raw) as { plan?: string; express?: boolean; phone?: string; fileName?: string };
+      if (stash.plan && ["basic", "standard", "premium"].includes(stash.plan)) setSelectedPlan(stash.plan);
+      if (typeof stash.express === "boolean") setExpressAddon(stash.express);
+      if (typeof stash.phone === "string" && stash.phone) setPhone(stash.phone);
+      if (typeof stash.fileName === "string" && stash.fileName) setRestoredFileName(stash.fileName);
+      sessionStorage.removeItem(UPLOAD_STASH_KEY);
+    } catch {
+      // corrupted stash, ignore
+    }
+  }, [authLoading, isAuthenticated]);
 
   const uploadMutation = trpc.contracts.upload.useMutation({
     onSuccess: (data) => {
@@ -34,10 +71,10 @@ export default function Upload() {
         navigate(localePath(`/preview/${data.contractId}`));
       } else if (data.trialApplied) {
         toast.success(
-          locale === "en" ? "Free trial analysis applied — no charge." :
-          locale === "cz" ? "Bezplatná analýza z trialu uplatněna — bez platby." :
-          locale === "hu" ? "Ingyenes próbaelemzés alkalmazva – fizetés nélkül." :
-          "Bezplatná analýza zo skúšobnej verzie uplatnená — bez platby."
+          locale === "en" ? "Free trial analysis applied, no charge." :
+          locale === "cz" ? "Bezplatná analýza z trialu uplatněna, bez platby." :
+          locale === "hu" ? "Ingyenes próbaelemzés alkalmazva, fizetés nélkül." :
+          "Bezplatná analýza zo skúšobnej verzie uplatnená, bez platby."
         );
         navigate(localePath(`/contract/${data.contractId}`));
       } else {
@@ -68,6 +105,12 @@ export default function Upload() {
       return;
     }
     setFile(selectedFile);
+    setRestoredFileName(null);
+    // Soft page-count estimate for PDFs (never blocks the upload)
+    setPageEstimate(null);
+    if (selectedFile.type === "application/pdf") {
+      estimatePdfPages(selectedFile).then(pages => setPageEstimate(pages)).catch(() => {});
+    }
   }, [t]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -78,9 +121,21 @@ export default function Upload() {
   }, [handleFileSelect]);
 
   const handleSubmit = async () => {
-    if (!file || !selectedPlan) return;
+    if (!file || !selectedPlan || !consent) return;
 
-    if (!isAuthenticated) {
+    // The free basic scan runs without login; paid plans require a session.
+    // Stash the selections so they survive the login redirect (restored above).
+    if (!isAuthenticated && selectedPlan !== "basic") {
+      try {
+        sessionStorage.setItem(UPLOAD_STASH_KEY, JSON.stringify({
+          plan: selectedPlan,
+          express: expressAddon,
+          phone,
+          fileName: file.name,
+        }));
+      } catch {
+        // storage unavailable, continue to login anyway
+      }
       toast.info(t.upload.loginFirst);
       startLogin();
       return;
@@ -102,6 +157,10 @@ export default function Upload() {
           phone: phone || undefined,
         });
       };
+      reader.onerror = () => {
+        toast.error(t.upload.errorRead);
+        setUploading(false);
+      };
       reader.readAsDataURL(file);
     } catch {
       toast.error(t.upload.errorRead);
@@ -110,9 +169,10 @@ export default function Upload() {
   };
 
   // Get price for selected plan - use marketing-friendly prices from stripe-products
-  const MARKETING_PRICES_EUR: Record<string, number> = { basic: 197, standard: 297, premium: 497 };
-  const MARKETING_PRICES_CZK: Record<string, number> = { basic: 4990, standard: 7490, premium: 12490 };
-  const MARKETING_PRICES_HUF: Record<string, number> = { basic: 79000, standard: 119000, premium: 199000 };
+  // (basic is the free scan, so it carries no price anywhere)
+  const MARKETING_PRICES_EUR: Record<string, number> = { basic: 0, standard: 297, premium: 497 };
+  const MARKETING_PRICES_CZK: Record<string, number> = { basic: 0, standard: 7490, premium: 12490 };
+  const MARKETING_PRICES_HUF: Record<string, number> = { basic: 0, standard: 119000, premium: 199000 };
   const EXPRESS_EUR = 127;
   const EXPRESS_CZK = 3190;
   const EXPRESS_HUF = 51000;
@@ -130,16 +190,24 @@ export default function Upload() {
     : locale === "cz" ? "Použít bezplatnou analýzu z trialu"
     : locale === "hu" ? "Ingyenes próbaelemzés használata"
     : "Použiť bezplatnú analýzu zo skúšobnej verzie";
-  const trialBannerText = locale === "en" ? "Your free trial analysis will be applied — no charge."
-    : locale === "cz" ? "Uplatní se vaše bezplatná analýza z trialu — bez platby."
-    : locale === "hu" ? "Az ingyenes próbaelemzés kerül alkalmazásra – fizetés nélkül."
-    : "Uplatní sa vaša bezplatná analýza zo skúšobnej verzie — bez platby.";
+  const trialBannerText = locale === "en" ? "Your free trial analysis will be applied, no charge."
+    : locale === "cz" ? "Uplatní se vaše bezplatná analýza z trialu, bez platby."
+    : locale === "hu" ? "Az ingyenes próbaelemzés kerül alkalmazásra, fizetés nélkül."
+    : "Uplatní sa vaša bezplatná analýza zo skúšobnej verzie, bez platby.";
 
   // Plan display strings are locale-specific (sk/cz/en)
   const planNames = [t.pricing.basicTitle, t.pricing.standardTitle, t.pricing.premiumTitle];
   const planPrices = [t.pricing.basicPrice, t.pricing.standardPrice, t.pricing.premiumPrice];
   const planTimes = [t.pricing.basicTime, t.pricing.standardTime, t.pricing.premiumTime];
   const planFeatures = [t.pricing.basicFeatures, t.pricing.standardFeatures, t.pricing.premiumFeatures];
+
+  // Locale-aware legal document paths (same slugs the Footer uses)
+  const vopPath = locale === "en" ? "/en/terms" : locale === "cz" ? "/cz/vop" : locale === "hu" ? "/hu/vop" : "/vop";
+  const gdprPath = locale === "en" ? "/en/privacy" : locale === "cz" ? "/cz/gdpr" : locale === "hu" ? "/hu/gdpr" : "/gdpr";
+
+  const pagesWarningText = file && pageEstimate !== null && selectedPlanData && pageEstimate > selectedPlanData.maxPages
+    ? t.wp1.pagesWarning.replace("{pages}", String(pageEstimate)).replace("{max}", String(selectedPlanData.maxPages))
+    : null;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -155,13 +223,22 @@ export default function Upload() {
           <Card className="mb-8">
             <CardContent className="p-8">
               <div
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
+                role="button"
+                tabIndex={0}
+                aria-label={t.upload.dragDrop}
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
                   dragOver ? "border-primary bg-primary/5" : file ? "border-primary/50 bg-primary/[0.02]" : "border-border hover:border-primary/30"
                 }`}
                 onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                 onDragLeave={() => setDragOver(false)}
                 onDrop={handleDrop}
                 onClick={() => document.getElementById("file-input")?.click()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    document.getElementById("file-input")?.click();
+                  }
+                }}
               >
                 {file ? (
                   <div className="flex flex-col items-center gap-3">
@@ -196,6 +273,16 @@ export default function Upload() {
                   if (f) handleFileSelect(f);
                 }}
               />
+              {restoredFileName && !file && (
+                <p className="text-sm text-primary font-sans mt-3" data-testid="upload-restore-notice">
+                  {t.wp1.restoreNotice.replace("{fileName}", restoredFileName)}
+                </p>
+              )}
+              {pagesWarningText && (
+                <p className="text-xs text-amber-600 font-sans mt-3" data-testid="upload-pages-warning">
+                  {pagesWarningText}
+                </p>
+              )}
             </CardContent>
           </Card>
 
@@ -258,7 +345,9 @@ export default function Upload() {
             </CardContent>
           </Card>
 
-          {/* Optional SMS/WhatsApp notifications */}
+          {/* Optional SMS/WhatsApp notifications (paid plans only: the copy
+              promises a lawyer-signed report, which the free scan has not) */}
+          {selectedPlan !== "basic" && (
           <div className="mb-2" data-testid="upload-phone-block">
             <label className="text-sm font-sans font-medium block mb-1" htmlFor="notify-phone">
               {locale === 'en' ? 'Phone for SMS / WhatsApp updates (optional)'
@@ -280,6 +369,25 @@ export default function Upload() {
                 : 'Pošleme vám správu, keď bude analýza a advokátom podpísaný report hotový.'}
             </p>
           </div>
+          )}
+
+          {/* GDPR / VOP consent (required before submit) */}
+          <label className="flex items-start gap-2 mb-4 cursor-pointer select-none" data-testid="upload-consent-block">
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-input accent-primary"
+              data-testid="upload-consent-checkbox"
+            />
+            <span className="text-sm font-sans text-muted-foreground">
+              {t.wp1.consentText1}
+              <Link href={vopPath} className="text-primary underline hover:no-underline" onClick={(e) => e.stopPropagation()}>{t.wp1.consentVop}</Link>
+              {t.wp1.consentText2}
+              <Link href={gdprPath} className="text-primary underline hover:no-underline" onClick={(e) => e.stopPropagation()}>{t.wp1.consentGdpr}</Link>
+              {t.wp1.consentText3}
+            </span>
+          </label>
 
           {/* Submit */}
           <div className="flex flex-col gap-3">
@@ -293,7 +401,7 @@ export default function Upload() {
               <Button
                 size="lg"
                 className="font-sans"
-                disabled={!file || !selectedPlan || uploading}
+                disabled={!file || !selectedPlan || uploading || !consent}
                 onClick={handleSubmit}
               >
                 {uploading ? (
@@ -319,6 +427,16 @@ export default function Upload() {
                 </p>
               )}
             </div>
+            {uploading && (
+              <div
+                className="w-full max-w-sm h-1.5 rounded-full bg-muted overflow-hidden"
+                role="progressbar"
+                aria-label={t.upload.processing}
+                data-testid="upload-progress"
+              >
+                <div className="h-full w-full bg-primary/70 animate-pulse rounded-full" />
+              </div>
+            )}
             <p className="text-xs text-muted-foreground font-sans">
               {selectedPlan === "basic"
                 ? t.upload.basicNote
@@ -333,9 +451,11 @@ export default function Upload() {
                   <span className="flex items-center gap-1"><Lock className="h-3 w-3" /> {locale === 'en' ? 'SSL encrypted' : locale === 'cz' ? 'Šifrované připojení' : 'Šifrované pripojenie'}</span>
                   <span className="flex items-center gap-1"><Shield className="h-3 w-3" /> {locale === 'en' ? 'Attorney-client privilege' : locale === 'cz' ? 'Advokátní mlčenlivost' : 'Advokátska mlčanlivosť'}</span>
                 </div>
-                <p className="text-xs text-amber-600 font-sans font-medium">
-                  {t.upload.testCardNote}
-                </p>
+                {import.meta.env.VITE_STRIPE_TEST_MODE === 'true' && (
+                  <p className="text-xs text-amber-600 font-sans font-medium">
+                    {t.upload.testCardNote}
+                  </p>
+                )}
               </>
             )}
           </div>

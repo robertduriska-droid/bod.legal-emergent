@@ -1,11 +1,84 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Scale, Shield, Brain, Users } from "lucide-react";
+import { Scale, Shield, Brain, Users, Lock, UserCheck } from "lucide-react";
 import { useT } from "@/i18n";
+// Created by WP1 (client/src/lib/advokat.ts). Until the config is filled the
+// section renders in generic mode; access is guarded below so empty fields
+// never produce a fabricated identity.
+import { ADVOKAT, SAK_REGISTER_SEARCH_URL, isAdvokatConfigured } from "@/lib/advokat";
 
 // Table row types drive which rows get mailto:/tel:/website link treatment,
 // independent of locale-specific label text (e.g. "Telefón" vs "Telefon").
 type TableRowType = "text" | "email" | "phone" | "web";
+
+// Advokat identity + security sections (WP4 item 6). Local TX per the
+// coordination rules; i18n/* is owned by WP1.
+const SECTION_TX = {
+  sk: {
+    advokatTitle: "Advokát, ktorý podpisuje reporty",
+    advokatGeneric:
+      "Štandardné a Prémiové reporty overuje a podpisuje advokát zapísaný v Slovenskej advokátskej komore. Prevádzkovateľom služby je advokátska kancelária KILIAN LEGAL s.r.o.",
+    advokatFilledLine: (sakId: string) =>
+      `Advokát zapísaný v Slovenskej advokátskej komore, reg. č. ${sakId}`,
+    advokatVerifyLink: "Overiť v zozname advokátov SAK",
+    securityTitle: "Bezpečnosť a dôvernosť",
+    securityItems: [
+      "Dáta sú uložené na serveroch v Európskej únii.",
+      "Dokumenty sú šifrované pri prenose aj pri uložení.",
+      "Na advokáta sa vzťahuje povinnosť mlčanlivosti podľa § 23 zákona č. 586/2003 Z. z. o advokácii.",
+      "Nahraté dokumenty mažeme do 30 dní od dokončenia kontroly.",
+      "Vaše dokumenty nepoužívame na trénovanie AI.",
+    ],
+  },
+  cz: {
+    advokatTitle: "Advokát, který podepisuje reporty",
+    advokatGeneric:
+      "Standardní a Prémiové reporty ověřuje a podepisuje advokát zapsaný ve Slovenské advokátní komoře. Provozovatelem služby je advokátní kancelář KILIAN LEGAL s.r.o.",
+    advokatFilledLine: (sakId: string) =>
+      `Advokát zapsaný ve Slovenské advokátní komoře, reg. č. ${sakId}`,
+    advokatVerifyLink: "Ověřit v seznamu advokátů SAK",
+    securityTitle: "Bezpečnost a důvěrnost",
+    securityItems: [
+      "Data jsou uložena na serverech v Evropské unii.",
+      "Dokumenty jsou šifrovány při přenosu i při uložení.",
+      "Na advokáta se vztahuje povinnost mlčenlivosti podle § 23 slovenského zákona č. 586/2003 Z. z. o advokacii.",
+      "Nahrané dokumenty mažeme do 30 dnů od dokončení kontroly.",
+      "Vaše dokumenty nepoužíváme k trénování AI.",
+    ],
+  },
+  en: {
+    advokatTitle: "The lawyer who signs the reports",
+    advokatGeneric:
+      "Standard and Premium reports are verified and signed by a lawyer registered with the Slovak Bar Association. The service is operated by the law firm KILIAN LEGAL s.r.o.",
+    advokatFilledLine: (sakId: string) =>
+      `Lawyer registered with the Slovak Bar Association, reg. no. ${sakId}`,
+    advokatVerifyLink: "Verify in the SAK register of lawyers",
+    securityTitle: "Security and confidentiality",
+    securityItems: [
+      "Data is stored on servers in the European Union.",
+      "Documents are encrypted in transit and at rest.",
+      "The lawyer is bound by confidentiality under Section 23 of the Slovak Act No. 586/2003 Coll. on Advocacy.",
+      "Uploaded documents are deleted within 30 days after the review is completed.",
+      "We do not use your documents to train AI.",
+    ],
+  },
+  hu: {
+    advokatTitle: "Az ügyvéd, aki aláírja a jelentéseket",
+    advokatGeneric:
+      "A Standard és Prémium jelentéseket a Szlovák Ügyvédi Kamarában bejegyzett ügyvéd ellenőrzi és írja alá. A szolgáltatást a KILIAN LEGAL s.r.o. ügyvédi iroda üzemelteti.",
+    advokatFilledLine: (sakId: string) =>
+      `A Szlovák Ügyvédi Kamarában bejegyzett ügyvéd, nyilvántartási szám: ${sakId}`,
+    advokatVerifyLink: "Ellenőrzés a SAK ügyvédi névjegyzékében",
+    securityTitle: "Biztonság és titoktartás",
+    securityItems: [
+      "Az adatokat az Európai Unióban található szervereken tároljuk.",
+      "A dokumentumok átvitel és tárolás közben is titkosítva vannak.",
+      "Az ügyvédet titoktartási kötelezettség terheli a szlovák ügyvédi törvény (586/2003. sz. törvény) 23. §-a szerint.",
+      "A feltöltött dokumentumokat az ellenőrzés befejezése után 30 napon belül töröljük.",
+      "Dokumentumait nem használjuk AI tanítására.",
+    ],
+  },
+};
 
 export default function About() {
   const { locale } = useT();
@@ -81,7 +154,7 @@ export default function About() {
       whatWeDoTitle: "Co děláme",
       whatWeDoText: "Kontrolujeme obchodní smlouvy pro firmy a podnikatele. AI analyzuje každou klauzuli, identifikuje rizika a doplní odkazy na konkrétní paragrafy českých a evropských právních předpisů. U Standardní a Prémiové kontroly advokát ověří nálezy a podepíše report.",
       features: [
-        { icon: Scale, title: "Ověření advokátem", desc: "Report u Standardní a Prémiové kontroly ověřuje advokát zapsaný v České advokátní komoře (ČAK)." },
+        { icon: Scale, title: "Ověření advokátem", desc: "Report u Standardní a Prémiové kontroly ověřuje advokát zapsaný ve Slovenské advokátní komoře." },
         { icon: Brain, title: "AI analýza", desc: "Jazykové modely analyzují smlouvu klauzuli po klauzuli s odkazy na zakonyprolidi.cz a EUR-Lex." },
         { icon: Shield, title: "Bezpečnost", desc: "Šifrované úložiště, soulad s GDPR a advokátní mlčenlivost." },
         { icon: Users, title: "Pro firmy", desc: "Zaměřujeme se na obchodní smlouvy: dodavatelské, rámcové, licenční, SPA a podobné." },
@@ -111,10 +184,10 @@ export default function About() {
       title: "Rólunk",
       intro: "A bod.legal a KILIAN LEGAL s.r.o. ügyvédi iroda terméke. A jogi szakértelmet AI-technológiával ötvözzük az üzleti szerződések ellenőrzéséhez.",
       whatWeDoTitle: "Mit csinálunk",
-      whatWeDoText: "Üzleti szerződéseket ellenőrzünk cégek és vállalkozók számára. Az AI minden klauzulát elemez, azonosítja a kockázatokat, és hivatkozásokat ad a magyar és európai jogszabályok konkrét szakaszaira. A Standard és Prémium csomagoknál ügyvéd ellenőrzi a megállapításokat, és aláírja a jelentést.",
+      whatWeDoText: "Üzleti szerződéseket ellenőrzünk cégek és vállalkozók számára. Az AI minden klauzulát elemez, azonosítja a kockázatokat, és hivatkozásokat ad a szlovák és cseh, valamint az európai jogszabályok konkrét szakaszaira. A Standard és Prémium csomagoknál ügyvéd ellenőrzi a megállapításokat, és aláírja a jelentést.",
       features: [
-        { icon: Scale, title: "Ügyvédi ellenőrzés", desc: "A Standard és Prémium csomagok jelentéseit a Magyar Ügyvédi Kamarában bejegyzett ügyvéd ellenőrzi." },
-        { icon: Brain, title: "AI-elemzés", desc: "A nyelvi modellek klauzuláról klauzulára elemzik a szerződést, njt.hu és EUR-Lex hivatkozásokkal." },
+        { icon: Scale, title: "Ügyvédi ellenőrzés", desc: "A Standard és Prémium csomagok jelentéseit a Szlovák Ügyvédi Kamarában bejegyzett ügyvéd ellenőrzi." },
+        { icon: Brain, title: "AI-elemzés", desc: "A nyelvi modellek klauzuláról klauzulára elemzik a szerződést, Slov-Lex és EUR-Lex hivatkozásokkal." },
         { icon: Shield, title: "Biztonság", desc: "Titkosított tárolás, GDPR-megfelelőség és ügyvédi titoktartás." },
         { icon: Users, title: "Cégeknek", desc: "Üzleti szerződésekre összpontosítunk: szállítási, keret-, licenc-, SPA- és hasonló szerződések." },
       ],
@@ -132,16 +205,24 @@ export default function About() {
         { label: "Weboldal", value: "bod.legal", type: "web" as TableRowType },
       ],
       sourcesTitle: "Jogforrások",
-      sourcesIntro: "Az AI-elemzés hivatalos jogforrásokra hivatkozik:",
+      sourcesIntro: "Az AI-elemzés hivatalos szlovák, cseh és uniós jogforrásokra hivatkozik:",
       sources: [
-        { url: "https://njt.hu", name: "Nemzeti Jogszabálytár", desc: "Magyarország hivatalos jogszabály-nyilvántartása" },
+        { url: "https://www.slov-lex.sk", name: "Slov-Lex", desc: "A Szlovák Köztársaság Igazságügyi Minisztériumának jogi portálja" },
+        { url: "https://www.zakonyprolidi.cz", name: "Zákony pro lidi", desc: "Cseh jogszabályok portálja" },
         { url: "https://eur-lex.europa.eu", name: "EUR-Lex", desc: "Az Európai Unió joga" },
-        { url: "https://ekr.gov.hu", name: "EKR", desc: "Elektronikus Közbeszerzési Rendszer" },
       ],
     },
   };
 
   const content = contentByLocale[locale];
+  const sections = SECTION_TX[locale] ?? SECTION_TX.sk;
+
+  // Defensive view over the WP1 config: never render a name or number that
+  // is not explicitly filled in. Placeholder-empty config = generic mode.
+  const adv: { name?: string; sakId?: string; photoUrl?: string; sakRegisterUrl?: string } =
+    ADVOKAT ?? {};
+  const advokatFilled = isAdvokatConfigured();
+  const sakRegisterUrl = adv?.sakRegisterUrl || SAK_REGISTER_SEARCH_URL;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -167,6 +248,55 @@ export default function About() {
                 </div>
               ))}
             </div>
+
+            {/* The human behind the signature (WP4 item 6) */}
+            <h2 className="text-2xl font-serif mt-12 mb-4">{sections.advokatTitle}</h2>
+            <div className="bg-muted/30 rounded-lg p-6 border flex items-start gap-4">
+              {advokatFilled && adv.photoUrl ? (
+                <img
+                  src={adv.photoUrl}
+                  alt={adv.name}
+                  className="h-20 w-20 rounded-full object-cover border shrink-0"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              ) : (
+                <UserCheck className="h-8 w-8 text-primary shrink-0 mt-1" aria-hidden="true" />
+              )}
+              <div>
+                {advokatFilled ? (
+                  <>
+                    <p className="font-sans font-semibold mb-1">{adv.name}</p>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      {sections.advokatFilledLine(adv.sakId as string)}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground mb-2">{sections.advokatGeneric}</p>
+                )}
+                <a
+                  href={sakRegisterUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline"
+                >
+                  {sections.advokatVerifyLink}
+                </a>
+              </div>
+            </div>
+
+            {/* Security and confidentiality (WP4 item 6). Facts only, no
+                certification claims. */}
+            <h2 className="text-2xl font-serif mt-12 mb-4">{sections.securityTitle}</h2>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              {sections.securityItems.map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <Lock className="h-4 w-4 text-primary shrink-0 mt-0.5" aria-hidden="true" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
 
             <h2 className="text-2xl font-serif mt-12 mb-4">{content.companyTitle}</h2>
             <div className="bg-muted/30 rounded-lg p-6 border">

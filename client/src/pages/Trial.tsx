@@ -19,6 +19,8 @@ interface TxShape {
   startCta: string;
   noCharge: string;
   testCardNote: string;
+  afterTrialTitle: string;
+  afterTrialText: string;
   activeTitle: string;
   daysLeft: (n: number) => string;
   analysisAvailable: string;
@@ -37,13 +39,15 @@ const TX: Record<Locale, TxShape> = {
     subtitle: "15-dňová skúšobná verzia s 1 bezplatnou analýzou zmluvy. Kartu overíme, no počas skúšky vám nič nestrhneme.",
     b1: "15 dní plného prístupu",
     b2: "1 kompletná analýza zmluvy zadarmo (vrátane právnych odkazov)",
-    b3: "Bez záväzku — kedykoľvek zrušíte",
+    b3: "Bez záväzku, kedykoľvek zrušíte",
     b4: "Karta sa iba overí, počas skúšky bez platby",
     startCta: "Spustiť skúšobnú verziu",
     noCharge: "Počas skúšobnej doby vám nič nestrhneme.",
     testCardNote: "Testovací režim: karta 4242 4242 4242 4242, ľubovoľný budúci dátum a CVC.",
+    afterTrialTitle: "Čo sa stane po 15 dňoch?",
+    afterTrialText: "Po 15 dňoch sa nič neúčtuje. Kartu iba overíme, žiadne predplatné nevzniká. Ak si objednáte kontrolu, zaplatíte len jej pevnú cenu.",
     activeTitle: "Skúšobná verzia je aktívna",
-    daysLeft: (n) => `Zostáva ${n} dní`,
+    daysLeft: (n) => n === 1 ? "Zostáva 1 deň" : n >= 2 && n <= 4 ? `Zostávajú ${n} dni` : `Zostáva ${n} dní`,
     analysisAvailable: "1 bezplatná analýza k dispozícii",
     analysisUsed: "Bezplatná analýza už bola využitá",
     uploadCta: "Nahrať zmluvu",
@@ -58,13 +62,15 @@ const TX: Record<Locale, TxShape> = {
     subtitle: "15denní zkušební verze s 1 bezplatnou analýzou smlouvy. Kartu ověříme, ale během zkoušky vám nic nestrhneme.",
     b1: "15 dní plného přístupu",
     b2: "1 kompletní analýza smlouvy zdarma (včetně právních odkazů)",
-    b3: "Bez závazku — kdykoli zrušíte",
+    b3: "Bez závazku, kdykoli zrušíte",
     b4: "Karta se pouze ověří, během zkoušky bez platby",
     startCta: "Spustit zkušební verzi",
     noCharge: "Během zkušební doby vám nic nestrhneme.",
     testCardNote: "Testovací režim: karta 4242 4242 4242 4242, libovolné budoucí datum a CVC.",
+    afterTrialTitle: "Co se stane po 15 dnech?",
+    afterTrialText: "Po 15 dnech se nic neúčtuje. Kartu pouze ověříme, žádné předplatné nevzniká. Pokud si objednáte kontrolu, zaplatíte jen její pevnou cenu.",
     activeTitle: "Zkušební verze je aktivní",
-    daysLeft: (n) => `Zbývá ${n} dní`,
+    daysLeft: (n) => n === 1 ? "Zbývá 1 den" : n >= 2 && n <= 4 ? `Zbývají ${n} dny` : `Zbývá ${n} dnů`,
     analysisAvailable: "1 bezplatná analýza k dispozici",
     analysisUsed: "Bezplatná analýza již byla využita",
     uploadCta: "Nahrát smlouvu",
@@ -79,13 +85,15 @@ const TX: Record<Locale, TxShape> = {
     subtitle: "A 15-day trial with 1 free contract analysis. We verify your card, but you won't be charged during the trial.",
     b1: "15 days of full access",
     b2: "1 complete contract analysis free (with legal references)",
-    b3: "No commitment — cancel anytime",
+    b3: "No commitment, cancel anytime",
     b4: "Card is only verified, no charge during the trial",
     startCta: "Start free trial",
     noCharge: "You won't be charged during the trial period.",
     testCardNote: "Test mode: card 4242 4242 4242 4242, any future date and CVC.",
+    afterTrialTitle: "What happens after 15 days?",
+    afterTrialText: "Nothing is charged after 15 days. We only verify your card, no subscription is created. If you order a review, you pay only its fixed price.",
     activeTitle: "Your trial is active",
-    daysLeft: (n) => `${n} days left`,
+    daysLeft: (n) => n === 1 ? "1 day left" : `${n} days left`,
     analysisAvailable: "1 free analysis available",
     analysisUsed: "Free analysis already used",
     uploadCta: "Upload contract",
@@ -100,11 +108,13 @@ const TX: Record<Locale, TxShape> = {
     subtitle: "15 napos próbaidőszak 1 ingyenes szerződéselemzéssel. A kártyát ellenőrizzük, de a próba alatt nem terheljük meg.",
     b1: "15 nap teljes hozzáférés",
     b2: "1 teljes szerződéselemzés ingyen (jogszabályi hivatkozásokkal)",
-    b3: "Kötelezettség nélkül — bármikor lemondható",
+    b3: "Kötelezettség nélkül, bármikor lemondható",
     b4: "A kártyát csak ellenőrizzük, a próba alatt nincs terhelés",
     startCta: "Ingyenes próba indítása",
     noCharge: "A próbaidőszak alatt nem terheljük meg a kártyáját.",
     testCardNote: "Tesztmód: 4242 4242 4242 4242 kártya, bármely jövőbeli dátum és CVC.",
+    afterTrialTitle: "Mi történik 15 nap után?",
+    afterTrialText: "15 nap után semmit nem számlázunk. A kártyát csak ellenőrizzük, előfizetés nem jön létre. Ha ellenőrzést rendel, csak annak fix árát fizeti.",
     activeTitle: "A próbaidőszak aktív",
     daysLeft: (n) => `${n} nap van hátra`,
     analysisAvailable: "1 ingyenes elemzés elérhető",
@@ -206,10 +216,18 @@ export default function Trial() {
                 <p className="text-xs text-muted-foreground font-sans mt-3 flex items-center gap-1 justify-center">
                   <Clock className="h-3 w-3" /> {tx.noCharge}
                 </p>
-                <p className="text-xs text-amber-600 font-sans mt-2 text-center">{tx.testCardNote}</p>
+                {import.meta.env.VITE_STRIPE_TEST_MODE === "true" && (
+                  <p className="text-xs text-amber-600 font-sans mt-2 text-center">{tx.testCardNote}</p>
+                )}
               </CardContent>
             </Card>
           )}
+
+          {/* What happens after the 15 days: plainly visible answer */}
+          <div className="rounded-lg border bg-muted/30 p-5" data-testid="trial-after-info">
+            <h2 className="font-sans text-sm font-semibold mb-1">{tx.afterTrialTitle}</h2>
+            <p className="text-sm text-muted-foreground font-sans">{tx.afterTrialText}</p>
+          </div>
         </div>
       </main>
       <Footer />

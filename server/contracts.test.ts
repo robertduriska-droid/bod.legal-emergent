@@ -56,8 +56,9 @@ describe("Shared types and reference data", () => {
     expect(PRICING_PLANS.map(p => p.id)).toEqual(["basic", "standard", "premium"]);
   });
 
-  it("PRICING_PLANS has correct prices (consistent with Stripe products & marketing display)", () => {
-    expect(PRICING_PLANS[0].price).toBe(197);
+  it("PRICING_PLANS has correct prices (basic is the free scan, paid tiers unchanged)", () => {
+    expect(PRICING_PLANS[0].price).toBe(0);
+    expect(PRICING_PLANS[0].includesLawyer).toBe(false);
     expect(PRICING_PLANS[1].price).toBe(297);
     expect(PRICING_PLANS[2].price).toBe(497);
   });
@@ -154,5 +155,50 @@ describe("Protected procedures - access control", () => {
     const { ctx } = createUserContext("user");
     const caller = appRouter.createCaller(ctx);
     await expect(caller.admin.allContracts()).rejects.toThrow();
+  });
+});
+
+describe("Anonymous free-scan funnel", () => {
+  it("contracts.upload rejects unauthenticated paid plans with UNAUTHORIZED", async () => {
+    const ctx = createUnauthenticatedContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(caller.contracts.upload({
+      fileName: "zmluva.pdf",
+      mimeType: "application/pdf",
+      fileBase64: Buffer.from("test").toString("base64"),
+      plan: "standard",
+      expressAddon: false,
+      language: "sk",
+    })).rejects.toThrow(/sign in/i);
+  });
+
+  it("contracts.getById is public but returns null without owner or claim cookie", async () => {
+    const ctx = createUnauthenticatedContext();
+    const caller = appRouter.createCaller(ctx);
+    // No DB in the test environment: the contract lookup misses, and the
+    // procedure must resolve to null instead of throwing UNAUTHORIZED.
+    const result = await caller.contracts.getById({ id: 999999 });
+    expect(result).toBeNull();
+  });
+
+  it("payments.getStatus is public and returns unpaid without access", async () => {
+    const ctx = createUnauthenticatedContext();
+    const caller = appRouter.createCaller(ctx);
+    const result = await caller.payments.getStatus({ contractId: 999999 });
+    expect(result).toEqual({ paid: false });
+  });
+
+  it("contracts.attachEmail rejects an invalid e-mail", async () => {
+    const ctx = createUnauthenticatedContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(caller.contracts.attachEmail({ contractId: 1, email: "not-an-email" }))
+      .rejects.toThrow();
+  });
+
+  it("contracts.attachEmail returns NOT_FOUND for a missing contract", async () => {
+    const ctx = createUnauthenticatedContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(caller.contracts.attachEmail({ contractId: 999999, email: "lead@example.com" }))
+      .rejects.toThrow(/not found/i);
   });
 });

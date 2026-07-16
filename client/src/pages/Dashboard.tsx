@@ -10,6 +10,7 @@ import { FileText, Upload, Clock, CheckCircle, AlertCircle, Loader2, Eye, Credit
 import { useT } from "@/i18n";
 import { useState, useMemo } from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { RISK_CATEGORIES } from "@shared/types";
 
 export default function Dashboard() {
   const { isAuthenticated, loading: authLoading } = useAuth({ redirectOnUnauthenticated: true });
@@ -24,6 +25,60 @@ export default function Dashboard() {
     if (jurisdictionFilter === "all") return contracts;
     return contracts.filter((c: any) => c.language === jurisdictionFilter);
   }, [contracts, jurisdictionFilter]);
+
+  // ── Mini command center: computed client-side from existing query data ──
+  const completedContracts = useMemo(
+    () => (contracts || []).filter((c) => c.status === "completed"),
+    [contracts]
+  );
+
+  // Clause categories live in the per-contract detail; fetch a bounded sample
+  // (5 most recent completed contracts) to compute the top risk areas tile.
+  const detailQueries = trpc.useQueries((q) =>
+    completedContracts.slice(0, 5).map((c) => q.contracts.getById({ id: c.id }))
+  );
+
+  const stats = useMemo(() => {
+    const completedCount = completedContracts.length;
+    let avgLabel: string | null = null;
+    if (completedCount > 0) {
+      const totalMs = completedContracts.reduce((sum, c) => {
+        const start = new Date(c.createdAt).getTime();
+        const end = new Date((c as any).updatedAt || c.createdAt).getTime();
+        return sum + Math.max(0, end - start);
+      }, 0);
+      const avgMs = totalMs / completedCount;
+      const hours = Math.floor(avgMs / 3600000);
+      const minutes = Math.round((avgMs % 3600000) / 60000);
+      avgLabel = hours > 0 ? `${hours} h ${minutes} min` : `${minutes} min`;
+    }
+    return { completedCount, avgLabel };
+  }, [completedContracts]);
+
+  const topRiskAreas = useMemo(() => {
+    const counts = new Map<string, number>();
+    detailQueries.forEach((q) => {
+      q.data?.clauses?.forEach((cl) => {
+        const category = (cl as { riskCategory?: string | null }).riskCategory;
+        if (category) counts.set(category, (counts.get(category) || 0) + 1);
+      });
+    });
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 2)
+      .map(([id, count]) => {
+        const cat = RISK_CATEGORIES.find((c) => c.id === id);
+        const label = cat ? (locale === "en" ? cat.label : cat.labelSk) : id;
+        return { label, count };
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [detailQueries.map((q) => q.data).filter(Boolean).length, completedContracts, locale]);
+
+  const statsLabels = locale === "en"
+    ? { reviewed: "Contracts reviewed", avgTime: "Average delivery time", riskAreas: "Most common risk areas" }
+    : locale === "cz"
+    ? { reviewed: "Zkontrolované smlouvy", avgTime: "Průměrný čas dodání", riskAreas: "Nejčastější rizikové oblasti" }
+    : { reviewed: "Skontrolované zmluvy", avgTime: "Priemerný čas dodania", riskAreas: "Najčastejšie rizikové oblasti" };
 
   const jurisdictionLabels: Record<string, string> = locale === "en"
     ? { all: "All", sk: "Slovak", cz: "Czech" }
@@ -101,6 +156,40 @@ export default function Dashboard() {
             </Link>
           </div>
 
+          {/* Mini command center */}
+          {contracts && contracts.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+              <Card>
+                <CardContent className="p-4">
+                  <p className="text-xs text-muted-foreground font-sans">{statsLabels.reviewed}</p>
+                  <p className="text-2xl font-serif mt-1">{stats.completedCount}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <p className="text-xs text-muted-foreground font-sans">{statsLabels.avgTime}</p>
+                  <p className="text-2xl font-serif mt-1">{stats.avgLabel ?? "…"}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <p className="text-xs text-muted-foreground font-sans">{statsLabels.riskAreas}</p>
+                  {topRiskAreas.length > 0 ? (
+                    <div className="mt-1.5 space-y-0.5">
+                      {topRiskAreas.map((area) => (
+                        <p key={area.label} className="text-sm font-sans truncate" title={area.label}>
+                          {area.label} ({area.count})
+                        </p>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-2xl font-serif mt-1">…</p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           {/* Jurisdiction filter */}
           {contracts && contracts.length > 0 && (
             <div className="mb-4">
@@ -134,7 +223,9 @@ export default function Dashboard() {
                 <h3 className="font-sans text-xl font-semibold mb-2">
                   {locale === "en" ? "No contracts yet" : locale === "cz" ? "Zatím žádné smlouvy" : "Zatiaľ žiadne zmluvy"}
                 </h3>
-                <p className="text-muted-foreground font-sans mb-4">{t.dashboard.noContracts}</p>
+                <p className="text-muted-foreground font-sans mb-4">
+                  {locale === "en" ? "No reviews yet. Upload your first contract for free." : locale === "cz" ? "Zatím žádné kontroly. Nahrajte první smlouvu zdarma." : "Zatiaľ žiadne kontroly. Nahrajte prvú zmluvu zadarmo."}
+                </p>
                 <Link href={localePath("/upload")}>
                   <Button className="font-sans">
                     <Upload className="mr-2 h-4 w-4" />

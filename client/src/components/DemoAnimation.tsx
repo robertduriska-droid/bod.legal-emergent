@@ -16,23 +16,23 @@ export default function DemoAnimation() {
     en: {
       stepLabels: ["Upload", "Analysis", "Report"],
       dragDrop: "Drag & drop file here",
-      fileTypes: "PDF, DOCX - max 50 MB",
+      fileTypes: "PDF, DOCX, max 50 MB",
       langNote: "Slovak & English contracts · Slovak law",
       fileName: "Framework_Agreement_IT.docx",
-      filePages: "12 pages - 1.8 MB",
+      filePages: "12 pages, 1.8 MB",
       fileType: "DOCX",
       fileName2: "Ramcova_zmluva_IT.pdf",
-      filePages2: "8 pages - 2.4 MB",
+      filePages2: "8 pages, 2.4 MB",
       fileType2: "PDF",
       analyzing: "Analyzing clauses...",
       analyzingDesc: "AI reviews the contract under Slovak law",
       high: "High",
       medium: "Medium",
-      risk1: "§ 4.2 Exclusion of liability – § 379 Obchodný zákonník",
+      risk1: "§ 4.2 Exclusion of liability, § 379 Obchodný zákonník",
       risk2: "§ 11.2 IP rights transfer without compensation",
-      risk3: "§ 7.1 Jurisdiction clause – unfavorable for SR",
+      risk3: "§ 7.1 Jurisdiction clause, unfavorable for SR",
       reportReady: "Report is ready",
-      reportDone: "Analysis completed in 18 minutes",
+      reportDone: "AI analysis done in minutes, verified report within 24 hours",
       highRisk: "High risk",
       mediumRisk: "Medium risk",
       lowRisk: "Low risk",
@@ -47,23 +47,23 @@ export default function DemoAnimation() {
     sk: {
       stepLabels: ["Nahratie", "Analýza", "Report"],
       dragDrop: "Pretiahnite súbor sem",
-      fileTypes: "PDF, DOCX - max 50 MB",
+      fileTypes: "PDF, DOCX, max 50 MB",
       langNote: "Zmluvy v SK a EN · slovenské právo",
       fileName: "Ramcova_zmluva_IT.pdf",
-      filePages: "12 strán - 2.4 MB",
+      filePages: "12 strán, 2.4 MB",
       fileType: "PDF",
       fileName2: "Service_Agreement_EN.docx",
-      filePages2: "8 strán - 1.6 MB",
+      filePages2: "8 strán, 1.6 MB",
       fileType2: "DOCX",
       analyzing: "Analyzujem klauzuly...",
       analyzingDesc: "AI analyzuje zmluvu podľa slovenského práva",
       high: "Vysoké",
       medium: "Stredné",
-      risk1: "§ 4.2 Vylúčenie zodpovednosti – § 379 Obch. zák.",
+      risk1: "§ 4.2 Vylúčenie zodpovednosti, § 379 Obchodného zákonníka",
       risk2: "§ 11.2 Prevod IP práv bez kompenzácie",
-      risk3: "§ 7.1 Jurisdikčná doložka – nevýhodná pre SR",
+      risk3: "§ 7.1 Jurisdikčná doložka, nevýhodná pre SR",
       reportReady: "Report je hotový",
-      reportDone: "Analýza dokončená za 18 minút",
+      reportDone: "AI analýza hotová o pár minút, report s overením do 24 hodín",
       highRisk: "Vysoké riziko",
       mediumRisk: "Stredné riziko",
       lowRisk: "Nízke riziko",
@@ -78,23 +78,23 @@ export default function DemoAnimation() {
     cz: {
       stepLabels: ["Nahrání", "Analýza", "Report"],
       dragDrop: "Přetáhněte soubor sem",
-      fileTypes: "PDF, DOCX - max 50 MB",
+      fileTypes: "PDF, DOCX, max 50 MB",
       langNote: "Smlouvy v CZ a EN · české právo",
       fileName: "Ramcova_smlouva_IT.pdf",
-      filePages: "12 stran - 2.4 MB",
+      filePages: "12 stran, 2.4 MB",
       fileType: "PDF",
       fileName2: "Service_Agreement_EN.docx",
-      filePages2: "8 stran - 1.6 MB",
+      filePages2: "8 stran, 1.6 MB",
       fileType2: "DOCX",
       analyzing: "Analyzuji klauzule...",
       analyzingDesc: "AI analyzuje smlouvu podle českého práva",
       high: "Vysoké",
       medium: "Střední",
-      risk1: "§ 4.2 Vyloučení odpovědnosti – § 2898 Obč. zák.",
+      risk1: "§ 4.2 Vyloučení odpovědnosti, § 2898 občanského zákoníku",
       risk2: "§ 11.2 Převod IP práv bez kompenzace",
-      risk3: "§ 7.1 Doložka o příslušnosti soudu – nevýhodná pro ČR",
+      risk3: "§ 7.1 Doložka o příslušnosti soudu, nevýhodná pro ČR",
       reportReady: "Report je hotový",
-      reportDone: "Analýza dokončena za 18 minut",
+      reportDone: "AI analýza hotová za pár minut, report s ověřením do 24 hodin",
       highRisk: "Vysoké riziko",
       mediumRisk: "Střední riziko",
       lowRisk: "Nízké riziko",
@@ -109,23 +109,23 @@ export default function DemoAnimation() {
     hu: {
       stepLabels: ["Feltöltés", "Elemzés", "Jelentés"],
       dragDrop: "Húzza ide a fájlt",
-      fileTypes: "PDF, DOCX – max. 50 MB",
-      langNote: "Magyar és angol szerződések · magyar jog",
+      fileTypes: "PDF, DOCX, max. 50 MB",
+      langNote: "Az elemzés a szlovák és a cseh jogra terjed ki",
       fileName: "Keretszerzodes_IT.pdf",
-      filePages: "12 oldal – 2,4 MB",
+      filePages: "12 oldal, 2,4 MB",
       fileType: "PDF",
       fileName2: "Service_Agreement_EN.docx",
-      filePages2: "8 oldal – 1,6 MB",
+      filePages2: "8 oldal, 1,6 MB",
       fileType2: "DOCX",
       analyzing: "Klauzulák elemzése...",
-      analyzingDesc: "Az AI a magyar jog szerint vizsgálja a szerződést",
+      analyzingDesc: "Az AI a szlovák és a cseh jog szerint vizsgálja a szerződést",
       high: "Magas",
       medium: "Közepes",
-      risk1: "§ 4.2 Felelősség kizárása – Ptk. 6:152. §",
+      risk1: "§ 4.2 Felelősség kizárása, a szlovák kereskedelmi törvénykönyv 379. §-a",
       risk2: "§ 11.2 Szellemi tulajdon átruházása ellentételezés nélkül",
-      risk3: "§ 7.1 Joghatósági kikötés – kedvezőtlen",
+      risk3: "§ 7.1 Joghatósági kikötés, kedvezőtlen feltételekkel",
       reportReady: "A jelentés elkészült",
-      reportDone: "Az elemzés 18 perc alatt elkészült",
+      reportDone: "Az AI elemzés perceken belül elkészül, az ellenőrzött jelentés 24 órán belül",
       highRisk: "Magas kockázat",
       mediumRisk: "Közepes kockázat",
       lowRisk: "Alacsony kockázat",
@@ -182,7 +182,8 @@ export default function DemoAnimation() {
 
   return (
     <div className="w-full max-w-4xl mx-auto">
-      <div className="relative bg-white rounded-2xl shadow-xl border overflow-hidden" style={{ aspectRatio: "16/9" }}>
+      {/* Fixed 16:9 stage only from md up; below md the active step renders in normal flow. */}
+      <div className="relative bg-white rounded-2xl shadow-xl border overflow-hidden md:aspect-video">
         {/* Browser chrome */}
         <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border-b">
           <div className="flex gap-1.5">
@@ -198,17 +199,17 @@ export default function DemoAnimation() {
         </div>
 
         {/* Content area */}
-        <div className="p-6 md:p-10 flex items-center justify-center" style={{ minHeight: "320px" }}>
+        <div className="md:flex items-center justify-center md:min-h-[320px]">
           {/* Step 0: Upload */}
           <div
-            className="absolute inset-0 top-[41px] flex items-center justify-center p-8 transition-all duration-500"
+            className={`p-5 md:p-8 transition-all duration-500 md:absolute md:inset-0 md:top-[41px] md:flex md:items-center md:justify-center ${step === 0 ? "" : "hidden"}`}
             style={{
               opacity: step === 0 ? 1 : 0,
               transform: step === 0 ? "scale(1)" : "scale(0.95)",
               pointerEvents: step === 0 ? "auto" : "none",
             }}
           >
-            <div className="w-full max-w-md">
+            <div className="w-full max-w-md mx-auto">
               <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center transition-all duration-300 hover:border-primary/50">
                 <div className="w-12 h-12 rounded-full bg-primary/5 flex items-center justify-center mx-auto mb-3">
                   <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -264,14 +265,14 @@ export default function DemoAnimation() {
 
           {/* Step 1: Analyzing */}
           <div
-            className="absolute inset-0 top-[41px] flex items-center justify-center p-8 transition-all duration-500"
+            className={`p-5 md:p-8 transition-all duration-500 md:absolute md:inset-0 md:top-[41px] md:flex md:items-center md:justify-center ${step === 1 ? "" : "hidden"}`}
             style={{
               opacity: step === 1 ? 1 : 0,
               transform: step === 1 ? "scale(1)" : "scale(0.95)",
               pointerEvents: step === 1 ? "auto" : "none",
             }}
           >
-            <div className="w-full max-w-lg">
+            <div className="w-full max-w-lg mx-auto">
               <div className="flex items-center gap-4 mb-6">
                 <div className="relative w-16 h-16">
                   <svg className="w-16 h-16 -rotate-90" viewBox="0 0 36 36">
@@ -336,14 +337,14 @@ export default function DemoAnimation() {
 
           {/* Step 2: Report ready */}
           <div
-            className="absolute inset-0 top-[41px] flex items-center justify-center p-8 transition-all duration-500"
+            className={`p-5 md:p-8 transition-all duration-500 md:absolute md:inset-0 md:top-[41px] md:flex md:items-center md:justify-center ${step === 2 ? "" : "hidden"}`}
             style={{
               opacity: step === 2 ? 1 : 0,
               transform: step === 2 ? "scale(1)" : "scale(0.95)",
               pointerEvents: step === 2 ? "auto" : "none",
             }}
           >
-            <div className="w-full max-w-lg">
+            <div className="w-full max-w-lg mx-auto">
               <div className="flex items-center gap-3 mb-5">
                 <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
                   <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -387,8 +388,8 @@ export default function DemoAnimation() {
           </div>
         </div>
 
-        {/* Controls bar */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gray-50/90 backdrop-blur-sm border-t px-4 py-2.5 flex items-center justify-between">
+        {/* Controls bar: in normal flow on mobile, overlaid at the bottom from md up */}
+        <div className="md:absolute md:bottom-0 md:left-0 md:right-0 bg-gray-50/90 backdrop-blur-sm border-t px-4 py-2.5 flex items-center justify-between">
           {/* Play/Pause button */}
           <button
             onClick={togglePause}

@@ -3,13 +3,10 @@
  * Prices are in EUR cents. Single source of truth for checkout amounts.
  * CZK equivalents (for display only): rate ~25, rounded to marketing-friendly numbers.
  */
+// NOTE: the basic plan is the free scan and intentionally has NO Stripe
+// product. Checkout for a basic contract requires an upgrade to standard
+// or premium (see payments.createCheckout).
 export const STRIPE_PRODUCTS = {
-  basic: {
-    name: "Základná kontrola",
-    description: "AI analýza rizík s odkazmi na Slov-Lex a EUR-Lex (do 30 strán, do 24h)",
-    priceAmount: 19700, // 197 €
-    currency: "eur",
-  },
   standard: {
     name: "Štandardná kontrola",
     description: "AI analýza + overenie advokátom, návrhy úprav (do 50 strán, do 24h)",

@@ -283,6 +283,26 @@ export type DeepAnalysis = typeof deepAnalysis.$inferSelect;
 export type InsertDeepAnalysis = typeof deepAnalysis.$inferInsert;
 
 /**
+ * Contract claims — anonymous free-scan ownership. A random claim token is
+ * minted at upload time for contracts uploaded without a session; the token is
+ * stored here and mirrored into an httpOnly cookie so only the uploading
+ * browser can read the preview. Kept in its own table (CREATE TABLE IF NOT
+ * EXISTS at runtime) to avoid ALTERing the contracts table.
+ */
+export const contractClaims = mysqlTable("contract_claims", {
+  id: int("id").autoincrement().primaryKey(),
+  contractId: int("contractId").notNull().unique(),
+  /** Random UUID claim token (httpOnly cookie holds the same value) */
+  token: varchar("token", { length: 64 }).notNull(),
+  /** Optional e-mail captured on the free-scan preview page */
+  email: varchar("email", { length: 320 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ContractClaim = typeof contractClaims.$inferSelect;
+export type InsertContractClaim = typeof contractClaims.$inferInsert;
+
+/**
  * Free trials — 15-day trial with one free contract analysis. A card is saved
  * (no charge) via Stripe Checkout in setup mode (SetupIntent). Kept in its own
  * table to avoid ALTERing the existing users table.

@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Nahratie zmluvy">
+  <defs>
+    <linearGradient id="bg1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0D1B33"/>
+      <stop offset="1" stop-color="#0A1428"/>
+    </linearGradient>
+    <linearGradient id="gold1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E8C776"/>
+      <stop offset="1" stop-color="#C9973F"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg1)"/>
+  <!-- subtle grid -->
+  <g stroke="#FFFFFF" stroke-opacity="0.03">
+    <path d="M0 150 H800 M0 300 H800 M0 450 H800"/>
+    <path d="M200 0 V600 M400 0 V600 M600 0 V600"/>
+  </g>
+  <!-- wordmark watermark -->
+  <text x="400" y="565" text-anchor="middle" font-family="Georgia, serif" font-size="26" fill="#FFFFFF" fill-opacity="0.08">bod.legal</text>
+  <!-- document sheet -->
+  <g>
+    <rect x="290" y="150" width="220" height="290" rx="14" fill="#101F3C" stroke="#2A3B5E" stroke-width="2"/>
+    <path d="M290 164 a14 14 0 0 1 14 -14 h146 l60 60 v230 a14 14 0 0 1 -14 14" fill="none"/>
+    <!-- folded corner -->
+    <path d="M450 150 l60 60 h-46 a14 14 0 0 1 -14 -14 z" fill="#1A2C50" stroke="#2A3B5E" stroke-width="2"/>
+    <!-- text lines -->
+    <g stroke="#3D4F76" stroke-width="8" stroke-linecap="round">
+      <path d="M320 250 H470"/>
+      <path d="M320 282 H450"/>
+      <path d="M320 314 H470"/>
+      <path d="M320 346 H420"/>
+    </g>
+    <!-- PDF tag -->
+    <rect x="320" y="188" width="64" height="26" rx="6" fill="#1A2C50" stroke="#2A3B5E"/>
+    <text x="352" y="206" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#E8C776">PDF</text>
+  </g>
+  <!-- upload arrow circle -->
+  <g>
+    <circle cx="400" cy="430" r="52" fill="#0A1428" stroke="url(#gold1)" stroke-width="4"/>
+    <path d="M400 456 V410 M400 410 l-18 18 M400 410 l18 18" stroke="url(#gold1)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </g>
+  <!-- dashed drop zone -->
+  <rect x="220" y="110" width="360" height="380" rx="24" fill="none" stroke="#E8C776" stroke-opacity="0.35" stroke-width="3" stroke-dasharray="14 12"/>
+  <!-- caption dots -->
+  <g fill="#E8C776">
+    <circle cx="372" cy="530" r="6"/>
+    <circle cx="400" cy="530" r="6" fill-opacity="0.45"/>
+    <circle cx="428" cy="530" r="6" fill-opacity="0.45"/>
+  </g>
+</svg>

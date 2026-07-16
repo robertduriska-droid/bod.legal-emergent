@@ -1,4 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import { startLogin } from "@/const";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +25,9 @@ const TX = {
     riskLabels: { high: "Vysoké", medium: "Stredné", low: "Nízke" } as Record<string, string>,
     redirecting: "Presmerovávame na platbu...",
     paymentError: "Chyba pri vytváraní platby: ",
+    paymentSuccess: "Platba úspešná! Analýza sa začína.",
+    paymentCancelled: "Platba bola zrušená.",
+    checkoutFallback: "Ak sa platba neotvorila, kliknite sem.",
     notFound: "Zmluva nenájdená",
     backToDashboard: "Späť na prehľad",
     uploaded: "Nahrané",
@@ -35,10 +39,20 @@ const TX = {
     payAndStart: "Zaplatiť a spustiť analýzu",
     awaitingProcessing: "Spúšťame analýzu",
     aiAnalyzing: "AI analyzuje vašu zmluvu",
-    analyzingDesc: "Kontrolujeme každú klauzulu a porovnávame s právnymi predpismi. Zvyčajne to trvá 1–3 minúty. Stránka sa aktualizuje automaticky.",
+    analyzingDesc: "Kontrolujeme každú klauzulu a porovnávame s právnymi predpismi. Zvyčajne to trvá 1 až 3 minúty. Stránka sa aktualizuje automaticky.",
     retryAnalysis: "Spustiť analýzu znova",
+    failedTitle: "Analýzu sa nepodarilo dokončiť.",
+    failedDesc: "Skúsime to znova, alebo nám napíšte.",
     lawyerReview: "Advokát overuje report",
-    lawyerReviewDesc: "AI analýza je hotová. Advokát teraz kontroluje nálezy, dopĺňa poznámky a pripravuje finálny report. Dostanete e-mail, keď bude hotový.",
+    lawyerReviewLine: "Advokát zapísaný v SAK overuje nálezy.",
+    lawyerEta: "Overenie zvyčajne trvá do 24 hodín od platby, expresne do 4 hodín.",
+    aiDone: "AI hotovo",
+    lawyerVerifying: "Advokát overuje",
+    stepUploaded: "Nahranie",
+    stepPayment: "Platba",
+    stepAnalysis: "AI analýza",
+    stepReview: "Overenie advokátom",
+    stepDone: "Hotovo",
     highRisk: "Vysoké riziko",
     mediumRisk: "Stredné riziko",
     lowRisk: "Nízke riziko",
@@ -49,11 +63,21 @@ const TX = {
     dateLocale: "sk-SK",
     countdownLabel: "Gar. dodanie do:",
     countdownExpired: "Report bude dodaný čo najskôr",
+    upgradeTitle: "Chcete overenie advokátom?",
+    upgradeDesc: "Bezplatný sken ukazuje top 3 riziká. Advokát overí a podpíše kompletný report pri Štandardnej alebo Prémiovej kontrole.",
+    upgradeStandard: "Štandardná kontrola, 297 eur",
+    upgradeStandardDesc: "Kompletný report, overenie a podpis advokáta.",
+    upgradePremium: "Prémiová kontrola, 497 eur",
+    upgradePremiumDesc: "Navyše redline dokument s návrhmi úprav na priame prevzatie.",
+    upgradeLogin: "Na dokončenie objednávky sa najprv prihláste.",
   },
   en: {
     riskLabels: { high: "High", medium: "Medium", low: "Low" } as Record<string, string>,
     redirecting: "Redirecting to payment...",
     paymentError: "Error creating payment: ",
+    paymentSuccess: "Payment successful! Analysis starting.",
+    paymentCancelled: "Payment was cancelled.",
+    checkoutFallback: "If the payment page did not open, click here.",
     notFound: "Contract not found",
     backToDashboard: "Back to dashboard",
     uploaded: "Uploaded",
@@ -65,10 +89,20 @@ const TX = {
     payAndStart: "Pay and start analysis",
     awaitingProcessing: "Starting analysis",
     aiAnalyzing: "AI is analyzing your contract",
-    analyzingDesc: "We're checking every clause against applicable legal provisions. This usually takes 1–3 minutes. The page refreshes automatically.",
+    analyzingDesc: "We're checking every clause against applicable legal provisions. This usually takes 1 to 3 minutes. The page refreshes automatically.",
     retryAnalysis: "Restart analysis",
+    failedTitle: "The analysis could not be completed.",
+    failedDesc: "We will try again, or write to us.",
     lawyerReview: "Lawyer is verifying the report",
-    lawyerReviewDesc: "AI analysis is complete. A lawyer is now reviewing the findings, adding notes, and preparing the final report. You'll receive an email when it's ready.",
+    lawyerReviewLine: "A lawyer registered with the Slovak Bar Association is verifying the findings.",
+    lawyerEta: "Verification usually takes up to 24 hours from payment, express up to 4 hours.",
+    aiDone: "AI done",
+    lawyerVerifying: "Lawyer verifying",
+    stepUploaded: "Upload",
+    stepPayment: "Payment",
+    stepAnalysis: "AI analysis",
+    stepReview: "Lawyer review",
+    stepDone: "Done",
     highRisk: "High risk",
     mediumRisk: "Medium risk",
     lowRisk: "Low risk",
@@ -79,11 +113,21 @@ const TX = {
     dateLocale: "en-GB",
     countdownLabel: "Guaranteed by:",
     countdownExpired: "Report will be delivered ASAP",
+    upgradeTitle: "Want a lawyer to verify it?",
+    upgradeDesc: "The free scan shows the top 3 risks. With the Standard or Premium review a lawyer verifies and signs the complete report.",
+    upgradeStandard: "Standard review, 297 eur",
+    upgradeStandardDesc: "Complete report, verified and signed by a lawyer.",
+    upgradePremium: "Premium review, 497 eur",
+    upgradePremiumDesc: "Plus a redline document with ready-to-use amendments.",
+    upgradeLogin: "Please sign in first to complete your order.",
   },
   cz: {
     riskLabels: { high: "Vysoké", medium: "Střední", low: "Nízké" } as Record<string, string>,
     redirecting: "Přesměrováváme na platbu...",
     paymentError: "Chyba při vytváření platby: ",
+    paymentSuccess: "Platba úspěšná! Analýza začíná.",
+    paymentCancelled: "Platba byla zrušena.",
+    checkoutFallback: "Pokud se platba neotevřela, klikněte sem.",
     notFound: "Smlouva nenalezena",
     backToDashboard: "Zpět na přehled",
     uploaded: "Nahráno",
@@ -95,10 +139,20 @@ const TX = {
     payAndStart: "Zaplatit a spustit analýzu",
     awaitingProcessing: "Spouštíme analýzu",
     aiAnalyzing: "AI analyzuje vaši smlouvu",
-    analyzingDesc: "Kontrolujeme každou klauzuli a porovnáváme s právními předpisy. Obvykle to trvá 1–3 minuty. Stránka se aktualizuje automaticky.",
+    analyzingDesc: "Kontrolujeme každou klauzuli a porovnáváme s právními předpisy. Obvykle to trvá 1 až 3 minuty. Stránka se aktualizuje automaticky.",
     retryAnalysis: "Spustit analýzu znovu",
+    failedTitle: "Analýzu se nepodařilo dokončit.",
+    failedDesc: "Zkusíme to znovu, nebo nám napište.",
     lawyerReview: "Advokát ověřuje report",
-    lawyerReviewDesc: "AI analýza je hotová. Advokát nyní kontroluje nálezy, doplňuje poznámky a připravuje finální report. Dostanete e-mail, až bude hotový.",
+    lawyerReviewLine: "Advokát zapsaný v SAK ověřuje nálezy.",
+    lawyerEta: "Ověření obvykle trvá do 24 hodin od platby, expresně do 4 hodin.",
+    aiDone: "AI hotovo",
+    lawyerVerifying: "Advokát ověřuje",
+    stepUploaded: "Nahrání",
+    stepPayment: "Platba",
+    stepAnalysis: "AI analýza",
+    stepReview: "Ověření advokátem",
+    stepDone: "Hotovo",
     highRisk: "Vysoké riziko",
     mediumRisk: "Střední riziko",
     lowRisk: "Nízké riziko",
@@ -109,15 +163,115 @@ const TX = {
     dateLocale: "cs-CZ",
     countdownLabel: "Gar. dodání do:",
     countdownExpired: "Report bude dodán co nejdříve",
+    upgradeTitle: "Chcete ověření advokátem?",
+    upgradeDesc: "Bezplatný sken ukazuje top 3 rizika. Advokát ověří a podepíše kompletní report u kontroly Standard nebo Premium.",
+    upgradeStandard: "Standardní kontrola, 297 eur",
+    upgradeStandardDesc: "Kompletní report, ověření a podpis advokáta.",
+    upgradePremium: "Prémiová kontrola, 497 eur",
+    upgradePremiumDesc: "Navíc redline dokument s návrhy úprav k přímému převzetí.",
+    upgradeLogin: "Pro dokončení objednávky se nejprve přihlaste.",
+  },
+  hu: {
+    riskLabels: { high: "Magas", medium: "Közepes", low: "Alacsony" } as Record<string, string>,
+    redirecting: "Átirányítás a fizetéshez...",
+    paymentError: "Hiba a fizetés létrehozásakor: ",
+    paymentSuccess: "Sikeres fizetés! Az elemzés indul.",
+    paymentCancelled: "A fizetés megszakadt.",
+    checkoutFallback: "Ha a fizetési oldal nem nyílt meg, kattintson ide.",
+    notFound: "A szerződés nem található",
+    backToDashboard: "Vissza az áttekintéshez",
+    uploaded: "Feltöltve",
+    plan: "Csomag",
+    planNames: { basic: "Alap", standard: "Standard", premium: "Prémium" } as Record<string, string>,
+    viewReport: "Report megtekintése",
+    awaitingPayment: "Fizetésre vár",
+    awaitingPaymentDesc: "Az elemzés a sikeres fizetés után automatikusan elindul.",
+    payAndStart: "Fizetés és elemzés indítása",
+    awaitingProcessing: "Elemzés indítása",
+    aiAnalyzing: "Az AI elemzi a szerződését",
+    analyzingDesc: "Minden pontot ellenőrzünk és összevetünk a jogszabályokkal. Ez általában 1 és 3 perc között tart. Az oldal automatikusan frissül.",
+    retryAnalysis: "Elemzés újraindítása",
+    failedTitle: "Az elemzést nem sikerült befejezni.",
+    failedDesc: "Újra megpróbáljuk, vagy írjon nekünk.",
+    lawyerReview: "Az ügyvéd ellenőrzi a reportot",
+    lawyerReviewLine: "A Szlovák Ügyvédi Kamaránál bejegyzett ügyvéd ellenőrzi a megállapításokat.",
+    lawyerEta: "Az ellenőrzés általában a fizetéstől számított 24 órán belül, expressz esetén 4 órán belül elkészül.",
+    aiDone: "AI kész",
+    lawyerVerifying: "Ügyvéd ellenőrzi",
+    stepUploaded: "Feltöltés",
+    stepPayment: "Fizetés",
+    stepAnalysis: "AI elemzés",
+    stepReview: "Ügyvédi ellenőrzés",
+    stepDone: "Kész",
+    highRisk: "Magas kockázat",
+    mediumRisk: "Közepes kockázat",
+    lowRisk: "Alacsony kockázat",
+    clauseAnalysis: "Pontok elemzése",
+    legalBasis: "Jogalap:",
+    suggestedEdit: "Javasolt módosítás:",
+    lawyerNote: "Ügyvédi megjegyzés:",
+    dateLocale: "hu-HU",
+    countdownLabel: "Garantált átadás:",
+    countdownExpired: "A reportot a lehető leghamarabb átadjuk",
+    upgradeTitle: "Szeretné, hogy ügyvéd ellenőrizze?",
+    upgradeDesc: "Az ingyenes szken a top 3 kockázatot mutatja. A Standard vagy Prémium ellenőrzésnél ügyvéd ellenőrzi és írja alá a teljes reportot.",
+    upgradeStandard: "Standard ellenőrzés, 297 eur",
+    upgradeStandardDesc: "Teljes report, ügyvédi ellenőrzéssel és aláírással.",
+    upgradePremium: "Prémium ellenőrzés, 497 eur",
+    upgradePremiumDesc: "Ráadásul redline dokumentum azonnal használható módosításokkal.",
+    upgradeLogin: "A megrendelés befejezéséhez először jelentkezzen be.",
   },
 };
 
-function DeliveryCountdown({ createdAt, expressAddon, tx }: { createdAt: string | Date; expressAddon: number; tx: typeof TX.sk }) {
+type TxShape = typeof TX.sk;
+
+/** 5-step progress strip with visible text labels and screen-reader labels. */
+function ProgressStrip({ current, tx }: { current: number; tx: TxShape }) {
+  const steps = [
+    { icon: Upload, label: tx.stepUploaded },
+    { icon: CreditCard, label: tx.stepPayment },
+    { icon: Loader2, label: tx.stepAnalysis },
+    { icon: Scale, label: tx.stepReview },
+    { icon: FileCheck, label: tx.stepDone },
+  ];
+  return (
+    <div className="flex items-start justify-center mt-4" role="list">
+      {steps.map((step, i) => {
+        const done = i < current;
+        const isCurrent = i === current;
+        const StepIcon = step.icon;
+        return (
+          <div key={i} className="flex items-start">
+            <div
+              className="flex flex-col items-center w-14 sm:w-16"
+              role="listitem"
+              aria-label={step.label}
+              aria-current={isCurrent ? "step" : undefined}
+            >
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center ${
+                done ? "bg-primary text-primary-foreground" : isCurrent ? "bg-primary/20 text-primary ring-2 ring-primary/40" : "bg-muted text-muted-foreground"
+              }`}>
+                <StepIcon className={`h-3.5 w-3.5 ${isCurrent && i === 2 ? "animate-spin" : ""}`} aria-hidden="true" />
+              </div>
+              <span className={`text-[10px] mt-1 font-sans text-center leading-tight ${
+                isCurrent ? "text-foreground font-medium" : "text-muted-foreground"
+              }`}>{step.label}</span>
+            </div>
+            {i < steps.length - 1 && (
+              <div className={`w-3 sm:w-5 h-0.5 mt-3.5 rounded-full ${done ? "bg-primary" : "bg-muted"}`} aria-hidden="true" />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function DeliveryCountdown({ startAt, expressAddon, tx }: { startAt: number; expressAddon: number; tx: TxShape }) {
   const deadline = useMemo(() => {
-    const start = new Date(createdAt).getTime();
     const hours = expressAddon ? 4 : 24;
-    return start + hours * 60 * 60 * 1000;
-  }, [createdAt, expressAddon]);
+    return startAt + hours * 60 * 60 * 1000;
+  }, [startAt, expressAddon]);
 
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
@@ -157,10 +311,23 @@ function DeliveryCountdown({ createdAt, expressAddon, tx }: { createdAt: string 
   );
 }
 
+function getStoredPaidAt(contractId: number): number {
+  if (typeof window === "undefined" || contractId <= 0) return 0;
+  try {
+    const raw = window.localStorage.getItem(`bod:paidAt:${contractId}`);
+    const parsed = raw ? parseInt(raw, 10) : 0;
+    return Number.isFinite(parsed) ? parsed : 0;
+  } catch {
+    return 0;
+  }
+}
+
 export default function ContractDetail() {
-  const { isAuthenticated } = useAuth({ redirectOnUnauthenticated: true });
+  // No forced login: anonymous free-scan visitors hold a claim cookie and the
+  // server gates every query on owner-or-claim. Login happens at checkout.
+  const { isAuthenticated } = useAuth();
   const { locale, localePath } = useT();
-  const tx = TX[locale === "hu" ? "en" : locale];
+  const tx = TX[locale];
   const params = useParams<{ id: string }>();
   const contractId = parseInt(params.id || "0");
   const searchString = useSearch();
@@ -170,31 +337,60 @@ export default function ContractDetail() {
   // Show toast on payment result (once via useEffect)
   useEffect(() => {
     if (paymentResult === 'success') {
-      toast.success(locale === 'sk' ? 'Platba úspešná! Analýza sa začína.' : 'Payment successful! Analysis starting.');
+      toast.success(tx.paymentSuccess);
     } else if (paymentResult === 'cancelled') {
-      toast.error(locale === 'sk' ? 'Platba bola zrušená.' : 'Payment was cancelled.');
+      toast.error(tx.paymentCancelled);
     }
-  }, [paymentResult, locale]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paymentResult]);
+
+  // Remember when the payment succeeded so the delivery countdown starts
+  // from the payment moment, not from the upload moment.
+  useEffect(() => {
+    if (paymentResult === 'success' && contractId > 0) {
+      try {
+        const key = `bod:paidAt:${contractId}`;
+        if (!window.localStorage.getItem(key)) {
+          window.localStorage.setItem(key, String(Date.now()));
+        }
+      } catch {
+        // localStorage unavailable: countdown falls back to createdAt
+      }
+    }
+  }, [paymentResult, contractId]);
 
   const { data, isLoading, refetch } = trpc.contracts.getById.useQuery(
     { id: contractId },
-    { enabled: isAuthenticated && contractId > 0, refetchInterval: 5000 }
+    {
+      enabled: isAuthenticated && contractId > 0,
+      // Stop polling once the contract reached a terminal state.
+      refetchInterval: (query) => {
+        const status = query.state.data?.contract?.status as string | undefined;
+        if (status === "completed" || status === "failed" || status === "error") return false;
+        return 5000;
+      },
+    }
   );
 
   const retryMutation = trpc.contracts.retryAnalysis.useMutation({
     onSuccess: () => refetch(),
   });
 
+  // Public with claim-cookie support server-side, so no auth gate here.
   const paymentStatus = trpc.payments.getStatus.useQuery(
     { contractId },
-    { enabled: isAuthenticated && contractId > 0 }
+    { enabled: contractId > 0 }
   );
 
+  // Same-tab redirect: popups are blocked on iOS Safari and many mobile
+  // browsers, so navigate directly and keep a visible fallback link.
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const createCheckout = trpc.payments.createCheckout.useMutation({
     onSuccess: (data) => {
       if (data.checkoutUrl) {
+        setCheckoutUrl(data.checkoutUrl);
         toast.success(tx.redirecting);
-        window.open(data.checkoutUrl, "_blank");
+        window.location.href = data.checkoutUrl;
       }
     },
     onError: (error) => {
@@ -229,6 +425,16 @@ export default function ContractDetail() {
   }
 
   const { contract, clauses, report } = data;
+  const isFailed = (contract.status as string) === "failed" || (contract.status as string) === "error";
+
+  // Countdown start: the later of the locally stored payment moment and any
+  // payment timestamp the payments API returns; only fall back to createdAt
+  // when neither exists.
+  const storedPaidAt = getStoredPaidAt(contractId);
+  const payloadPaidAtRaw = (paymentStatus.data as { paid: boolean; paidAt?: string | number | Date } | undefined)?.paidAt;
+  const payloadPaidAt = payloadPaidAtRaw ? new Date(payloadPaidAtRaw).getTime() : 0;
+  const paidAt = Math.max(storedPaidAt, Number.isFinite(payloadPaidAt) ? payloadPaidAt : 0);
+  const countdownStart = paidAt > 0 ? paidAt : new Date(contract.createdAt).getTime();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -243,19 +449,91 @@ export default function ContractDetail() {
           </Link>
 
           {/* Contract Header */}
-          <div className="flex items-start justify-between mb-8">
-            <div>
-              <h1 className="text-2xl font-serif mb-1">{contract.fileName}</h1>
+          <div className="flex items-start justify-between gap-4 mb-8">
+            <div className="min-w-0">
+              <h1 className="text-2xl font-serif mb-1 truncate" title={contract.fileName}>{contract.fileName}</h1>
               <p className="text-sm text-muted-foreground font-sans">
                 {tx.uploaded} {new Date(contract.createdAt).toLocaleDateString(tx.dateLocale)} · {tx.plan}: {tx.planNames[contract.plan] || contract.plan}
               </p>
             </div>
             {contract.status === "completed" && (
-              <Link href={localePath(`/report/${contract.id}`)}>
-                <Button className="font-sans">{tx.viewReport}</Button>
-              </Link>
+              <div className="shrink-0">
+                <Link href={localePath(`/report/${contract.id}`)}>
+                  <Button className="font-sans">{tx.viewReport}</Button>
+                </Link>
+              </div>
             )}
           </div>
+
+          {/* Free-scan upsell: upgrade a basic contract to a lawyer-verified review */}
+          {contract.plan === "basic" && !paymentStatus.data?.paid && (
+            <Card className="mb-8 border-primary/30 bg-primary/[0.03]">
+              <CardContent className="p-6">
+                <div className="flex items-start gap-3 mb-4">
+                  <Scale className="h-6 w-6 text-primary shrink-0 mt-0.5" aria-hidden="true" />
+                  <div>
+                    <h3 className="font-sans text-lg font-semibold">{tx.upgradeTitle}</h3>
+                    <p className="text-sm text-muted-foreground font-sans">{tx.upgradeDesc}</p>
+                  </div>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {([
+                    { plan: "standard" as const, label: tx.upgradeStandard, desc: tx.upgradeStandardDesc },
+                    { plan: "premium" as const, label: tx.upgradePremium, desc: tx.upgradePremiumDesc },
+                  ]).map(opt => (
+                    <div key={opt.plan} className="rounded-lg border border-border p-4 flex flex-col">
+                      <span className="font-sans font-medium mb-1">{opt.label}</span>
+                      <span className="text-xs text-muted-foreground font-sans mb-3 flex-1">{opt.desc}</span>
+                      <Button
+                        className="font-sans w-full"
+                        variant={opt.plan === "premium" ? "default" : "outline"}
+                        disabled={createCheckout.isPending}
+                        onClick={() => {
+                          if (!isAuthenticated) {
+                            toast.info(tx.upgradeLogin);
+                            startLogin();
+                            return;
+                          }
+                          createCheckout.mutate({ contractId: contract.id, upgradeTo: opt.plan });
+                        }}
+                      >
+                        {createCheckout.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CreditCard className="h-4 w-4 mr-2" />}
+                        {tx.payAndStart}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                {checkoutUrl && (
+                  <p className="mt-3 text-center">
+                    <a href={checkoutUrl} className="text-sm font-sans text-primary underline underline-offset-2">
+                      {tx.checkoutFallback}
+                    </a>
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Failed analysis */}
+          {isFailed && (
+            <Card className="mb-8 border-red-300 bg-red-50">
+              <CardContent className="p-6 text-center">
+                <AlertTriangle className="h-8 w-8 text-red-600 mx-auto mb-3" />
+                <h3 className="font-sans text-lg font-semibold mb-1 text-red-900">{tx.failedTitle}</h3>
+                <p className="text-sm text-red-800/80 font-sans mb-4">{tx.failedDesc}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="font-sans"
+                  onClick={() => retryMutation.mutate({ contractId: contract.id })}
+                  disabled={retryMutation.isPending}
+                >
+                  {retryMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  {tx.retryAnalysis}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Payment Required */}
           {contract.status === "pending" && paymentStatus.data && !paymentStatus.data.paid && (
@@ -274,12 +552,19 @@ export default function ContractDetail() {
                   {createCheckout.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CreditCard className="h-4 w-4 mr-2" />}
                   {tx.payAndStart}
                 </Button>
+                {checkoutUrl && (
+                  <p className="mt-3">
+                    <a href={checkoutUrl} className="text-sm font-sans text-primary underline underline-offset-2">
+                      {tx.checkoutFallback}
+                    </a>
+                  </p>
+                )}
               </CardContent>
             </Card>
           )}
 
           {/* Status - analyzing or paid pending */}
-          {(contract.status === "analyzing" || (contract.status === "pending" && paymentStatus.data?.paid)) && (
+          {!isFailed && (contract.status === "analyzing" || (contract.status === "pending" && paymentStatus.data?.paid)) && (
             <Card className="mb-8 border-primary/20 bg-primary/[0.02]">
               <CardContent className="p-6">
                 <div className="text-center mb-5">
@@ -292,26 +577,9 @@ export default function ContractDetail() {
                   </p>
                 </div>
                 {/* Delivery Countdown */}
-                <DeliveryCountdown createdAt={contract.createdAt} expressAddon={contract.expressAddon} tx={tx} />
+                <DeliveryCountdown startAt={countdownStart} expressAddon={contract.expressAddon} tx={tx} />
                 {/* Progress steps */}
-                <div className="flex items-center justify-center gap-2 mt-4">
-                  {[
-                    { icon: Upload, done: true },
-                    { icon: CreditCard, done: true },
-                    { icon: Loader2, done: false, current: true },
-                    { icon: Scale, done: false },
-                    { icon: FileCheck, done: false },
-                  ].map((step, i) => (
-                    <div key={i} className="flex items-center">
-                      <div className={`w-7 h-7 rounded-full flex items-center justify-center ${
-                        step.done ? 'bg-primary text-primary-foreground' : step.current ? 'bg-primary/20 text-primary ring-2 ring-primary/40' : 'bg-muted text-muted-foreground'
-                      }`}>
-                        <step.icon className={`h-3.5 w-3.5 ${step.current ? 'animate-spin' : ''}`} />
-                      </div>
-                      {i < 4 && <div className={`w-6 h-0.5 mx-1 rounded-full ${step.done ? 'bg-primary' : 'bg-muted'}`} />}
-                    </div>
-                  ))}
-                </div>
+                <ProgressStrip current={2} tx={tx} />
                 {contract.status === "pending" && (
                   <div className="text-center mt-4">
                     <Button
@@ -336,29 +604,21 @@ export default function ContractDetail() {
                 <div className="text-center">
                   <Scale className="h-8 w-8 text-amber-600 mx-auto mb-3" />
                   <h3 className="font-sans text-lg font-semibold mb-1">{tx.lawyerReview}</h3>
-                  <p className="text-sm text-muted-foreground font-sans">
-                    {tx.lawyerReviewDesc}
-                  </p>
+                  <p className="text-sm text-muted-foreground font-sans">{tx.lawyerReviewLine}</p>
+                  <p className="text-sm text-muted-foreground font-sans mt-1">{tx.lawyerEta}</p>
+                </div>
+                {/* Two-step indicator: AI done, lawyer verifying */}
+                <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-green-100 border border-green-300 text-green-800 px-3 py-1 text-xs font-sans">
+                    <CheckCircle className="h-3.5 w-3.5" aria-hidden="true" /> {tx.aiDone}
+                  </span>
+                  <span className="w-5 h-0.5 bg-amber-300 rounded-full" aria-hidden="true" />
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 border border-amber-300 text-amber-800 px-3 py-1 text-xs font-sans">
+                    <Scale className="h-3.5 w-3.5" aria-hidden="true" /> {tx.lawyerVerifying}
+                  </span>
                 </div>
                 {/* Progress steps */}
-                <div className="flex items-center justify-center gap-2 mt-5">
-                  {[
-                    { icon: Upload, done: true },
-                    { icon: CreditCard, done: true },
-                    { icon: Loader2, done: true },
-                    { icon: Scale, done: false, current: true },
-                    { icon: FileCheck, done: false },
-                  ].map((step, i) => (
-                    <div key={i} className="flex items-center">
-                      <div className={`w-7 h-7 rounded-full flex items-center justify-center ${
-                        step.done ? 'bg-primary text-primary-foreground' : step.current ? 'bg-amber-200 text-amber-700 ring-2 ring-amber-300' : 'bg-muted text-muted-foreground'
-                      }`}>
-                        <step.icon className={`h-3.5 w-3.5`} />
-                      </div>
-                      {i < 4 && <div className={`w-6 h-0.5 mx-1 rounded-full ${step.done ? 'bg-primary' : 'bg-muted'}`} />}
-                    </div>
-                  ))}
-                </div>
+                <ProgressStrip current={3} tx={tx} />
               </CardContent>
             </Card>
           )}
@@ -368,19 +628,19 @@ export default function ContractDetail() {
             <div className="grid grid-cols-3 gap-4 mb-8">
               <Card className="border-red-200 bg-red-50">
                 <CardContent className="p-4 text-center">
-                  <p className="text-2xl font-serif text-red-800">{(report.riskSummary as any)?.high || 0}</p>
+                  <p className="text-2xl font-serif text-red-800">{(report.riskSummary as { high?: number } | null)?.high || 0}</p>
                   <p className="text-xs text-red-600 font-sans">{tx.highRisk}</p>
                 </CardContent>
               </Card>
               <Card className="border-amber-200 bg-amber-50">
                 <CardContent className="p-4 text-center">
-                  <p className="text-2xl font-serif text-amber-800">{(report.riskSummary as any)?.medium || 0}</p>
+                  <p className="text-2xl font-serif text-amber-800">{(report.riskSummary as { medium?: number } | null)?.medium || 0}</p>
                   <p className="text-xs text-amber-600 font-sans">{tx.mediumRisk}</p>
                 </CardContent>
               </Card>
               <Card className="border-green-200 bg-green-50">
                 <CardContent className="p-4 text-center">
-                  <p className="text-2xl font-serif text-green-800">{(report.riskSummary as any)?.low || 0}</p>
+                  <p className="text-2xl font-serif text-green-800">{(report.riskSummary as { low?: number } | null)?.low || 0}</p>
                   <p className="text-xs text-green-600 font-sans">{tx.lowRisk}</p>
                 </CardContent>
               </Card>

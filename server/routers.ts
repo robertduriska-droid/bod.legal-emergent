@@ -47,7 +47,13 @@ import {
   upsertTrialPending,
   markTrialAnalysisUsed,
   updateUserStripeCustomerId,
+  createContractClaim,
+  getContractClaimByContractId,
+  setContractClaimEmail,
+  updateContractPlanAndOwner,
 } from "./db";
+import { randomUUID } from "crypto";
+import type { TrpcContext } from "./_core/context";
 import { storagePut } from "./storage";
 import { analyzeContract } from "./analysis";
 import { runAssistant } from "./assistant";
@@ -58,6 +64,55 @@ import { LEGAL_SOURCES, RISK_CATEGORIES, PRICING_PLANS } from "@shared/types";
 import Stripe from "stripe";
 import { ENV } from "./_core/env";
 import { STRIPE_PRODUCTS } from "./stripe-products";
+
+// ─── Anonymous free-scan claims ─────────────────────────────────────────────
+// Contracts uploaded without a session are owned by a claim token: a random
+// UUID stored in contract_claims and mirrored into an httpOnly cookie. The
+// sentinel userId 0 marks anonymous rows (users.id autoincrements from 1).
+
+const ANONYMOUS_USER_ID = 0;
+const CLAIM_COOKIE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+const claimCookieName = (contractId: number) => `bod_claim_${contractId}`;
+
+/** Base URL for links in SMS/e-mail notifications. Env override with a localhost fallback. */
+function getAppBaseUrl(): string {
+  const fromEnv = (process.env.APP_BASE_URL || "").trim().replace(/\/+$/, "");
+  return fromEnv || "http://localhost:3000";
+}
+
+/** Read the anonymous claim token for a contract from the request's cookies. */
+function readClaimToken(req: TrpcContext["req"], contractId: number): string | null {
+  const header = req.headers.cookie;
+  if (!header) return null;
+  const name = claimCookieName(contractId);
+  for (const part of header.split(";")) {
+    const eqIdx = part.indexOf("=");
+    if (eqIdx === -1) continue;
+    if (part.slice(0, eqIdx).trim() !== name) continue;
+    const raw = part.slice(eqIdx + 1).trim();
+    try {
+      return decodeURIComponent(raw);
+    } catch {
+      return raw;
+    }
+  }
+  return null;
+}
+
+/** True when the caller is the contract owner, an admin, or holds a valid claim cookie. */
+async function canAccessContract(
+  ctx: TrpcContext,
+  contract: { id: number; userId: number }
+): Promise<boolean> {
+  if (ctx.user && (contract.userId === ctx.user.id || ctx.user.role === "admin")) {
+    return true;
+  }
+  const token = readClaimToken(ctx.req, contract.id);
+  if (!token) return false;
+  const claim = await getContractClaimByContractId(contract.id).catch(() => null);
+  return !!claim && claim.token === token;
+}
 
 export const appRouter = router({
   system: systemRouter,
@@ -114,8 +169,10 @@ export const appRouter = router({
 
   // ─── Contract Procedures ────────────────────────────────────────────────
   contracts: router({
-    /** Upload and create a new contract */
-    upload: protectedProcedure
+    /** Upload and create a new contract.
+     * Public: the free basic scan works without a session (anonymous upload
+     * owned by a claim-token cookie). Paid plans still require sign-in. */
+    upload: publicProcedure
       .input(z.object({
         fileName: z.string(),
         mimeType: z.string(),
@@ -126,6 +183,12 @@ export const appRouter = router({
         phone: z.string().max(32).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
+        const user = ctx.user;
+        if (!user && input.plan !== "basic") {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Sign in to order a paid review." });
+        }
+        const ownerId = user?.id ?? ANONYMOUS_USER_ID;
+
         // Decode file and upload to S3
         const fileBuffer = Buffer.from(input.fileBase64, "base64");
         const ext = input.mimeType.includes("pdf") ? "pdf" : "docx";
@@ -135,13 +198,13 @@ export const appRouter = router({
           .replace(/[\u0300-\u036f]/g, "")
           .replace(/[^a-zA-Z0-9._-]/g, "_")
           .replace(/_+/g, "_");
-        const storageKey = `contracts/${ctx.user.id}/${Date.now()}_${safeFileName}`;
+        const storageKey = `contracts/${ownerId}/${Date.now()}_${safeFileName}`;
 
         const { key, url } = await storagePut(storageKey, fileBuffer, input.mimeType);
 
         // Create contract record
         const contractId = await createContract({
-          userId: ctx.user.id,
+          userId: ownerId,
           fileName: input.fileName,
           mimeType: input.mimeType,
           fileKey: key,
@@ -152,30 +215,47 @@ export const appRouter = router({
           status: "pending",
         });
 
+        // Anonymous free scan: mint a claim token and hand it to the browser
+        // as an httpOnly cookie so only this browser can open the preview.
+        if (!user) {
+          const claimToken = randomUUID();
+          await createContractClaim(contractId, claimToken);
+          ctx.res.cookie(claimCookieName(contractId), claimToken, {
+            ...getSessionCookieOptions(ctx.req),
+            maxAge: CLAIM_COOKIE_MAX_AGE_MS,
+          });
+        }
+
         // Persist optional SMS/WhatsApp recipient for this contract (Twilio)
         if (input.phone) {
-          await setNotifyPhone(contractId, ctx.user.id, input.phone)
+          await setNotifyPhone(contractId, ownerId, input.phone)
             .catch(err => console.error("[NotifyPref] Failed:", err));
         }
 
+        const uploaderLabel = user
+          ? (user.name || user.email || "ID:" + user.id)
+          : "anonymný návštevník (bezplatný sken)";
+
         // Twilio: alert admins/lawyers about the new submission (SMS + WhatsApp)
-        notifyAdmins(`bod.legal: Nová zmluva "${input.fileName}" (plán: ${input.plan}) od ${ctx.user.name || ctx.user.email || "ID:" + ctx.user.id}.`)
+        notifyAdmins(`bod.legal: Nová zmluva "${input.fileName}" (plán: ${input.plan}) od ${uploaderLabel}.`)
           .catch(() => {});
 
         // Notify owner/lawyer about new submission
         await notifyOwner({
           title: "Nová zmluva na kontrolu",
-          content: `Používateľ ${ctx.user.name || ctx.user.email || "ID:" + ctx.user.id} nahral zmluvu "${input.fileName}" (plán: ${input.plan}). Zmluva čaká na spracovanie.`,
+          content: `Používateľ ${uploaderLabel} nahral zmluvu "${input.fileName}" (plán: ${input.plan}). Zmluva čaká na spracovanie.`,
         }).catch(err => console.error("[Notification] Failed:", err));
 
-        // In-app notification for user
-        await createNotification({
-          userId: ctx.user.id,
-          title: "Zmluva odoslaná",
-          message: `Vaša zmluva "${input.fileName}" bola úspešne nahraná a čaká na spracovanie.`,
-          type: "contract_submitted",
-          contractId: contractId,
-        }).catch(err => console.error("[Notification] Failed to create:", err));
+        // In-app notification for signed-in users
+        if (user) {
+          await createNotification({
+            userId: user.id,
+            title: "Zmluva odoslaná",
+            message: `Vaša zmluva "${input.fileName}" bola úspešne nahraná a čaká na spracovanie.`,
+            type: "contract_submitted",
+            contractId: contractId,
+          }).catch(err => console.error("[Notification] Failed to create:", err));
+        }
 
         // Analysis will be triggered by Stripe webhook after payment
         // For basic plan: also runs free preview (top 3 risks) immediately
@@ -186,14 +266,19 @@ export const appRouter = router({
           return { contractId, status: "pending" as const, trialApplied: false };
         }
 
+        // Paid plans are guarded above, so a signed-in user is guaranteed here.
+        if (!user) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Sign in to order a paid review." });
+        }
+
         // Free trial: apply the one free full analysis if the user has an active
         // trial that hasn't been used yet (non-basic plans only). Skips payment.
         let trialApplied = false;
-        const trial = await getTrialByUserId(ctx.user.id).catch(() => null);
+        const trial = await getTrialByUserId(user.id).catch(() => null);
         const trialActive = !!trial && trial.status === "active"
           && !!trial.endsAt && new Date(trial.endsAt).getTime() > Date.now();
         if (trialActive && trial!.freeAnalysisUsed === 0) {
-          await markTrialAnalysisUsed(ctx.user.id).catch(err => console.error("[Trial] mark used failed:", err));
+          await markTrialAnalysisUsed(user.id).catch(err => console.error("[Trial] mark used failed:", err));
           trialApplied = true;
           analyzeContract(contractId).catch(err =>
             console.error(`[Analysis] Trial analysis failed for contract ${contractId}:`, err)
@@ -208,15 +293,17 @@ export const appRouter = router({
       return getContractsByUserId(ctx.user.id);
     }),
 
-    /** Get a specific contract with clauses and report */
-    getById: protectedProcedure
+    /** Get a specific contract with clauses and report.
+     * Public: accessible to the authenticated owner (or admin), or to an
+     * anonymous free-scan uploader holding a valid claim-token cookie. */
+    getById: publicProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ ctx, input }) => {
         const contract = await getContractById(input.id);
         if (!contract) return null;
 
-        // Users can only see their own contracts (admins can see all)
-        if (contract.userId !== ctx.user.id && ctx.user.role !== "admin") {
+        // Owner, admin, or valid claim-token holder only
+        if (!(await canAccessContract(ctx, contract))) {
           return null;
         }
 
@@ -262,6 +349,29 @@ export const appRouter = router({
 
         return { contract, clauses: contractClauses, report, isLimited: false, deepAnalysis: deepAnalysisOut };
       }),
+    /** Attach an e-mail to a free-scan contract (claim-token holder or owner).
+     * Captured at the preview paywall: "Kam vám pošleme report?" */
+    attachEmail: publicProcedure
+      .input(z.object({
+        contractId: z.number(),
+        email: z.string().email().max(320),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const contract = await getContractById(input.contractId);
+        if (!contract) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Contract not found" });
+        }
+        if (!(await canAccessContract(ctx, contract))) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Not allowed" });
+        }
+        await setContractClaimEmail(input.contractId, input.email);
+        notifyOwner({
+          title: "Nový kontakt z bezplatného skenu",
+          content: `Návštevník nechal e-mail ${input.email} pri zmluve "${contract.fileName}" (ID ${contract.id}).`,
+        }).catch(() => {});
+        return { success: true } as const;
+      }),
+
     /** Retry analysis for a pending contract (user-facing) */
     retryAnalysis: protectedProcedure
       .input(z.object({ contractId: z.number() }))
@@ -365,7 +475,7 @@ export const appRouter = router({
           {
             const signPhone = await getNotifyPhone(input.contractId).catch(() => null);
             const lang = signedContract.language || "sk";
-            const url = `https://bod.legal/report/${signedContract.id}`;
+            const url = `${getAppBaseUrl()}/report/${signedContract.id}`;
             const msg = lang === "en"
               ? `bod.legal: Your report for "${signedContract.fileName}" is signed by the lawyer and ready: ${url}`
               : lang === "cz"
@@ -379,7 +489,7 @@ export const appRouter = router({
           if (clientUser?.email) {
             const { subject, html } = emailReviewCompleted({
               contractName: signedContract.fileName,
-              reportUrl: `https://bod.legal/report/${signedContract.id}`,
+              reportUrl: `${getAppBaseUrl()}/report/${signedContract.id}`,
               recipientName: clientUser.name || undefined,
               lawyerName: ctx.user.name || undefined,
             });
@@ -404,24 +514,45 @@ export const appRouter = router({
 
   // ─── Stripe Payment Procedures ─────────────────────────────────────────
   payments: router({
-    /** Create a Stripe checkout session for a contract */
+    /** Create a Stripe checkout session for a contract.
+     * Free-scan upsell: a basic (free) contract checks out only with an
+     * `upgradeTo` plan; an anonymous claim-holder who signed in gets the
+     * contract adopted to their account before payment. */
     createCheckout: protectedProcedure
       .input(z.object({
         contractId: z.number(),
+        upgradeTo: z.enum(["standard", "premium"]).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const contract = await getContractById(input.contractId);
-        if (!contract || contract.userId !== ctx.user.id) {
+        if (!contract || !(await canAccessContract(ctx, contract))) {
           throw new Error("Contract not found");
         }
 
-        const product = STRIPE_PRODUCTS[contract.plan as keyof typeof STRIPE_PRODUCTS];
+        // Adopt an anonymous free-scan contract to the paying user.
+        if (contract.userId !== ctx.user.id && ctx.user.role !== "admin") {
+          await updateContractPlanAndOwner(contract.id, { userId: ctx.user.id });
+          contract.userId = ctx.user.id;
+        }
+
+        // Resolve the plan to charge. Basic is the free scan and has no
+        // Stripe product, so it must carry an upgrade.
+        let planToCharge = contract.plan as string;
+        if (input.upgradeTo && input.upgradeTo !== contract.plan) {
+          await updateContractPlanAndOwner(contract.id, { plan: input.upgradeTo });
+          planToCharge = input.upgradeTo;
+        }
+        if (planToCharge === "basic") {
+          throw new Error("Bezplatný sken sa neplatí. Vyberte Štandardnú alebo Prémiovú kontrolu.");
+        }
+
+        const product = STRIPE_PRODUCTS[planToCharge as keyof typeof STRIPE_PRODUCTS];
         if (!product) {
-          throw new Error(`Invalid plan: ${contract.plan}`);
+          throw new Error(`Invalid plan: ${planToCharge}`);
         }
 
         const stripe = new Stripe(ENV.stripeSecretKey);
-        const origin = ctx.req.headers.origin || "https://bodlegal-mqcbxxfs.manus.space";
+        const origin = ctx.req.headers.origin || getAppBaseUrl();
 
         // Build line items - plan + optional express add-on
         const lineItems: any[] = [
@@ -462,7 +593,7 @@ export const appRouter = router({
           metadata: {
             user_id: ctx.user.id.toString(),
             contract_id: input.contractId.toString(),
-            plan: contract.plan,
+            plan: planToCharge,
             express: contract.expressAddon ? "true" : "false",
             customer_email: ctx.user.email || "",
             customer_name: ctx.user.name || "",
@@ -475,12 +606,13 @@ export const appRouter = router({
         return { checkoutUrl: session.url };
       }),
 
-    /** Get payment status for a contract (checks Stripe directly) */
-    getStatus: protectedProcedure
+    /** Get payment status for a contract (checks Stripe directly).
+     * Public: owner, admin, or anonymous claim-token holder. */
+    getStatus: publicProcedure
       .input(z.object({ contractId: z.number() }))
       .query(async ({ ctx, input }) => {
         const contract = await getContractById(input.contractId);
-        if (!contract || contract.userId !== ctx.user.id) {
+        if (!contract || !(await canAccessContract(ctx, contract))) {
           return { paid: false };
         }
 
@@ -528,7 +660,7 @@ export const appRouter = router({
         }
 
         const stripe = new Stripe(ENV.stripeSecretKey);
-        const origin = ctx.req.headers.origin || "https://bod.legal";
+        const origin = ctx.req.headers.origin || getAppBaseUrl();
 
         // Reuse or create the user's Stripe customer.
         const dbUser = await getUserById(ctx.user.id);
@@ -673,7 +805,7 @@ export const appRouter = router({
 
         // Send owner notification about new comment
         const isUserComment = ctx.user.role !== 'admin';
-        const siteUrl = ctx.req.headers.origin || 'https://bod.legal';
+        const siteUrl = ctx.req.headers.origin || getAppBaseUrl();
         notifyOwner({
           title: isUserComment
             ? `Nový komentár klienta: ${contract.fileName}`

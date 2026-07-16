@@ -141,6 +141,18 @@ export async function updateContractStatus(id: number, status: Contract["status"
   await db.update(contracts).set({ status }).where(eq(contracts.id, id));
 }
 
+/** Upgrade a contract's plan and/or adopt an anonymous contract to a real user
+ *  (free-scan upsell: the claim-holder signs in and pays for an upgrade). */
+export async function updateContractPlanAndOwner(
+  id: number,
+  data: Partial<Pick<Contract, "plan" | "userId">>,
+): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  if (Object.keys(data).length === 0) return;
+  await db.update(contracts).set(data).where(eq(contracts.id, id));
+}
+
 // ─── Clause Helpers ─────────────────────────────────────────────────────────
 
 export async function createClauses(data: InsertClause[]): Promise<void> {
@@ -149,6 +161,13 @@ export async function createClauses(data: InsertClause[]): Promise<void> {
 
   if (data.length === 0) return;
   await db.insert(clauses).values(data);
+}
+
+/** Findings the advokát excluded during review (AdminReview stores them as
+ *  lawyerApproved 0 + a "Vyradené advokátom" annotation prefix). Excluded
+ *  findings never reach client-facing surfaces (report page, PDF, DOCX). */
+export function isClauseExcluded(clause: Pick<Clause, "lawyerApproved" | "lawyerAnnotation">): boolean {
+  return clause.lawyerApproved === 0 && (clause.lawyerAnnotation || "").startsWith("Vyradené advokátom");
 }
 
 export async function getClausesByContractId(contractId: number): Promise<Clause[]> {
@@ -560,6 +579,55 @@ export async function getDeepAnalysisByContract(contractId: number): Promise<Dee
     .orderBy(desc(deepAnalysis.createdAt))
     .limit(1);
   return rows[0] || null;
+}
+
+// ─── Contract claims (anonymous free-scan ownership tokens) ──────────────────
+
+import { contractClaims, ContractClaim } from "../drizzle/schema";
+
+let _contractClaimsTableReady = false;
+
+/** Idempotently ensure the contract_claims table exists (avoids a migration step). */
+export async function ensureContractClaimsTable(): Promise<void> {
+  if (_contractClaimsTableReady) return;
+  const db = await getDb();
+  if (!db) return;
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS contract_claims (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      contractId INT NOT NULL,
+      token VARCHAR(64) NOT NULL,
+      email VARCHAR(320) NULL,
+      createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_contract_claims_contract (contractId)
+    )
+  `);
+  _contractClaimsTableReady = true;
+}
+
+export async function createContractClaim(contractId: number, token: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await ensureContractClaimsTable();
+  await db.insert(contractClaims).values({ contractId, token });
+}
+
+export async function getContractClaimByContractId(contractId: number): Promise<ContractClaim | null> {
+  const db = await getDb();
+  if (!db) return null;
+  await ensureContractClaimsTable();
+  const rows = await db.select().from(contractClaims)
+    .where(eq(contractClaims.contractId, contractId))
+    .limit(1);
+  return rows[0] || null;
+}
+
+export async function setContractClaimEmail(contractId: number, email: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await ensureContractClaimsTable();
+  await db.update(contractClaims).set({ email })
+    .where(eq(contractClaims.contractId, contractId));
 }
 
 // ─── Free trials (15-day trial + one free analysis, Stripe SetupIntent) ────────

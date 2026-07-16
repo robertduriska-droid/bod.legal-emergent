@@ -1,11 +1,11 @@
+import { z } from "zod";
 import { ENV } from "./_core/env";
 import { getContractById, createClauses, createReport, updateContractStatus, createNotification, getUserById, getNotifyPhone, createDeepAnalysis } from "./db";
 import { notifyOwner } from "./_core/notification";
 import { notifyClient, notifyAdmins } from "./twilio";
-import { sendEmail, emailReportReady, emailNewContractForReview } from "./email";
+import { sendEmail, emailReportReady, emailAnalysisAwaitingReview, emailNewContractForReview, getAppBaseUrl } from "./email";
 import { storageGetSignedUrl } from "./storage";
-import { LEGAL_SOURCES, RISK_CATEGORIES } from "@shared/types";
-import type { ClauseAnalysis, AnalysisResult } from "@shared/types";
+import { RISK_CATEGORIES } from "@shared/types";
 import { DEFAULT_ANALYSIS_MODEL } from "@shared/const";
 import axios from "axios";
 
@@ -104,7 +104,7 @@ export async function extractDocxText(fileUrl: string): Promise<string> {
 
 /**
  * Extract text from a PDF by downloading it and reading each page with pdf.js.
- * Provider-neutral (works with any LLM gateway) — replaces the Manus-only
+ * Provider-neutral (works with any LLM gateway), replaces the Manus-only
  * `file_url` attachment path.
  */
 export async function extractPdfText(fileUrl: string): Promise<string> {
@@ -124,113 +124,697 @@ export async function extractPdfText(fileUrl: string): Promise<string> {
   return pages.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
-/**
- * System prompts for contract analysis, keyed by language/jurisdiction.
- */
-const SYSTEM_PROMPTS: Record<string, string> = {
-  sk: `Si právny AI asistent pre bod.legal. Analyzuješ zmluvy podľa slovenského a európskeho práva.
+// ─── Versioned output schema (zod) ──────────────────────────────────────────
+// Version history: v2 adds severity, citation, whyItMatters, suggestedWording,
+// negotiationLine per finding + contract-type classification + rich riskSummary
+// (negotiationChecklist, missingClauses). Legacy fields (clauseNumber, title,
+// excerpt, riskLevel, finding, suggestedEdit, legalBasis, legalSourceUrl,
+// riskCategory) are kept so existing consumers keep working.
+export const ANALYSIS_SCHEMA_VERSION = 2;
 
-ÚLOHY:
-1. Identifikuj typ zmluvy.
-2. Analyzuj max 8 najdôležitejších klauzúl (zameraj sa na riziká).
-3. Pre každú klauzulu urči riziko (high/medium/low), nález, a právny základ.
-4. Cituj konkrétny zákon a paragraf.
+const severityEnum = z.enum(["critical", "important", "minor"]);
+const riskLevelEnum = z.enum(["high", "medium", "low"]);
 
-PRÁVNE ZDROJE:
-- Občiansky zákonník (40/1964 Zb.) - https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/1964/40/
-- Obchodný zákonník (513/1991 Zb.) - https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/1991/513/
-- Zákon o verejnom obstarávaní (343/2015 Z.z.) - https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/2015/343/
-- Zákon o ochrane osobných údajov (18/2018 Z.z.) - https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/2018/18/
-- GDPR (2016/679) - https://eur-lex.europa.eu/eli/reg/2016/679/oj/eng
+const citationSchema = z.strictObject({
+  /** Statute name + number, e.g. "Obchodný zákonník (513/1991 Zb.)" */
+  law: z.string(),
+  /** Section, e.g. "§ 379" */
+  section: z.string(),
+  /** Subsection, e.g. "ods. 1"; empty string when not applicable */
+  paragraph: z.string(),
+  /** Link to slov-lex.sk, zakonyprolidi.cz, or eur-lex.europa.eu */
+  url: z.string(),
+});
 
-PRAVIDLÁ:
-- Odpovede píš v slovenčine.
-- Vždy cituj konkrétny paragraf.
-- Max 8 klauzúl v odpovedi.
-- Buď stručný ale presný.`,
+const clauseFindingSchema = z.strictObject({
+  clauseNumber: z.number().int(),
+  title: z.string(),
+  excerpt: z.string(),
+  riskLevel: riskLevelEnum,
+  severity: severityEnum,
+  finding: z.string(),
+  whyItMatters: z.string(),
+  suggestedEdit: z.string(),
+  suggestedWording: z.string(),
+  negotiationLine: z.string(),
+  legalBasis: z.string(),
+  legalSourceUrl: z.string(),
+  citation: citationSchema,
+  riskCategory: z.string(),
+});
 
-  cz: `Jsi právní AI asistent pro bod.legal. Analyzuješ smlouvy podle českého a evropského práva.
+const missingClauseSchema = z.strictObject({
+  name: z.string(),
+  why: z.string(),
+});
 
-ÚKOLY:
-1. Identifikuj typ smlouvy.
-2. Analyzuj max 8 nejdůležitějších klauzulí (zaměř se na rizika).
-3. Pro každou klauzuli urči riziko (high/medium/low), nález, a právní základ.
-4. Cituj konkrétní zákon a paragraf.
+const richRiskSummarySchema = z.strictObject({
+  high: z.number().int(),
+  medium: z.number().int(),
+  low: z.number().int(),
+  negotiationChecklist: z.array(z.string()),
+  missingClauses: z.array(missingClauseSchema),
+});
 
-PRÁVNÍ ZDROJE:
-- Občanský zákoník (89/2012 Sb.) - https://www.zakonyprolidi.cz/cs/2012-89
-- Zákon o obchodních korporacích (90/2012 Sb.) - https://www.zakonyprolidi.cz/cs/2012-90
-- Zákon o veřejných zakázkách (134/2016 Sb.) - https://www.zakonyprolidi.cz/cs/2016-134
-- Zákon o zpracování osobních údajů (110/2019 Sb.) - https://www.zakonyprolidi.cz/cs/2019-110
-- GDPR (2016/679) - https://eur-lex.europa.eu/eli/reg/2016/679/oj/eng
-- Registr smluv - https://smlouvy.gov.cz/
+export const analysisResultSchema = z.strictObject({
+  /** Human-readable contract type in the report language */
+  contractType: z.string(),
+  /** Machine classification of the contract type */
+  contractTypeCode: z.enum(["nda", "lease", "purchase", "work", "sla", "employment", "other"]),
+  /** Governing-law jurisdiction */
+  jurisdiction: z.enum(["SK", "CZ", "EU", "OTHER"]),
+  clauses: z.array(clauseFindingSchema),
+  summary: z.string(),
+  recommendation: z.string(),
+  riskSummary: richRiskSummarySchema,
+  /** Overall risk 1 (safe) to 5 (critical) */
+  riskScore: z.number().int(),
+  dealBreakers: z.array(z.strictObject({ title: z.string(), detail: z.string() })),
+  verificationNotes: z.string(),
+  applicableLegalSources: z.array(z.strictObject({
+    id: z.string(),
+    name: z.string(),
+    instrument: z.string(),
+    url: z.string(),
+  })),
+});
 
-PRAVIDLA:
-- Odpovědi piš v češtině.
-- Vždy cituj konkrétní paragraf.
-- Max 8 klauzulí v odpovědi.
-- Buď stručný ale přesný.`,
+export type RichAnalysisResult = z.infer<typeof analysisResultSchema>;
+export type RichRiskSummary = z.infer<typeof richRiskSummarySchema>;
+export type ClauseFinding = z.infer<typeof clauseFindingSchema>;
 
-  en: `You are a legal AI assistant for bod.legal. You analyze contracts under Slovak and European law.
-
-TASKS:
-1. Identify the contract type.
-2. Analyze max 8 most important clauses (focus on risks).
-3. For each clause determine risk (high/medium/low), finding, and legal basis.
-4. Cite specific law and section.
-
-LEGAL SOURCES:
-- Slovak Civil Code (40/1964 Coll.) - https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/1964/40/
-- Slovak Commercial Code (513/1991 Coll.) - https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/1991/513/
-- GDPR (2016/679) - https://eur-lex.europa.eu/eli/reg/2016/679/oj/eng
-
-RULES:
-- Write responses in English.
-- Always cite specific section.
-- Max 8 clauses in response.
-- Be concise but precise.`,
-
-  hu: `Jogi AI asszisztens vagy a bod.legal számára. Szerződéseket elemzel a magyar és európai jog szerint.
-
-FELADATOK:
-1. Azonosítsd a szerződés típusát.
-2. Elemezz max. 8 legfontosabb klauzulát (a kockázatokra összpontosítva).
-3. Minden klauzulánál határozd meg a kockázatot (high/medium/low), a megállapítást és a jogalapot.
-4. Idézd a konkrét jogszabályt és szakaszt.
-
-JOGFORRÁSOK:
-- Polgári Törvénykönyv (2013. évi V. törvény) - https://njt.hu
-- A gazdasági társaságokra vonatkozó szabályok (Ptk. Harmadik Könyv) - https://njt.hu
-- A közbeszerzésekről szóló 2015. évi CXLIII. törvény - https://njt.hu
-- Az információs önrendelkezési jogról szóló 2011. évi CXII. törvény - https://njt.hu
-- GDPR (2016/679) - https://eur-lex.europa.eu/eli/reg/2016/679/oj/eng
-
-SZABÁLYOK:
-- A válaszokat magyarul írd.
-- Mindig idézd a konkrét szakaszt.
-- Max. 8 klauzula a válaszban.
-- Légy tömör, de pontos.`,
-};
-
-/**
- * Deeper "Mike OS" analysis instruction appended to every language prompt.
- * Drives the deal-breaker pass, missing-provisions check, verification pass
- * and a 1-5 overall risk score (fields written in the report's language).
- */
-const DEEP_ANALYSIS_INSTRUCTION = `
-DEEPER ANALYSIS (Mike OS) — additionally produce:
-1) Deal-breaker pass: critical issues that should stop the client from signing → "dealBreakers": [{ "title", "detail" }].
-2) Missing-provisions check: important clauses that are absent but expected for this contract type → "missingProvisions": [{ "title", "detail" }].
-3) Verification pass: re-check your own findings for consistency and legal accuracy, and summarize that check in "verificationNotes".
-4) Overall risk score from 1 (safe to sign) to 5 (critical) in "riskScore".
-Write dealBreakers, missingProvisions and verificationNotes in the SAME language as the rest of the report. Use empty arrays if none.`;
-
-function getSystemPrompt(language: string): string {
-  return SYSTEM_PROMPTS[language] || SYSTEM_PROMPTS.sk;
+/** Thrown when the model output fails schema validation even after one repair retry. */
+export class AnalysisValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AnalysisValidationError";
+  }
 }
 
 /**
- * Run AI-powered contract analysis with Slov-Lex legal grounding.
+ * JSON Schema for the LLM response_format, generated from the zod schema so
+ * the two can never drift. Sanitized for strict structured-output mode:
+ * no $schema/minimum/maximum keywords, additionalProperties always false,
+ * every property required.
+ */
+function sanitizeJsonSchema(node: any): any {
+  if (Array.isArray(node)) return node.map(sanitizeJsonSchema);
+  if (node && typeof node === "object") {
+    const out: Record<string, any> = {};
+    for (const [k, v] of Object.entries(node)) {
+      if (k === "$schema" || k === "minimum" || k === "maximum") continue;
+      out[k] = sanitizeJsonSchema(v);
+    }
+    if (out.type === "object" && out.properties) {
+      out.additionalProperties = false;
+      out.required = Object.keys(out.properties);
+    }
+    return out;
+  }
+  return node;
+}
+
+export function getAnalysisJsonSchema(): Record<string, any> {
+  return sanitizeJsonSchema(z.toJSONSchema(analysisResultSchema));
+}
+
+// ─── Response normalization ─────────────────────────────────────────────────
+// Fix format drift (localized severity words, missing derivable fields) before
+// zod validation so only genuinely broken outputs trigger the repair retry.
+
+const SEVERITY_SYNONYMS: Record<string, "critical" | "important" | "minor"> = {
+  critical: "critical", kriticke: "critical", "kritické": "critical", "kritická": "critical", kritikus: "critical", high: "critical", vysoke: "critical", "vysoké": "critical",
+  important: "important", dolezite: "important", "dôležité": "important", "důležité": "important", fontos: "important", medium: "important", stredne: "important", "stredné": "important",
+  minor: "minor", drobne: "minor", "drobné": "minor", apro: "minor", "apró": "minor", low: "minor", nizke: "minor", "nízke": "minor",
+};
+
+const SEVERITY_TO_RISK: Record<string, "high" | "medium" | "low"> = {
+  critical: "high", important: "medium", minor: "low",
+};
+const RISK_TO_SEVERITY: Record<string, "critical" | "important" | "minor"> = {
+  high: "critical", medium: "important", low: "minor",
+};
+
+const CONTRACT_TYPE_SYNONYMS: Record<string, RichAnalysisResult["contractTypeCode"]> = {
+  nda: "nda", mlcanlivost: "nda", "mlčanlivosť": "nda",
+  lease: "lease", najomna: "lease", "nájomná": "lease", najem: "lease", "nájem": "lease", "nájemní": "lease",
+  purchase: "purchase", kupna: "purchase", "kúpna": "purchase", "kupní": "purchase",
+  work: "work", dielo: "work", "o dielo": "work", "dílo": "work", "o dílo": "work",
+  sla: "sla",
+  employment: "employment", pracovna: "employment", "pracovná": "employment", "pracovní": "employment",
+  other: "other", ina: "other", "iná": "other", "jiná": "other",
+};
+
+function asString(value: unknown): string | undefined {
+  return typeof value === "string" ? value : undefined;
+}
+
+function asInt(value: unknown): number | undefined {
+  const n = typeof value === "string" ? Number(value) : value;
+  return typeof n === "number" && Number.isFinite(n) ? Math.round(n) : undefined;
+}
+
+/**
+ * Normalize a raw parsed model response toward the schema shape. Only formats
+ * are fixed and derivable fields filled; required content (titles, findings)
+ * is never invented, so genuinely bad outputs still fail validation.
+ */
+export function normalizeRawAnalysis(raw: unknown): unknown {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return raw;
+  const src = raw as Record<string, any>;
+  const out: Record<string, any> = {};
+
+  // Clauses
+  const rawClauses = src.clauses;
+  if (Array.isArray(rawClauses)) {
+    out.clauses = rawClauses.map((c: any, i: number) => {
+      if (!c || typeof c !== "object") return c;
+      const sevKey = asString(c.severity)?.toLowerCase().trim();
+      const riskKey = asString(c.riskLevel)?.toLowerCase().trim();
+      let severity = sevKey ? SEVERITY_SYNONYMS[sevKey] : undefined;
+      let riskLevel = riskKey && ["high", "medium", "low"].includes(riskKey) ? riskKey : undefined;
+      if (!severity && riskLevel) severity = RISK_TO_SEVERITY[riskLevel];
+      if (!riskLevel && severity) riskLevel = SEVERITY_TO_RISK[severity];
+
+      let citation = c.citation;
+      if (typeof citation === "string") {
+        citation = { law: citation, section: "", paragraph: "", url: asString(c.legalSourceUrl) ?? "" };
+      } else if (citation && typeof citation === "object") {
+        citation = {
+          law: asString(citation.law) ?? "",
+          section: asString(citation.section) ?? "",
+          paragraph: asString(citation.paragraph) ?? "",
+          url: asString(citation.url) ?? asString(c.legalSourceUrl) ?? "",
+        };
+      } else if (asString(c.legalBasis) || asString(c.legalSourceUrl)) {
+        citation = { law: asString(c.legalBasis) ?? "", section: "", paragraph: "", url: asString(c.legalSourceUrl) ?? "" };
+      }
+
+      const suggestedWording = asString(c.suggestedWording) ?? asString(c.suggestedEdit);
+      const suggestedEdit = asString(c.suggestedEdit) ?? asString(c.suggestedWording);
+      const legalBasis = asString(c.legalBasis)
+        ?? (citation && citation.law ? [citation.law, citation.section, citation.paragraph].filter(Boolean).join(", ") : undefined);
+      const legalSourceUrl = asString(c.legalSourceUrl) ?? (citation ? asString(citation.url) : undefined);
+
+      return {
+        clauseNumber: asInt(c.clauseNumber) ?? i + 1,
+        title: c.title,
+        excerpt: asString(c.excerpt) ?? "",
+        riskLevel,
+        severity,
+        finding: c.finding,
+        whyItMatters: c.whyItMatters,
+        suggestedEdit: suggestedEdit ?? "",
+        suggestedWording,
+        negotiationLine: c.negotiationLine,
+        legalBasis: legalBasis ?? "",
+        legalSourceUrl: legalSourceUrl ?? "",
+        citation,
+        riskCategory: asString(c.riskCategory) ?? "",
+      };
+    });
+  } else {
+    out.clauses = rawClauses;
+  }
+
+  // Risk summary (recompute counts from clauses when missing)
+  const rs = src.riskSummary && typeof src.riskSummary === "object" ? src.riskSummary : {};
+  const clauseArr: any[] = Array.isArray(out.clauses) ? out.clauses : [];
+  const countBy = (level: string) => clauseArr.filter(c => c && c.riskLevel === level).length;
+  out.riskSummary = {
+    high: asInt(rs.high) ?? countBy("high"),
+    medium: asInt(rs.medium) ?? countBy("medium"),
+    low: asInt(rs.low) ?? countBy("low"),
+    negotiationChecklist: Array.isArray(rs.negotiationChecklist)
+      ? rs.negotiationChecklist.filter((x: unknown) => typeof x === "string")
+      : [],
+    missingClauses: Array.isArray(rs.missingClauses)
+      ? rs.missingClauses
+          .filter((m: any) => m && typeof m === "object")
+          .map((m: any) => ({ name: asString(m.name) ?? asString(m.title) ?? "", why: asString(m.why) ?? asString(m.detail) ?? "" }))
+      : Array.isArray(src.missingProvisions)
+        ? src.missingProvisions
+            .filter((m: any) => m && typeof m === "object")
+            .map((m: any) => ({ name: asString(m.title) ?? "", why: asString(m.detail) ?? "" }))
+        : [],
+  };
+
+  // Classification
+  out.contractType = src.contractType;
+  const typeKey = asString(src.contractTypeCode)?.toLowerCase().trim();
+  out.contractTypeCode = (typeKey && CONTRACT_TYPE_SYNONYMS[typeKey]) || "other";
+  const jur = asString(src.jurisdiction)?.toUpperCase().trim();
+  out.jurisdiction = jur && ["SK", "CZ", "EU"].includes(jur) ? jur : "OTHER";
+
+  // Narrative + deep-analysis fields
+  out.summary = src.summary;
+  out.recommendation = src.recommendation;
+  out.riskScore = Math.min(5, Math.max(1, asInt(src.riskScore) ?? 3));
+  out.dealBreakers = Array.isArray(src.dealBreakers)
+    ? src.dealBreakers.filter((d: any) => d && typeof d === "object").map((d: any) => ({ title: asString(d.title) ?? "", detail: asString(d.detail) ?? "" }))
+    : [];
+  out.verificationNotes = asString(src.verificationNotes) ?? "";
+  out.applicableLegalSources = Array.isArray(src.applicableLegalSources)
+    ? src.applicableLegalSources.filter((s: any) => s && typeof s === "object").map((s: any) => ({
+        id: asString(s.id) ?? "",
+        name: asString(s.name) ?? "",
+        instrument: asString(s.instrument) ?? "",
+        url: asString(s.url) ?? "",
+      }))
+    : [];
+
+  return out;
+}
+
+/**
+ * Lenient JSON extraction: direct parse, fenced block, first brace match,
+ * then a truncation repair (close open brackets/braces).
+ */
+export function parseJsonLoose(content: string): unknown {
+  try {
+    return JSON.parse(content);
+  } catch (parseErr) {
+    const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) || content.match(/(\{[\s\S]*\})/);
+    if (jsonMatch && jsonMatch[1]) {
+      try {
+        return JSON.parse(jsonMatch[1].trim());
+      } catch {
+        let repaired = jsonMatch[1].trim();
+        repaired = repaired.replace(/,\s*\{[^}]*$/, "");
+        repaired = repaired.replace(/,\s*"[^"]*$/, "");
+        repaired = repaired.replace(/,\s*$/, "");
+        const openBrackets = (repaired.match(/\[/g) || []).length - (repaired.match(/\]/g) || []).length;
+        const openBraces = (repaired.match(/\{/g) || []).length - (repaired.match(/\}/g) || []).length;
+        for (let i = 0; i < openBrackets; i++) repaired += "]";
+        for (let i = 0; i < openBraces; i++) repaired += "}";
+        return JSON.parse(repaired);
+      }
+    }
+    throw new Error(`JSON parse failed: ${(parseErr as Error).message}`);
+  }
+}
+
+// ─── System prompts (structured analysis playbook, per language) ────────────
+// SK is the reference wording; CZ, EN, HU mirror it. House rules baked into
+// every prompt: no em or en dashes in SK/CZ output, no guarantees, only real
+// statute citations, uncertain findings marked for lawyer verification.
+
+export const SYSTEM_PROMPTS: Record<string, string> = {
+  sk: `Si právny AI analytik služby bod.legal. Analyzuješ zmluvy podľa slovenského a európskeho práva pre klientov, ktorí nie sú právnici.
+
+POSTUP (presne v tomto poradí):
+
+1. KLASIFIKÁCIA. Najprv urč typ zmluvy a jurisdikciu:
+   contractTypeCode: jeden z "nda", "lease" (nájomná), "purchase" (kúpna), "work" (o dielo), "sla", "employment" (pracovná), "other" (iná).
+   jurisdiction: "SK" alebo "CZ" podľa rozhodného práva, inak "EU" alebo "OTHER".
+   contractType: názov typu zmluvy po slovensky, napríklad "Zmluva o dielo".
+
+2. KONTROLA CHÝBAJÚCICH KLAUZÚL podľa typu zmluvy. Výsledok zapíš do riskSummary.missingClauses ako pole objektov {name, why}. Kontrolný zoznam podľa typu:
+   NDA: zmluvná pokuta za porušenie mlčanlivosti, doba trvania mlčanlivosti, definícia dôverných informácií, výnimky z mlčanlivosti, vrátenie alebo zničenie podkladov.
+   Nájomná: predmet nájmu, výška a splatnosť nájomného, doba nájmu a výpovedné podmienky, kaucia, opravy a údržba, stav pri odovzdaní.
+   Kúpna: predmet kúpy, kúpna cena a splatnosť, prechod vlastníctva a nebezpečenstva škody, zodpovednosť za vady, dodacie podmienky.
+   O dielo: vymedzenie diela, cena a platobné podmienky, termín a spôsob odovzdania, záruka a zodpovednosť za vady, zmluvná pokuta za omeškanie, práva k výstupom.
+   SLA: definícia služieb, dostupnosť a metriky, kredity za nedodržanie úrovne, reakčné časy, podpora, ukončenie a exit.
+   Pracovná: druh práce, miesto výkonu práce, deň nástupu, mzda, skúšobná doba, pracovný čas.
+   Iná: podstatné náležitosti podľa povahy zmluvy.
+
+3. ANALÝZA KLAUZÚL. Analyzuj najviac 8 najrizikovejších klauzúl. Pre každú vyplň všetky polia:
+   severity: "critical" (v texte reportu tomu zodpovedá slovo kritické), "important" (dôležité) alebo "minor" (drobné).
+   riskLevel: "high" pre critical, "medium" pre important, "low" pre minor.
+   citation: objekt {law, section, paragraph, url}. law je názov a číslo zákona, section je paragraf (napríklad "§ 379"), paragraph je odsek (napríklad "ods. 1", inak prázdny reťazec), url je odkaz na slov-lex.sk pre slovenské právo, zakonyprolidi.cz pre české právo, eur-lex.europa.eu pre právo EÚ.
+   whyItMatters: najviac 2 krátke vety jednoduchou slovenčinou, prečo je nález pre klienta dôležitý.
+   suggestedWording: hotové znenie klauzuly, ktoré klient môže rovno vložiť do zmluvy.
+   suggestedEdit: stručný popis navrhovanej úpravy.
+   negotiationLine: jedna veta, ktorú klient povie alebo napíše druhej strane pri rokovaní.
+   finding: vecný popis problému. excerpt: citácia textu klauzuly. title, clauseNumber: názov a poradie klauzuly.
+   legalBasis: textová citácia (zákon, paragraf, odsek). legalSourceUrl: rovnaká URL ako citation.url.
+   riskCategory: jedna z kategórií uvedených v zadaní.
+
+4. ZHRNUTIE. summary: zhrnutie jednoduchou slovenčinou. recommendation: odporúčanie ďalšieho postupu. riskSummary.high, riskSummary.medium, riskSummary.low: počty klauzúl podľa riskLevel.
+
+5. KONTROLNÝ ZOZNAM NA ROKOVANIE. riskSummary.negotiationChecklist: 3 až 7 krátkych bodov, čo si má klient vypýtať alebo overiť pred podpisom, od najdôležitejšieho.
+
+6. HĹBKOVÁ KONTROLA. dealBreakers: zásadné problémy, pre ktoré klient nemá zmluvu podpísať, ako pole {title, detail}. verificationNotes: krátke zhrnutie tvojej vlastnej kontroly konzistencie nálezov. riskScore: celkové riziko od 1 (bezpečné) do 5 (kritické).
+
+PRÁVNE ZDROJE (cituj iba skutočné predpisy):
+Občiansky zákonník (40/1964 Zb.), https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/1964/40/
+Obchodný zákonník (513/1991 Zb.), https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/1991/513/
+Zákonník práce (311/2001 Z.z.), https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/2001/311/
+Zákon o ochrane osobných údajov (18/2018 Z.z.), https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/2018/18/
+GDPR (2016/679), https://eur-lex.europa.eu/eli/reg/2016/679/oj/eng
+
+TVRDÉ PRAVIDLÁ:
+Píš po slovensky, jednoducho, aby textu rozumel aj laik.
+Nepoužívaj pomlčky, dlhé ani stredné. Používaj čiarky a bodky.
+Žiadne záruky ani sľuby výsledku.
+Cituj iba skutočné zákony a paragrafy. Ak si citáciou nie si istý, citáciu vynechaj a na koniec poľa finding pridaj text "na overenie advokátom".
+Ceny píš v tvare "X eur".
+Odpovedz iba validným JSON podľa zadanej schémy, bez akéhokoľvek ďalšieho textu.
+
+BEZPLATNÝ SKEN: klient s plánom basic vidí iba top 3 nálezy. Top 3 sú nálezy s najvyššou závažnosťou, každý z inej rizikovej kategórie (riskCategory). Pole clauses zoraď od najzávažnejšieho nálezu.`,
+
+  cz: `Jsi právní AI analytik služby bod.legal. Analyzuješ smlouvy podle českého a evropského práva pro klienty, kteří nejsou právníci.
+
+POSTUP (přesně v tomto pořadí):
+
+1. KLASIFIKACE. Nejprve urči typ smlouvy a jurisdikci:
+   contractTypeCode: jeden z "nda", "lease" (nájemní), "purchase" (kupní), "work" (o dílo), "sla", "employment" (pracovní), "other" (jiná).
+   jurisdiction: "SK" nebo "CZ" podle rozhodného práva, jinak "EU" nebo "OTHER".
+   contractType: název typu smlouvy česky, například "Smlouva o dílo".
+
+2. KONTROLA CHYBĚJÍCÍCH KLAUZULÍ podle typu smlouvy. Výsledek zapiš do riskSummary.missingClauses jako pole objektů {name, why}. Kontrolní seznam podle typu:
+   NDA: smluvní pokuta za porušení mlčenlivosti, doba trvání mlčenlivosti, definice důvěrných informací, výjimky z mlčenlivosti, vrácení nebo zničení podkladů.
+   Nájemní: předmět nájmu, výše a splatnost nájemného, doba nájmu a výpovědní podmínky, kauce, opravy a údržba, stav při předání.
+   Kupní: předmět koupě, kupní cena a splatnost, přechod vlastnictví a nebezpečí škody, odpovědnost za vady, dodací podmínky.
+   O dílo: vymezení díla, cena a platební podmínky, termín a způsob předání, záruka a odpovědnost za vady, smluvní pokuta za prodlení, práva k výstupům.
+   SLA: definice služeb, dostupnost a metriky, kredity za nedodržení úrovně, reakční časy, podpora, ukončení a exit.
+   Pracovní: druh práce, místo výkonu práce, den nástupu, mzda, zkušební doba, pracovní doba.
+   Jiná: podstatné náležitosti podle povahy smlouvy.
+
+3. ANALÝZA KLAUZULÍ. Analyzuj nejvýše 8 nejrizikovějších klauzulí. Pro každou vyplň všechna pole:
+   severity: "critical" (v textu reportu tomu odpovídá slovo kritické), "important" (důležité) nebo "minor" (drobné).
+   riskLevel: "high" pro critical, "medium" pro important, "low" pro minor.
+   citation: objekt {law, section, paragraph, url}. law je název a číslo zákona, section je paragraf (například "§ 2586"), paragraph je odstavec (například "odst. 1", jinak prázdný řetězec), url je odkaz na zakonyprolidi.cz pro české právo, slov-lex.sk pro slovenské právo, eur-lex.europa.eu pro právo EU.
+   whyItMatters: nejvýše 2 krátké věty jednoduchou češtinou, proč je nález pro klienta důležitý.
+   suggestedWording: hotové znění klauzule, které klient může rovnou vložit do smlouvy.
+   suggestedEdit: stručný popis navrhované úpravy.
+   negotiationLine: jedna věta, kterou klient řekne nebo napíše druhé straně při jednání.
+   finding: věcný popis problému. excerpt: citace textu klauzule. title, clauseNumber: název a pořadí klauzule.
+   legalBasis: textová citace (zákon, paragraf, odstavec). legalSourceUrl: stejná URL jako citation.url.
+   riskCategory: jedna z kategorií uvedených v zadání.
+
+4. SHRNUTÍ. summary: shrnutí jednoduchou češtinou. recommendation: doporučení dalšího postupu. riskSummary.high, riskSummary.medium, riskSummary.low: počty klauzulí podle riskLevel.
+
+5. KONTROLNÍ SEZNAM K JEDNÁNÍ. riskSummary.negotiationChecklist: 3 až 7 krátkých bodů, co si má klient vyžádat nebo ověřit před podpisem, od nejdůležitějšího.
+
+6. HLOUBKOVÁ KONTROLA. dealBreakers: zásadní problémy, kvůli kterým klient nemá smlouvu podepsat, jako pole {title, detail}. verificationNotes: krátké shrnutí tvé vlastní kontroly konzistence nálezů. riskScore: celkové riziko od 1 (bezpečné) do 5 (kritické).
+
+PRÁVNÍ ZDROJE (cituj pouze skutečné předpisy):
+Občanský zákoník (89/2012 Sb.), https://www.zakonyprolidi.cz/cs/2012-89
+Zákon o obchodních korporacích (90/2012 Sb.), https://www.zakonyprolidi.cz/cs/2012-90
+Zákoník práce (262/2006 Sb.), https://www.zakonyprolidi.cz/cs/2006-262
+Zákon o zpracování osobních údajů (110/2019 Sb.), https://www.zakonyprolidi.cz/cs/2019-110
+GDPR (2016/679), https://eur-lex.europa.eu/eli/reg/2016/679/oj/eng
+
+TVRDÁ PRAVIDLA:
+Piš česky, jednoduše, aby textu rozuměl i laik.
+Nepoužívej pomlčky, dlouhé ani střední. Používej čárky a tečky.
+Žádné záruky ani sliby výsledku.
+Cituj pouze skutečné zákony a paragrafy. Pokud si citací nejsi jistý, citaci vynech a na konec pole finding přidej text "k ověření advokátem".
+Ceny piš ve tvaru "X eur".
+Odpověz pouze validním JSON podle zadaného schématu, bez jakéhokoli dalšího textu.
+
+BEZPLATNÝ SKEN: klient s plánem basic vidí pouze top 3 nálezy. Top 3 jsou nálezy s nejvyšší závažností, každý z jiné rizikové kategorie (riskCategory). Pole clauses seřaď od nejzávažnějšího nálezu.`,
+
+  en: `You are the legal AI analyst for bod.legal. You analyze contracts under Slovak, Czech and European law for clients who are not lawyers.
+
+PROCEDURE (in this exact order):
+
+1. CLASSIFICATION. First determine the contract type and jurisdiction:
+   contractTypeCode: one of "nda", "lease", "purchase", "work" (contract for work), "sla", "employment", "other".
+   jurisdiction: "SK" or "CZ" by governing law, otherwise "EU" or "OTHER".
+   contractType: human-readable contract type in English, e.g. "Contract for work".
+
+2. MISSING-CLAUSES CHECK by contract type. Write the result into riskSummary.missingClauses as an array of {name, why}. Checklist per type:
+   NDA: contractual penalty for breach of confidentiality, duration of confidentiality, definition of confidential information, exceptions, return or destruction of materials.
+   Lease: leased object, rent amount and due dates, term and termination conditions, deposit, repairs and maintenance, handover condition.
+   Purchase: object of purchase, price and due dates, transfer of ownership and risk, liability for defects, delivery terms.
+   Work: scope of work, price and payment terms, delivery deadline and acceptance, warranty and defects liability, penalty for delay, rights to deliverables.
+   SLA: service definitions, availability and metrics, service credits, response times, support, termination and exit.
+   Employment: type of work, place of work, start date, salary, probation period, working hours.
+   Other: essential terms by the nature of the contract.
+
+3. CLAUSE ANALYSIS. Analyze at most 8 highest-risk clauses. Fill every field for each:
+   severity: "critical", "important" or "minor".
+   riskLevel: "high" for critical, "medium" for important, "low" for minor.
+   citation: object {law, section, paragraph, url}. law is the statute name and number, section e.g. "§ 379", paragraph e.g. "para. 1" (empty string when not applicable), url links to slov-lex.sk for Slovak law, zakonyprolidi.cz for Czech law, eur-lex.europa.eu for EU law.
+   whyItMatters: at most 2 short plain-language sentences on why the finding matters to the client.
+   suggestedWording: a paste-ready replacement clause the client can drop into the contract.
+   suggestedEdit: a short description of the proposed change.
+   negotiationLine: one sentence the client can say or write to the counterparty.
+   finding: factual description of the issue. excerpt: quoted clause text. title, clauseNumber: clause heading and order.
+   legalBasis: textual citation (statute, section, paragraph). legalSourceUrl: same URL as citation.url.
+   riskCategory: one of the categories listed in the task.
+
+4. SUMMARY. summary: plain-language summary. recommendation: recommended next steps. riskSummary.high, riskSummary.medium, riskSummary.low: clause counts by riskLevel.
+
+5. NEGOTIATION CHECKLIST. riskSummary.negotiationChecklist: 3 to 7 short items the client should request or verify before signing, most important first.
+
+6. DEEP CHECK. dealBreakers: fundamental problems that should stop the client from signing, as an array of {title, detail}. verificationNotes: a short summary of your own consistency check of the findings. riskScore: overall risk from 1 (safe) to 5 (critical).
+
+LEGAL SOURCES (cite only real statutes):
+Slovak Civil Code (40/1964 Coll.), https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/1964/40/
+Slovak Commercial Code (513/1991 Coll.), https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/1991/513/
+Slovak Labour Code (311/2001 Coll.), https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/2001/311/
+Czech Civil Code (89/2012 Sb.), https://www.zakonyprolidi.cz/cs/2012-89
+GDPR (2016/679), https://eur-lex.europa.eu/eli/reg/2016/679/oj/eng
+
+HARD RULES:
+Write in plain English a layperson understands.
+No guarantees or promises of outcome.
+Cite only real statutes and sections. If unsure about a citation, omit it and append "to be verified by a lawyer" to the finding field.
+Write prices as "X eur".
+Respond with valid JSON matching the given schema only, no other text.
+
+FREE SCAN: a client on the basic plan sees only the top 3 findings. The top 3 are the highest-severity findings, each from a distinct risk category (riskCategory). Sort the clauses array from the most severe finding.`,
+
+  hu: `A bod.legal szolgáltatás jogi AI elemzője vagy. A szerződéseket a szlovák és a cseh jog, valamint az európai jog alapján elemzed olyan ügyfeleknek, akik nem jogászok. Fontos: az elemzés a szlovák és a cseh jogra terjed ki, magyar jogi elemzést nem nyújtasz.
+
+ELJÁRÁS (pontosan ebben a sorrendben):
+
+1. OSZTÁLYOZÁS. Először határozd meg a szerződés típusát és a joghatóságot:
+   contractTypeCode: az alábbiak egyike: "nda", "lease" (bérleti), "purchase" (adásvételi), "work" (vállalkozási), "sla", "employment" (munkaszerződés), "other" (egyéb).
+   jurisdiction: "SK" vagy "CZ" az irányadó jog szerint, egyébként "EU" vagy "OTHER".
+   contractType: a szerződés típusának megnevezése magyarul, például "Vállalkozási szerződés".
+
+2. HIÁNYZÓ KIKÖTÉSEK ELLENŐRZÉSE a szerződés típusa szerint. Az eredményt a riskSummary.missingClauses mezőbe írd {name, why} objektumok tömbjeként. Ellenőrzőlista típusonként:
+   NDA: kötbér a titoktartás megsértéséért, a titoktartás időtartama, a bizalmas információk meghatározása, kivételek, az anyagok visszaadása vagy megsemmisítése.
+   Bérleti: a bérlet tárgya, a bérleti díj összege és esedékessége, időtartam és felmondási feltételek, kaució, javítás és karbantartás, átadási állapot.
+   Adásvételi: az adásvétel tárgya, vételár és esedékesség, a tulajdonjog és a kárveszély átszállása, hibás teljesítésért való felelősség, szállítási feltételek.
+   Vállalkozási: a mű meghatározása, ár és fizetési feltételek, határidő és átadás, jótállás és hibás teljesítés, késedelmi kötbér, a szellemi alkotásokhoz fűződő jogok.
+   SLA: a szolgáltatások meghatározása, rendelkezésre állás és mérőszámok, jóváírások, reakcióidők, támogatás, megszüntetés és kilépés.
+   Munkaszerződés: a munkakör, a munkavégzés helye, a munkába lépés napja, a bér, a próbaidő, a munkaidő.
+   Egyéb: a szerződés jellege szerinti lényeges elemek.
+
+3. KIKÖTÉSEK ELEMZÉSE. Legfeljebb 8 legkockázatosabb kikötést elemezz. Mindegyiknél töltsd ki az összes mezőt:
+   severity: "critical" (a jelentés szövegében: kritikus), "important" (fontos) vagy "minor" (apró).
+   riskLevel: "high" a critical, "medium" az important, "low" a minor értékhez.
+   citation: {law, section, paragraph, url} objektum. law a jogszabály neve és száma, section a paragrafus (például "§ 379"), paragraph a bekezdés (ha nincs, üres karakterlánc), url a slov-lex.sk (szlovák jog), zakonyprolidi.cz (cseh jog) vagy eur-lex.europa.eu (EU jog) hivatkozás.
+   whyItMatters: legfeljebb 2 rövid, közérthető mondat arról, miért fontos a megállapítás az ügyfélnek.
+   suggestedWording: kész szövegű kikötés, amelyet az ügyfél azonnal beilleszthet a szerződésbe.
+   suggestedEdit: a javasolt módosítás rövid leírása.
+   negotiationLine: egy mondat, amelyet az ügyfél a másik félnek mondhat vagy írhat.
+   finding: a probléma tárgyszerű leírása. excerpt: a kikötés idézett szövege. title, clauseNumber: a kikötés címe és sorszáma.
+   legalBasis: szöveges hivatkozás (jogszabály, paragrafus, bekezdés). legalSourceUrl: ugyanaz az URL, mint a citation.url.
+   riskCategory: a feladatban felsorolt kategóriák egyike.
+
+4. ÖSSZEFOGLALÓ. summary: közérthető összefoglaló magyarul. recommendation: javasolt következő lépések. riskSummary.high, riskSummary.medium, riskSummary.low: a kikötések száma riskLevel szerint.
+
+5. TÁRGYALÁSI ELLENŐRZŐLISTA. riskSummary.negotiationChecklist: 3 és 7 közötti rövid pont arról, mit kérjen vagy ellenőrizzen az ügyfél aláírás előtt, a legfontosabbal kezdve.
+
+6. MÉLYELLENŐRZÉS. dealBreakers: alapvető problémák, amelyek miatt az ügyfélnek nem szabad aláírnia, {title, detail} tömbként. verificationNotes: a saját konzisztencia ellenőrzésed rövid összefoglalója. riskScore: összesített kockázat 1 (biztonságos) és 5 (kritikus) között.
+
+JOGFORRÁSOK (csak létező jogszabályokat idézz):
+Szlovák Polgári Törvénykönyv (40/1964 Zb.), https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/1964/40/
+Szlovák Kereskedelmi Törvénykönyv (513/1991 Zb.), https://www.slov-lex.sk/ezbierky/pravne-predpisy/SK/ZZ/1991/513/
+Cseh Polgári Törvénykönyv (89/2012 Sb.), https://www.zakonyprolidi.cz/cs/2012-89
+GDPR (2016/679), https://eur-lex.europa.eu/eli/reg/2016/679/oj/eng
+
+SZIGORÚ SZABÁLYOK:
+Írj magyarul, egyszerűen, hogy laikus is megértse.
+Semmilyen garanciát vagy eredményígéretet ne adj.
+Csak létező jogszabályokat és paragrafusokat idézz. Ha bizonytalan vagy a hivatkozásban, hagyd ki, és a finding mező végére írd: "ügyvédi ellenőrzésre szorul".
+Az árakat "X eur" formában írd.
+Csak a megadott séma szerinti érvényes JSON legyen a válaszod, más szöveg nélkül.
+
+INGYENES ELLENŐRZÉS: a basic csomagos ügyfél csak a top 3 megállapítást látja. A top 3 a legsúlyosabb megállapítás, mindegyik más kockázati kategóriából (riskCategory). A clauses tömböt a legsúlyosabb megállapítással kezdve rendezd.`,
+};
+
+export function getSystemPrompt(language: string): string {
+  return SYSTEM_PROMPTS[language] || SYSTEM_PROMPTS.sk;
+}
+
+// Per-language user-instruction snippets for prompt assembly.
+const USER_INSTRUCTIONS: Record<string, { intro: string; basicNote: string; categories: string; schemaNote: string }> = {
+  sk: {
+    intro: "Text zmluvy:",
+    basicNote: "Tento klient má bezplatný sken (plán basic). Zobrazia sa mu iba top 3 nálezy, každý z inej rizikovej kategórie. Pole clauses zoraď od najzávažnejšieho nálezu.",
+    categories: "Pre riskCategory použi jednu z týchto hodnôt:",
+    schemaNote: "Analyzuj túto zmluvu podľa postupu v systémovej inštrukcii. Vráť IBA validný JSON presne podľa tejto schémy:",
+  },
+  cz: {
+    intro: "Text smlouvy:",
+    basicNote: "Tento klient má bezplatný sken (plán basic). Zobrazí se mu pouze top 3 nálezy, každý z jiné rizikové kategorie. Pole clauses seřaď od nejzávažnějšího nálezu.",
+    categories: "Pro riskCategory použij jednu z těchto hodnot:",
+    schemaNote: "Analyzuj tuto smlouvu podle postupu v systémové instrukci. Vrať POUZE validní JSON přesně podle tohoto schématu:",
+  },
+  en: {
+    intro: "Contract text:",
+    basicNote: "This client is on the free scan (basic plan). They will only see the top 3 findings, each from a distinct risk category. Sort the clauses array from the most severe finding.",
+    categories: "For riskCategory use one of these values:",
+    schemaNote: "Analyze this contract following the procedure in the system instruction. Return ONLY valid JSON matching exactly this schema:",
+  },
+  hu: {
+    intro: "A szerződés szövege:",
+    basicNote: "Ez az ügyfél ingyenes ellenőrzést használ (basic csomag). Csak a top 3 megállapítást látja, mindegyiket más kockázati kategóriából. A clauses tömböt a legsúlyosabb megállapítással kezdve rendezd.",
+    categories: "A riskCategory mezőhöz az alábbi értékek egyikét használd:",
+    schemaNote: "Elemezd ezt a szerződést a rendszerutasítás szerinti eljárással. KIZÁRÓLAG a következő sémának megfelelő érvényes JSON legyen a válaszod:",
+  },
+};
+
+/**
+ * Assemble the full analysis request (messages + response_format) for a
+ * contract text. Pure function so tests can verify prompt assembly without
+ * calling the model.
+ */
+export function buildAnalysisRequest(opts: {
+  language: string;
+  contractText: string;
+  plan: string;
+  maxChars?: number;
+}): { messages: { role: string; content: any }[]; responseFormat: any } {
+  const { language, contractText, plan } = opts;
+  const maxChars = opts.maxChars ?? 12000;
+  const truncated = contractText.length > maxChars
+    ? contractText.substring(0, maxChars) + "\n\n[... zvyšok textu skrátený ...]"
+    : contractText;
+
+  const t = USER_INSTRUCTIONS[language] || USER_INSTRUCTIONS.sk;
+  const jsonSchema = getAnalysisJsonSchema();
+  const categoryIds = RISK_CATEGORIES.map(c => c.id).join(", ");
+
+  const parts = [
+    `${t.intro}\n\n${truncated}`,
+    `${t.categories} ${categoryIds}.`,
+  ];
+  if (plan === "basic") parts.push(t.basicNote);
+  parts.push(`${t.schemaNote}\n${JSON.stringify(jsonSchema)}`);
+
+  return {
+    messages: [
+      { role: "system", content: getSystemPrompt(language) },
+      { role: "user", content: [{ type: "text", text: parts.join("\n\n") }] },
+    ],
+    responseFormat: {
+      type: "json_schema",
+      json_schema: {
+        name: "contract_analysis",
+        strict: true,
+        schema: jsonSchema,
+      },
+    },
+  };
+}
+
+const REPAIR_INSTRUCTION = "Tvoja predchádzajúca odpoveď nebola validný JSON podľa schémy. Oprav ju a vráť IBA validný JSON presne podľa schémy, bez akéhokoľvek ďalšieho textu. / Your previous answer was not valid JSON matching the schema. Fix it and return ONLY valid JSON matching the schema exactly, with no other text.";
+
+/**
+ * Call the model and validate the output against analysisResultSchema.
+ * On validation failure the call is retried ONCE with a repair instruction
+ * (the invalid output + validation errors appended). A second failure throws
+ * AnalysisValidationError so the caller can mark the contract as failed.
+ */
+export async function runAnalysisModel(opts: {
+  messages: { role: string; content: any }[];
+  responseFormat: any;
+  model?: string;
+}): Promise<RichAnalysisResult> {
+  const model = opts.model || ANALYSIS_MODEL;
+  let messages = [...opts.messages];
+  let lastIssue = "unknown";
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const response = await callLLM({
+      model,
+      max_completion_tokens: 8000,
+      reasoning: { effort: "low" },
+      messages,
+      response_format: opts.responseFormat,
+    });
+
+    const rawContent = response.choices?.[0]?.message?.content;
+    const finishReason = response.choices?.[0]?.finish_reason;
+    console.log(`[Analysis] LLM response (attempt ${attempt + 1}). finish_reason: ${finishReason}, content length: ${typeof rawContent === "string" ? rawContent.length : 0}`);
+
+    const content = typeof rawContent === "string" ? rawContent : rawContent ? JSON.stringify(rawContent) : "";
+    let issue: string;
+
+    if (!content) {
+      issue = `empty response (finish_reason: ${finishReason})`;
+    } else {
+      try {
+        const parsed = parseJsonLoose(content);
+        const normalized = normalizeRawAnalysis(parsed);
+        const check = analysisResultSchema.safeParse(normalized);
+        if (check.success) return check.data;
+        issue = check.error.issues
+          .slice(0, 5)
+          .map(i => `${i.path.join(".")}: ${i.message}`)
+          .join("; ");
+      } catch (err: any) {
+        issue = err.message || "JSON parse failed";
+      }
+    }
+
+    lastIssue = issue;
+    console.warn(`[Analysis] Schema validation failed (attempt ${attempt + 1}): ${issue.substring(0, 300)}`);
+    if (attempt === 0) {
+      messages = [
+        ...messages,
+        { role: "assistant", content: content ? content.slice(0, 6000) : "(empty)" },
+        { role: "user", content: `${REPAIR_INSTRUCTION}\n\nValidation errors: ${issue.substring(0, 1000)}` },
+      ];
+    }
+  }
+
+  throw new AnalysisValidationError(`Analysis output failed schema validation after one repair retry: ${lastIssue.substring(0, 500)}`);
+}
+
+/**
+ * Pick the top N findings for previews/emails: highest severity first, each
+ * from a distinct risk category where possible (free-scan top 3 rule). If
+ * there are not enough distinct categories, the remainder is filled by
+ * severity alone.
+ */
+export function selectTopFindings<T extends { title: string; riskLevel: "high" | "medium" | "low"; finding: string; riskCategory?: string | null }>(
+  clauses: T[],
+  count = 3,
+): { title: string; riskLevel: "high" | "medium" | "low"; finding: string }[] {
+  const order: Record<string, number> = { high: 0, medium: 1, low: 2 };
+  const sorted = [...clauses].sort((a, b) => (order[a.riskLevel] ?? 2) - (order[b.riskLevel] ?? 2));
+
+  const picked: T[] = [];
+  const seenCategories = new Set<string>();
+  for (const c of sorted) {
+    if (picked.length >= count) break;
+    const cat = c.riskCategory || null;
+    if (cat && seenCategories.has(cat)) continue;
+    if (cat) seenCategories.add(cat);
+    picked.push(c);
+  }
+  for (const c of sorted) {
+    if (picked.length >= count) break;
+    if (!picked.includes(c)) picked.push(c);
+  }
+
+  return picked.map(c => ({
+    title: c.title,
+    riskLevel: c.riskLevel,
+    finding: c.finding.length > 120 ? c.finding.slice(0, 120) + "..." : c.finding,
+  }));
+}
+
+// Labels used when folding the rich per-finding fields into the legacy
+// `finding` text column (the clauses table has no dedicated columns for them).
+const FOLD_LABELS: Record<string, { why: string; negotiate: string }> = {
+  sk: { why: "Prečo je to dôležité:", negotiate: "Veta na rokovanie:" },
+  cz: { why: "Proč je to důležité:", negotiate: "Věta k jednání:" },
+  en: { why: "Why it matters:", negotiate: "Negotiation line:" },
+  hu: { why: "Miért fontos:", negotiate: "Tárgyalási mondat:" },
+};
+
+/**
+ * Run AI-powered contract analysis with Slov-Lex/Zákony pro lidi legal grounding.
  */
 export async function analyzeContract(contractId: number): Promise<void> {
   const contract = await getContractById(contractId);
@@ -251,204 +835,75 @@ export async function analyzeContract(contractId: number): Promise<void> {
       : await extractDocxText(fileUrl);
     console.log(`[Analysis] Extracted ${contractText.length} chars from ${isPdf ? "PDF" : "DOCX"}`);
 
-    // Truncate to keep the prompt within token limits.
-    const maxChars = 12000;
-    const truncated = contractText.length > maxChars
-      ? contractText.substring(0, maxChars) + "\n\n[... zvyšok textu skrátený ...]"
-      : contractText;
-    const userContent: any[] = [
-      {
-        type: "text",
-        text: `Text zmluvy:\n\n${truncated}\n\nAnalyzuj túto zmluvu. Identifikuj max 8 najrizikovejších klauzúl. Vráť JSON.`,
-      },
-    ];
-
-    // Call LLM with structured output
-    const response = await callLLM({
-      model: ANALYSIS_MODEL,
-      max_completion_tokens: 8000,
-      reasoning: { effort: "low" },
-      messages: [
-        { role: "system", content: getSystemPrompt(contract.language) },
-        { role: "user", content: userContent },
-      ],
-      response_format: {
-        type: "json_schema",
-        json_schema: {
-          name: "contract_analysis",
-          strict: true,
-          schema: {
-            type: "object",
-            properties: {
-              contractType: { type: "string", description: "Typ zmluvy" },
-              clauses: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    clauseNumber: { type: "integer" },
-                    title: { type: "string" },
-                    excerpt: { type: "string" },
-                    riskLevel: { type: "string", enum: ["high", "medium", "low"] },
-                    finding: { type: "string" },
-                    suggestedEdit: { type: "string" },
-                    legalBasis: { type: "string" },
-                    legalSourceUrl: { type: "string" },
-                    riskCategory: { type: "string" },
-                  },
-                  required: ["clauseNumber", "title", "excerpt", "riskLevel", "finding", "suggestedEdit", "legalBasis", "legalSourceUrl", "riskCategory"],
-                  additionalProperties: false,
-                },
-              },
-              summary: { type: "string" },
-              recommendation: { type: "string" },
-              riskSummary: {
-                type: "object",
-                properties: {
-                  high: { type: "integer" },
-                  medium: { type: "integer" },
-                  low: { type: "integer" },
-                },
-                required: ["high", "medium", "low"],
-                additionalProperties: false,
-              },
-              riskScore: { type: "integer", description: "Overall risk 1 (safe) - 5 (critical)" },
-              dealBreakers: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    title: { type: "string" },
-                    detail: { type: "string" },
-                  },
-                  required: ["title", "detail"],
-                  additionalProperties: false,
-                },
-              },
-              missingProvisions: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    title: { type: "string" },
-                    detail: { type: "string" },
-                  },
-                  required: ["title", "detail"],
-                  additionalProperties: false,
-                },
-              },
-              verificationNotes: { type: "string" },
-              applicableLegalSources: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    id: { type: "string" },
-                    name: { type: "string" },
-                    instrument: { type: "string" },
-                    url: { type: "string" },
-                  },
-                  required: ["id", "name", "instrument", "url"],
-                  additionalProperties: false,
-                },
-              },
-            },
-            required: ["contractType", "clauses", "summary", "recommendation", "riskSummary", "riskScore", "dealBreakers", "missingProvisions", "verificationNotes", "applicableLegalSources"],
-            additionalProperties: false,
-          },
-        },
-      },
+    const language = contract.language || "sk";
+    const { messages, responseFormat } = buildAnalysisRequest({
+      language,
+      contractText,
+      plan: contract.plan,
     });
 
-    // Parse the response
-    const rawContent = response.choices?.[0]?.message?.content;
-    const finishReason = response.choices?.[0]?.finish_reason;
-    
-    console.log(`[Analysis] LLM response received. finish_reason: ${finishReason}, content length: ${rawContent?.length || 0}`);
-    
-    if (!rawContent) {
-      throw new Error(`Empty LLM response. finish_reason: ${finishReason}. Usage: ${JSON.stringify(response.usage)}`);
-    }
-
-    const content = typeof rawContent === "string" ? rawContent : JSON.stringify(rawContent);
-    let analysis: AnalysisResult;
-    
-    try {
-      analysis = JSON.parse(content);
-    } catch (parseErr) {
-      // Try to extract JSON from the response
-      const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) || content.match(/(\{[\s\S]*\})/);
-      if (jsonMatch && jsonMatch[1]) {
-        try {
-          analysis = JSON.parse(jsonMatch[1].trim());
-        } catch {
-          // Try to repair truncated JSON
-          let repaired = jsonMatch[1].trim();
-          // Remove trailing incomplete entries
-          repaired = repaired.replace(/,\s*\{[^}]*$/, "");
-          repaired = repaired.replace(/,\s*"[^"]*$/, "");
-          repaired = repaired.replace(/,\s*$/, "");
-          // Close open structures
-          const openBrackets = (repaired.match(/\[/g) || []).length - (repaired.match(/\]/g) || []).length;
-          const openBraces = (repaired.match(/\{/g) || []).length - (repaired.match(/\}/g) || []).length;
-          for (let i = 0; i < openBrackets; i++) repaired += "]";
-          for (let i = 0; i < openBraces; i++) repaired += "}";
-          try {
-            analysis = JSON.parse(repaired);
-          } catch (finalErr) {
-            console.error("[Analysis] JSON repair failed. Content (first 300):", content.substring(0, 300));
-            throw new Error(`JSON parse failed: ${(parseErr as Error).message}`);
-          }
-        }
-      } else {
-        console.error("[Analysis] No JSON in response. Content (first 300):", content.substring(0, 300));
-        throw new Error(`JSON parse failed: ${(parseErr as Error).message}`);
-      }
-    }
-
-    // Validate and fill defaults
-    if (!analysis.clauses || !Array.isArray(analysis.clauses)) analysis.clauses = [];
-    if (!analysis.riskSummary) analysis.riskSummary = { high: 0, medium: 0, low: 0 };
-    if (!analysis.summary) analysis.summary = "Analýza dokončená.";
-    if (!analysis.recommendation) analysis.recommendation = "Odporúčame konzultáciu s advokátom.";
-    if (!analysis.contractType) analysis.contractType = "other";
-    if (!analysis.applicableLegalSources) analysis.applicableLegalSources = [];
+    // Call the model; output is zod-validated with one repair retry.
+    const analysis = await runAnalysisModel({ messages, responseFormat });
 
     console.log(`[Analysis] Parsed ${analysis.clauses.length} clauses. Risk: H=${analysis.riskSummary.high} M=${analysis.riskSummary.medium} L=${analysis.riskSummary.low}`);
 
-    // Save clauses to database
-    const clauseRecords = analysis.clauses.map((c: ClauseAnalysis) => ({
-      contractId,
-      clauseNumber: c.clauseNumber || 0,
-      title: c.title || "Bez názvu",
-      excerpt: c.excerpt || "",
-      riskLevel: (c.riskLevel || "low") as "high" | "medium" | "low",
-      finding: c.finding || "",
-      suggestedEdit: c.suggestedEdit || null,
-      legalBasis: c.legalBasis || null,
-      legalSourceUrl: c.legalSourceUrl || null,
-      riskCategory: c.riskCategory || null,
-    }));
+    // Save clauses to database. The clauses table has no columns for the new
+    // rich fields (whyItMatters, negotiationLine, citation), so they are
+    // folded into the legacy text columns to stay backward compatible:
+    // finding carries whyItMatters + negotiationLine as labeled paragraphs,
+    // suggestedEdit prefers the paste-ready suggestedWording, and
+    // legalBasis/legalSourceUrl are backfilled from the structured citation.
+    const fold = FOLD_LABELS[language] || FOLD_LABELS.sk;
+    const clauseRecords = analysis.clauses.map((c) => {
+      const findingParts = [c.finding];
+      if (c.whyItMatters) findingParts.push(`${fold.why} ${c.whyItMatters}`);
+      if (c.negotiationLine) findingParts.push(`${fold.negotiate} ${c.negotiationLine}`);
+      const citationText = c.citation.law
+        ? [c.citation.law, c.citation.section, c.citation.paragraph].filter(Boolean).join(", ")
+        : "";
+      return {
+        contractId,
+        clauseNumber: c.clauseNumber || 0,
+        title: c.title || "Bez názvu",
+        excerpt: c.excerpt || "",
+        riskLevel: c.riskLevel,
+        finding: findingParts.filter(Boolean).join("\n\n"),
+        suggestedEdit: c.suggestedWording || c.suggestedEdit || null,
+        legalBasis: c.legalBasis || citationText || null,
+        legalSourceUrl: c.legalSourceUrl || c.citation.url || null,
+        riskCategory: c.riskCategory || null,
+      };
+    });
 
     if (clauseRecords.length > 0) {
       await createClauses(clauseRecords);
     }
 
-    // Create report record
+    // Create report record. riskSummary is a JSON column, so the rich shape
+    // (negotiationChecklist, missingClauses) rides along with the legacy
+    // high/medium/low counts; existing consumers keep reading the counts.
+    const richRiskSummary: RichRiskSummary = {
+      high: analysis.riskSummary.high,
+      medium: analysis.riskSummary.medium,
+      low: analysis.riskSummary.low,
+      negotiationChecklist: analysis.riskSummary.negotiationChecklist,
+      missingClauses: analysis.riskSummary.missingClauses,
+    };
     await createReport({
       contractId,
       summary: analysis.summary,
-      riskSummary: analysis.riskSummary,
+      riskSummary: richRiskSummary,
       recommendation: analysis.recommendation,
       isSigned: 0,
     });
 
     // Persist deeper "Mike OS" analysis (best-effort; never blocks the report).
+    // missingProvisions is derived from the schema's riskSummary.missingClauses.
     await createDeepAnalysis({
       contractId,
       riskScore: Math.min(5, Math.max(1, Number(analysis.riskScore) || 3)),
-      dealBreakers: Array.isArray(analysis.dealBreakers) ? analysis.dealBreakers : [],
-      missingProvisions: Array.isArray(analysis.missingProvisions) ? analysis.missingProvisions : [],
+      dealBreakers: analysis.dealBreakers,
+      missingProvisions: analysis.riskSummary.missingClauses.map(m => ({ title: m.name, detail: m.why })),
       verificationNotes: analysis.verificationNotes || null,
     }).catch(err => console.warn("[Analysis] Deep analysis save failed:", err));
 
@@ -465,10 +920,10 @@ export async function analyzeContract(contractId: number): Promise<void> {
     // Create in-app notification for the user
     await createNotification({
       userId: contract.userId,
-      title: plan === "basic" ? "Analýza dokončená" : "Analýza dokončená — čaká na kontrolu",
+      title: plan === "basic" ? "Analýza dokončená" : "Analýza dokončená, čaká na kontrolu advokátom",
       message: plan === "basic"
         ? `Vaša zmluva "${contract.fileName}" bola analyzovaná. Pozrite si report.`
-        : `Vaša zmluva "${contract.fileName}" bola analyzovaná. Čaká na kontrolu advokátom.`,
+        : `Vaša zmluva "${contract.fileName}" bola analyzovaná. Advokát teraz nálezy overuje.`,
       type: "contract_completed",
       contractId: contractId,
     }).catch(err => console.error("[Notification] Failed to create:", err));
@@ -482,14 +937,16 @@ export async function analyzeContract(contractId: number): Promise<void> {
         : `Report pre "${contract.fileName}" čaká na lawyer review (${riskStr}). Klient: ${contract.userId}.\nOdkaz: /admin/review/${contract.id}`,
     }).catch(err => console.warn("[Notification] Owner push failed:", err));
 
+    // Deep links: env-based base URL (APP_BASE_URL, Railway fallback).
+    const baseUrl = getAppBaseUrl();
+
     // Twilio: SMS + WhatsApp notifications (client + admins), best-effort.
     {
       const notifyPhone = await getNotifyPhone(contractId).catch(() => null);
-      const lang = contract.language || "sk";
-      const reportUrl = `https://bod.legal/report/${contract.id}`;
-      const clientMsg = lang === "en"
+      const reportUrl = `${baseUrl}/report/${contract.id}`;
+      const clientMsg = language === "en"
         ? `bod.legal: Your contract "${contract.fileName}" has been analyzed. ${plan === "basic" ? "View report: " + reportUrl : "It now awaits lawyer review."}`
-        : lang === "cz"
+        : language === "cz"
           ? `bod.legal: Vaše smlouva "${contract.fileName}" byla analyzována. ${plan === "basic" ? "Report: " + reportUrl : "Čeká na kontrolu advokátem."}`
           : `bod.legal: Vaša zmluva "${contract.fileName}" bola analyzovaná. ${plan === "basic" ? "Report: " + reportUrl : "Čaká na kontrolu advokátom."}`;
       notifyClient(notifyPhone, clientMsg).catch(() => {});
@@ -497,17 +954,13 @@ export async function analyzeContract(contractId: number): Promise<void> {
     }
 
     // Email notifications via SendGrid
-    const baseUrl = "https://bod.legal";
     const user = await getUserById(contract.userId).catch(() => null);
 
-    // Prepare top 3 findings for email
-    const topFindings = clauseRecords
-      .sort((a, b) => { const order = { high: 0, medium: 1, low: 2 }; return (order[a.riskLevel] ?? 2) - (order[b.riskLevel] ?? 2); })
-      .slice(0, 3)
-      .map(c => ({ title: c.title, riskLevel: c.riskLevel, finding: c.finding.slice(0, 120) + (c.finding.length > 120 ? "..." : "") }));
+    // Top 3 findings for emails: highest severity, distinct categories.
+    const topFindings = selectTopFindings(clauseRecords);
 
     if (plan === "basic" && user?.email) {
-      // Basic plan: email client that report is ready
+      // Basic plan: the AI report is the deliverable (no lawyer verification).
       const { subject, html } = emailReportReady({
         contractName: contract.fileName,
         reportUrl: `${baseUrl}/report/${contract.id}`,
@@ -526,9 +979,9 @@ export async function analyzeContract(contractId: number): Promise<void> {
       });
       sendEmail({ to: lawyerEmail, subject, html }).catch(err => console.warn("[Email] New review failed:", err));
 
-      // Also email client that analysis is done, awaiting review
+      // Also email client: AI pass done, lawyer has not signed yet.
       if (user?.email) {
-        const clientEmail = emailReportReady({
+        const clientEmail = emailAnalysisAwaitingReview({
           contractName: contract.fileName,
           reportUrl: `${baseUrl}/report/${contract.id}`,
           recipientName: user.name || undefined,
@@ -540,6 +993,11 @@ export async function analyzeContract(contractId: number): Promise<void> {
     }
   } catch (error: any) {
     console.error(`[Analysis] Failed for contract ${contractId}:`, error.message || error);
+    // NOTE: the contracts.status enum (drizzle/schema.ts, read-only for this
+    // workstream) has no "failed" value, so a hard failure (including
+    // AnalysisValidationError after the one repair retry) returns the contract
+    // to "pending"; the client UI offers retry from there.
+    // TODO: introduce a dedicated "failed" status once the schema can change.
     await updateContractStatus(contractId, "pending");
     throw error;
   }

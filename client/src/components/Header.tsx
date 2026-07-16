@@ -16,12 +16,19 @@ function GoogleIcon() {
 }
 import NotificationBell from "@/components/NotificationBell";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import EmailAuthForm from "@/components/EmailAuthForm";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
 import { useT } from "@/i18n";
+
+// The Manus OAuth portal button only makes sense when the portal env is
+// configured; otherwise startLogin() would navigate to "undefined/app-auth".
+const HAS_OAUTH_PORTAL = Boolean(import.meta.env.VITE_OAUTH_PORTAL_URL);
 
 export default function Header() {
   const { isAuthenticated, user } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [emailAuthOpen, setEmailAuthOpen] = useState(false);
   const { t, localePath } = useT();
 
   const isAdmin = user?.role === "admin";
@@ -62,8 +69,18 @@ export default function Header() {
             </>
           ) : (
             <>
-              <Button variant="ghost" size="sm" className="font-sans text-[13px] uppercase tracking-wide" onClick={() => startLogin()} data-testid="signin-button">{t.header.signIn}</Button>
+              {HAS_OAUTH_PORTAL && (
+                <Button variant="ghost" size="sm" className="font-sans text-[13px] uppercase tracking-wide" onClick={() => startLogin()} data-testid="signin-button">{t.header.signIn}</Button>
+              )}
               <Button variant="outline" size="sm" className="font-sans text-[13px] gap-2" onClick={() => startGoogleLogin()} data-testid="google-signin-button"><GoogleIcon />{t.header.signInGoogle}</Button>
+              <button
+                type="button"
+                className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 font-sans"
+                onClick={() => setEmailAuthOpen(true)}
+                data-testid="email-signin-link"
+              >
+                {t.wp1.signInEmail}
+              </button>
               <Link href={localePath("/upload")}>
                 <Button size="sm" className="font-sans text-[13px] uppercase tracking-wide">{t.header.uploadContract}</Button>
               </Link>
@@ -72,7 +89,12 @@ export default function Header() {
         </div>
 
         {/* Mobile menu button */}
-        <button className="md:hidden p-2" onClick={() => setMobileOpen(!mobileOpen)}>
+        <button
+          className="md:hidden p-2"
+          onClick={() => setMobileOpen(!mobileOpen)}
+          aria-label="Menu"
+          aria-expanded={mobileOpen}
+        >
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </div>
@@ -96,8 +118,18 @@ export default function Header() {
             </>
           ) : (
             <>
-              <Button variant="ghost" className="w-full font-sans" onClick={() => startLogin()} data-testid="signin-button-mobile">{t.header.signIn}</Button>
+              {HAS_OAUTH_PORTAL && (
+                <Button variant="ghost" className="w-full font-sans" onClick={() => startLogin()} data-testid="signin-button-mobile">{t.header.signIn}</Button>
+              )}
               <Button variant="outline" className="w-full font-sans mt-2 gap-2" onClick={() => startGoogleLogin()} data-testid="google-signin-button-mobile"><GoogleIcon />{t.header.signInGoogle}</Button>
+              <button
+                type="button"
+                className="block w-full text-center text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 font-sans mt-2"
+                onClick={() => { setEmailAuthOpen(true); setMobileOpen(false); }}
+                data-testid="email-signin-link-mobile"
+              >
+                {t.wp1.signInEmail}
+              </button>
               <Link href={localePath("/upload")} onClick={() => setMobileOpen(false)}>
                 <Button className="w-full font-sans mt-2">{t.header.uploadContract}</Button>
               </Link>
@@ -105,6 +137,16 @@ export default function Header() {
           )}
         </div>
       )}
+
+      {/* E-mail sign-in dialog (reuses the existing EmailAuthForm surface) */}
+      <Dialog open={emailAuthOpen} onOpenChange={setEmailAuthOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-serif">{t.wp1.signInEmail}</DialogTitle>
+          </DialogHeader>
+          <EmailAuthForm />
+        </DialogContent>
+      </Dialog>
     </header>
   );
 }

@@ -1,22 +1,33 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Shield, Clock, FileText, CheckCircle, ArrowRight, Upload, Brain, UserCheck, Lock, Eye, Server, Award, Zap, Star, Quote } from "lucide-react";
+import { Shield, Clock, FileText, CheckCircle, ArrowRight, Upload, Brain, UserCheck, Lock, Eye, Award, Zap, Star, Quote, Scale } from "lucide-react";
 import { Link } from "wouter";
-import { useAuth } from "@/_core/hooks/useAuth";
-import { useState as useLocalState } from "react";
-import { startLogin } from "@/const";
+import { useState as useLocalState, useEffect, useRef } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import DemoAnimation from "@/components/DemoAnimation";
 import SplashIntro from "@/components/SplashIntro";
-import { PRICING_PLANS, EXPRESS_ADDON } from "@shared/types";
+import { PRICING_PLANS } from "@shared/types";
+import { ADVOKAT, SAK_REGISTER_SEARCH_URL, isAdvokatConfigured } from "@/lib/advokat";
 import { useT } from "@/i18n";
 
 export default function Home() {
-  const { isAuthenticated } = useAuth();
   const [lightboxImg, setLightboxImg] = useLocalState<string | null>(null);
+  const [brokenImgs, setBrokenImgs] = useLocalState<Record<number, boolean>>({});
+  const lightboxCloseRef = useRef<HTMLButtonElement | null>(null);
   const { t, locale, localePath } = useT();
+
+  // Lightbox a11y: Escape closes, close button receives initial focus.
+  useEffect(() => {
+    if (!lightboxImg) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightboxImg(null);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    lightboxCloseRef.current?.focus();
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [lightboxImg]);
 
   // Splash intro - show once per session
   const [showSplash, setShowSplash] = useLocalState(() => {
@@ -60,24 +71,16 @@ export default function Home() {
             <p className="text-xs tracking-[0.25em] uppercase text-hero-text/35 mb-8 font-sans font-medium">
               {t.splash.motto}
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href={localePath("/upload")}>
-                <Button size="lg" className="bg-white text-hero-bg hover:bg-white/90 font-sans font-semibold px-8">
-                  {t.hero.ctaUpload}
+            <div className="flex flex-col items-center gap-3">
+              <Link href={`${localePath("/upload")}?plan=basic`}>
+                <Button size="lg" className="bg-white text-hero-bg hover:bg-white/90 font-sans font-semibold px-8 h-12 text-base" data-testid="hero-free-scan-cta">
+                  {t.wp1.heroCtaFree}
                   <Upload className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <a href="#pricing">
-                <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 font-sans px-8">
-                  {t.hero.ctaPricing}
-                </Button>
+              <a href="#pricing" className="text-sm text-hero-text/60 hover:text-hero-text underline underline-offset-4 font-sans">
+                {t.hero.ctaPricing}
               </a>
-              <Link href={localePath("/trial")}>
-                <Button size="lg" variant="ghost" className="text-white hover:bg-white/10 font-sans px-8" data-testid="hero-trial-cta">
-                  {t.hero.ctaTrial}
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
             </div>
           </div>
         </div>
@@ -124,25 +127,34 @@ export default function Home() {
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { src: "/manus-storage/ako-funguje-1-upload_7a1f5939.png", alt: t.howItWorks.step1Title, title: t.howItWorks.step1Title, desc: t.howItWorks.step1Desc },
-              { src: "/manus-storage/ako-funguje-2-analyza_a3e6382a.png", alt: t.howItWorks.step2Title, title: t.howItWorks.step2Title, desc: t.howItWorks.step2Desc },
-              { src: "/manus-storage/ako-funguje-3-report_370ea85b.png", alt: t.howItWorks.step3Title, title: t.howItWorks.step3Title, desc: t.howItWorks.step3Desc },
+              { src: "/img/krok-1.svg", Icon: Upload, alt: t.howItWorks.step1Title, title: t.howItWorks.step1Title, desc: t.howItWorks.step1Desc },
+              { src: "/img/krok-2.svg", Icon: Brain, alt: t.howItWorks.step2Title, title: t.howItWorks.step2Title, desc: t.howItWorks.step2Desc },
+              { src: "/img/krok-3.svg", Icon: UserCheck, alt: t.howItWorks.step3Title, title: t.howItWorks.step3Title, desc: t.howItWorks.step3Desc },
             ].map((item, i) => (
-              <Card key={i} className="border-0 shadow-sm bg-white overflow-hidden group cursor-pointer" onClick={() => setLightboxImg(item.src)}>
+              <Card key={i} className="border-0 shadow-sm bg-white overflow-hidden group cursor-pointer" onClick={() => !brokenImgs[i] && setLightboxImg(item.src)}>
                 <CardContent className="p-0">
                   <div className="aspect-[4/3] overflow-hidden bg-muted relative">
-                    <img
-                      src={item.src}
-                      alt={item.alt}
-                      className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center">
-                      <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg">
-                        <svg className="w-5 h-5 text-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                        </svg>
+                    {brokenImgs[i] ? (
+                      <div className="w-full h-full flex items-center justify-center bg-[#0A1428]">
+                        <item.Icon className="h-16 w-16 text-amber-200/80" aria-hidden="true" />
                       </div>
-                    </div>
+                    ) : (
+                      <>
+                        <img
+                          src={item.src}
+                          alt={item.alt}
+                          onError={() => setBrokenImgs(prev => ({ ...prev, [i]: true }))}
+                          className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg">
+                            <svg className="w-5 h-5 text-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                            </svg>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                   <div className="p-6 text-center">
                     <h3 className="font-sans text-xl font-semibold mb-2">{item.title}</h3>
@@ -195,7 +207,7 @@ export default function Home() {
             <table className="w-full text-left font-sans">
               <thead>
                 <tr className="border-b">
-                  <th className="py-4 px-4 font-semibold"></th>
+                  <th className="py-4 px-4 font-semibold"><span className="sr-only">{t.wp1.comparisonSrLabel}</span></th>
                   <th className="py-4 px-4 font-semibold text-primary">{t.comparison.headerBod}</th>
                   <th className="py-4 px-4 font-semibold text-muted-foreground">{t.comparison.headerTraditional}</th>
                 </tr>
@@ -223,12 +235,12 @@ export default function Home() {
                 </tr>
                 <tr className="border-b">
                   <td className="py-3 px-4 font-medium">{t.comparison.row5Label}</td>
-                  <td className="py-3 px-4"><CheckCircle className="h-4 w-4 text-primary inline" /> {t.comparison.row5Bod}</td>
-                  <td className="py-3 px-4"><CheckCircle className="h-4 w-4 text-primary inline" /> {t.comparison.row5Trad}</td>
+                  <td className="py-3 px-4"><CheckCircle className="h-4 w-4 text-primary inline" aria-hidden="true" /> {t.comparison.row5Bod}</td>
+                  <td className="py-3 px-4"><CheckCircle className="h-4 w-4 text-primary inline" aria-hidden="true" /> {t.comparison.row5Trad}</td>
                 </tr>
                 <tr>
                   <td className="py-3 px-4 font-medium">{t.comparison.row6Label}</td>
-                  <td className="py-3 px-4"><CheckCircle className="h-4 w-4 text-primary inline" /> {t.comparison.row6Bod}</td>
+                  <td className="py-3 px-4"><CheckCircle className="h-4 w-4 text-primary inline" aria-hidden="true" /> {t.comparison.row6Bod}</td>
                   <td className="py-3 px-4 text-muted-foreground">{t.comparison.row6Trad}</td>
                 </tr>
               </tbody>
@@ -290,17 +302,93 @@ export default function Home() {
             </Card>
           </div>
 
+          {/* Trial card for companies (single trial entry point on the page) */}
+          <div className="max-w-4xl mx-auto mt-4">
+            <Card className="border bg-warm-bg/60">
+              <CardContent className="p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <Clock className="h-5 w-5 text-primary" aria-hidden="true" />
+                  <div>
+                    <p className="font-sans font-semibold">{t.wp1.trialCardTitle}</p>
+                    <p className="text-sm text-muted-foreground font-sans">{t.wp1.trialCardDesc}</p>
+                  </div>
+                </div>
+                <Link href={localePath("/trial")}>
+                  <Button variant="outline" className="font-sans" data-testid="pricing-trial-cta">
+                    {t.wp1.trialCardCta} <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Guarantee */}
           <div className="max-w-4xl mx-auto mt-6 text-center space-y-2">
             <p className="text-sm text-muted-foreground font-sans">
-              <Clock className="h-4 w-4 inline mr-1" />
+              <Clock className="h-4 w-4 inline mr-1" aria-hidden="true" />
               {t.pricing.guarantee}
             </p>
-            <Link href={locale === "en" ? "/en/sample-report" : locale === "cz" ? "/cz/vzorovy-report" : "/vzorovy-report"}>
+            <Link href={locale === "en" ? "/en/sample-report" : locale === "cz" ? "/cz/vzorovy-report" : locale === "hu" ? "/hu/sample-report" : "/vzorovy-report"}>
               <button className="text-sm text-primary hover:underline font-sans inline-flex items-center gap-1 mt-2">
-                <Eye className="h-4 w-4" /> {t.pricing.ctaSampleReport}
+                <Eye className="h-4 w-4" aria-hidden="true" /> {t.pricing.ctaSampleReport}
               </button>
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Advokat trust block */}
+      <section className="py-14 bg-white border-t" data-testid="advokat-trust-block">
+        <div className="container">
+          <div className="max-w-2xl mx-auto">
+            <Card className="border shadow-sm">
+              <CardContent className="p-6 md:p-8">
+                <div className="flex flex-col sm:flex-row items-center gap-6">
+                  {isAdvokatConfigured() && ADVOKAT.photoUrl ? (
+                    <img
+                      src={ADVOKAT.photoUrl}
+                      alt={ADVOKAT.name}
+                      className="w-24 h-24 rounded-full object-cover border shrink-0"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 rounded-full bg-hero-bg flex items-center justify-center shrink-0" aria-hidden="true">
+                      <Scale className="h-10 w-10 text-amber-200/80" />
+                    </div>
+                  )}
+                  <div className="text-center sm:text-left">
+                    <h2 className="font-serif text-xl mb-2">{t.wp1.advokatTitle}</h2>
+                    {isAdvokatConfigured() ? (
+                      <>
+                        <p className="font-sans font-semibold">{ADVOKAT.name}</p>
+                        <p className="font-sans text-sm text-muted-foreground mb-2">
+                          {t.wp1.advokatRegisteredPrefix} {ADVOKAT.sakId}
+                        </p>
+                        <a
+                          href={ADVOKAT.sakRegisterUrl || SAK_REGISTER_SEARCH_URL}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary hover:underline font-sans"
+                        >
+                          {t.wp1.advokatVerifyLink}
+                        </a>
+                      </>
+                    ) : (
+                      <>
+                        <p className="font-sans text-sm text-muted-foreground mb-2">{t.wp1.advokatGeneric}</p>
+                        <a
+                          href={SAK_REGISTER_SEARCH_URL}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary hover:underline font-sans"
+                        >
+                          {t.wp1.advokatVerifyLink}
+                        </a>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
@@ -335,23 +423,27 @@ export default function Home() {
       <section className="py-20 bg-white">
         <div className="container">
           <div className="text-center mb-12">
-            <div className="flex items-center justify-center gap-1 mb-3">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
-              ))}
-              <span className="ml-2 font-sans text-lg font-semibold">{t.reviews.rating}</span>
-            </div>
-            <h2 className="text-3xl md:text-4xl font-serif mb-2">{t.reviews.count}</h2>
-            <p className="text-muted-foreground font-sans">{t.reviews.subtitle}</p>
+            <h2 className="text-2xl md:text-3xl font-serif mb-3 max-w-2xl mx-auto">
+              {t.wp1.reviewsHeading}
+              <span className="inline-flex items-center gap-1 ml-3 align-middle whitespace-nowrap">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" aria-hidden="true" />
+                ))}
+                <span className="font-sans text-lg font-semibold">{t.reviews.rating}</span>
+              </span>
+            </h2>
+            <p className="text-muted-foreground font-sans">{t.reviews.count}</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             <Card className="border shadow-sm">
               <CardContent className="p-6">
                 <Quote className="h-5 w-5 text-primary/30 mb-3" />
                 <p className="text-sm font-sans text-foreground mb-4 leading-relaxed">
-                  {locale === "en"
+                  {locale === "en" || locale === "hu"
                     ? "Very efficient cooperation, prompt responses, professionalism, and creativity in finding solutions."
-                    : "Veľmi efektívna spolupráca, promptné reakcie, profesionalita, kreativita pri hľadaní riešení."}
+                    : locale === "cz"
+                      ? "Velmi efektivní spolupráce, promptní reakce, profesionalita, kreativita při hledání řešení."
+                      : "Veľmi efektívna spolupráca, promptné reakcie, profesionalita, kreativita pri hľadaní riešení."}
                 </p>
                 <div className="flex items-center gap-1 mb-1">
                   {[...Array(5)].map((_, i) => <Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />)}
@@ -363,9 +455,11 @@ export default function Home() {
               <CardContent className="p-6">
                 <Quote className="h-5 w-5 text-primary/30 mb-3" />
                 <p className="text-sm font-sans text-foreground mb-4 leading-relaxed">
-                  {locale === "en"
+                  {locale === "en" || locale === "hu"
                     ? "Proactive and professional approach, prompt resolution. You can tell they know their field and have rich experience."
-                    : "Proaktívny a profesionálny prístup, promptné riešenie. Je vidno, že sa vo svojej oblasti vyznajú a majú bohaté skúsenosti."}
+                    : locale === "cz"
+                      ? "Proaktivní a profesionální přístup, promptní řešení. Je vidět, že se ve svém oboru vyznají a mají bohaté zkušenosti."
+                      : "Proaktívny a profesionálny prístup, promptné riešenie. Je vidno, že sa vo svojej oblasti vyznajú a majú bohaté skúsenosti."}
                 </p>
                 <div className="flex items-center gap-1 mb-1">
                   {[...Array(5)].map((_, i) => <Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />)}
@@ -377,9 +471,11 @@ export default function Home() {
               <CardContent className="p-6">
                 <Quote className="h-5 w-5 text-primary/30 mb-3" />
                 <p className="text-sm font-sans text-foreground mb-4 leading-relaxed">
-                  {locale === "en"
+                  {locale === "en" || locale === "hu"
                     ? "Working with Robert was in a very pleasant atmosphere, it was human and professional. I recommend."
-                    : "Spolupráca s Robertom sa niesla vo veľmi príjemnej atmosfére, bolo to ľudské a profesionálne. Odporúčam."}
+                    : locale === "cz"
+                      ? "Spolupráce s Robertem probíhala ve velmi příjemné atmosféře, bylo to lidské a profesionální. Doporučuji."
+                      : "Spolupráca s Robertom sa niesla vo veľmi príjemnej atmosfére, bolo to ľudské a profesionálne. Odporúčam."}
                 </p>
                 <div className="flex items-center gap-1 mb-1">
                   {[...Array(5)].map((_, i) => <Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />)}
@@ -438,6 +534,7 @@ export default function Home() {
               className="w-full h-auto rounded-xl shadow-2xl"
             />
             <button
+              ref={lightboxCloseRef}
               onClick={() => setLightboxImg(null)}
               className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
               aria-label={t.common.close}

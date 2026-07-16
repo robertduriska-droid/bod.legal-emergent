@@ -1,0 +1,9 @@
+{
+  "contractType": "Zmluva o mlčanlivosti (NDA)",
+  "clauses": "Zmluva obsahuje tri rizikové klauzuly: zmluvnú pokutu, neobmedzenú mlčanlivosť a širokú definíciu dôverných informácií.",
+  "riskSummary": {
+    "high": "one",
+    "medium": null
+  },
+  "recommendation": 42
+}

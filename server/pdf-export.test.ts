@@ -12,11 +12,13 @@ vi.mock("./_core/sdk", () => ({
   },
 }));
 
-// Mock DB functions
+// Mock DB functions (isClauseExcluded is pure, keep the real logic)
 vi.mock("./db", () => ({
   getContractById: vi.fn(),
   getClausesByContractId: vi.fn(),
   getReportByContractId: vi.fn(),
+  isClauseExcluded: (c: { lawyerApproved: number | null; lawyerAnnotation: string | null }) =>
+    c.lawyerApproved === 0 && (c.lawyerAnnotation || "").startsWith("Vyradené advokátom"),
 }));
 
 // Mock LLM for executive summary
@@ -340,5 +342,110 @@ describe("PDF Export Endpoint", () => {
     expect(pdfContent).toContain("Inter");
     // The PDF should have ExtGState (used by saveGraphicsState/setGState)
     expect(pdfContent).toContain("/ExtGState");
+  });
+});
+
+// ─── Verification honesty ─────────────────────────────────────────────────────
+// An unsigned report must never claim lawyer verification and must carry a
+// visible draft watermark. A signed report keeps the verified wording.
+
+async function extractPdfText(body: Buffer): Promise<string> {
+  const pdfjs: any = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  const doc = await pdfjs.getDocument({ data: new Uint8Array(body), useSystemFonts: true }).promise;
+  let text = "";
+  for (let i = 1; i <= doc.numPages; i++) {
+    const page = await doc.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map((item: any) => (typeof item.str === "string" ? item.str : "")).join(" ") + "\n";
+  }
+  return text;
+}
+
+function mockPaidContract() {
+  (sdk.authenticateRequest as any).mockResolvedValue({ id: 1, role: "user" });
+  (getContractById as any).mockResolvedValue({
+    id: 7,
+    userId: 1,
+    plan: "standard",
+    fileName: "Zmluva o dielo.pdf",
+    createdAt: new Date("2026-06-01"),
+  });
+  (getClausesByContractId as any).mockResolvedValue([
+    {
+      id: 1,
+      contractId: 7,
+      clauseNumber: 1,
+      title: "Zmluvná pokuta",
+      excerpt: "Zmluvná pokuta vo výške 50 % z ceny.",
+      riskLevel: "high",
+      finding: "Neprimerane vysoká zmluvná pokuta.",
+      suggestedEdit: "Znížiť pokutu na 10 % z ceny.",
+      legalBasis: "§ 544 Občianskeho zákonníka",
+      legalSourceUrl: null,
+      riskCategory: "liability_indemnity",
+      lawyerAnnotation: null,
+      lawyerApproved: 0,
+      overriddenRiskLevel: null,
+    },
+  ]);
+}
+
+describe("PDF verification honesty", () => {
+  it("unsigned report carries the draft watermark and never claims lawyer verification", async () => {
+    const { registerPdfExport } = await import("./pdf-export");
+    const express = await import("express");
+    const app = express.default();
+    app.use(express.default.json());
+    registerPdfExport(app);
+
+    mockPaidContract();
+    (getReportByContractId as any).mockResolvedValue({
+      id: 1,
+      contractId: 7,
+      summary: "Zmluva obsahuje rizikové klauzuly.",
+      recommendation: "Odporúčame úpravy pred podpisom.",
+      riskSummary: { high: 1, medium: 0, low: 0 },
+      isSigned: 0,
+      lawyerName: null,
+      signedAt: null,
+    });
+
+    const request = await import("supertest").then(m => m.default);
+    const res = await request(app).get("/api/contracts/7/report.pdf");
+    expect(res.status).toBe(200);
+
+    const text = await extractPdfText(res.body);
+    expect(text).toContain("PRACOVNÁ VERZIA");
+    expect(text).toContain("čaká na overenie advokátom");
+    expect(text).not.toContain("overený advokátom");
+  });
+
+  it("signed report keeps the verified wording and has no draft watermark", async () => {
+    const { registerPdfExport } = await import("./pdf-export");
+    const express = await import("express");
+    const app = express.default();
+    app.use(express.default.json());
+    registerPdfExport(app);
+
+    mockPaidContract();
+    (getReportByContractId as any).mockResolvedValue({
+      id: 1,
+      contractId: 7,
+      summary: "Zmluva obsahuje rizikové klauzuly.",
+      recommendation: "Odporúčame úpravy pred podpisom.",
+      riskSummary: { high: 1, medium: 0, low: 0 },
+      isSigned: 1,
+      lawyerName: "JUDr. Test",
+      signedAt: new Date("2026-06-02"),
+    });
+
+    const request = await import("supertest").then(m => m.default);
+    const res = await request(app).get("/api/contracts/7/report.pdf");
+    expect(res.status).toBe(200);
+
+    const text = await extractPdfText(res.body);
+    expect(text).toContain("overený advokátom");
+    expect(text).toContain("JUDr. Test");
+    expect(text).not.toContain("PRACOVNÁ VERZIA");
   });
 });

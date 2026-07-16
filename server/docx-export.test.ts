@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
 import express from "express";
 import request from "supertest";
+import JSZip from "jszip";
 import { registerDocxExport } from "./docx-export";
 
 // Mock the SDK
@@ -10,11 +11,13 @@ vi.mock("./_core/sdk", () => ({
   },
 }));
 
-// Mock the DB
+// Mock the DB (isClauseExcluded is pure, keep the real logic)
 vi.mock("./db", () => ({
   getContractById: vi.fn(),
   getClausesByContractId: vi.fn(),
   getReportByContractId: vi.fn(),
+  isClauseExcluded: (c: { lawyerApproved: number | null; lawyerAnnotation: string | null }) =>
+    c.lawyerApproved === 0 && (c.lawyerAnnotation || "").startsWith("Vyradené advokátom"),
 }));
 
 import { sdk } from "./_core/sdk";
@@ -306,5 +309,129 @@ describe("Final DOCX Export Endpoint (POST)", () => {
     expect(res.headers["content-disposition"]).toContain("bod-legal-final-1-en.docx");
     const buf = res.body as Buffer;
     expect(buf.toString("utf8", 0, 2)).toBe("PK");
+  });
+});
+
+// ─── Verification honesty ─────────────────────────────────────────────────────
+// An unsigned DOCX must never claim lawyer verification, and must carry the
+// draft label in the page header. A signed DOCX keeps the verified wording.
+
+const binaryParser = (res: any, cb: (err: Error | null, body: Buffer) => void) => {
+  const chunks: Buffer[] = [];
+  res.on("data", (chunk: Buffer) => chunks.push(chunk));
+  res.on("end", () => cb(null, Buffer.concat(chunks)));
+};
+
+async function extractDocxXml(buf: Buffer): Promise<string> {
+  const zip = await JSZip.loadAsync(buf);
+  const parts: string[] = [];
+  for (const name of Object.keys(zip.files)) {
+    if (name.endsWith(".xml")) {
+      parts.push(await zip.files[name].async("string"));
+    }
+  }
+  return parts.join("\n");
+}
+
+const honestyClauses = [
+  {
+    id: 1, contractId: 1, clauseNumber: 1, title: "Zmluvná pokuta",
+    riskLevel: "high", finding: "Neprimerane vysoká pokuta.",
+    excerpt: "Zmluvná pokuta vo výške 50 % z ceny.",
+    suggestedEdit: "Zmluvná pokuta vo výške 10 % z ceny.",
+    legalBasis: "§ 544 Občianskeho zákonníka",
+    lawyerAnnotation: null,
+    overriddenRiskLevel: null,
+  },
+];
+
+describe("DOCX verification honesty", () => {
+  const app = createApp();
+
+  beforeEach(() => {
+    mockAuth.mockReset();
+    mockGetContract.mockReset();
+    mockGetClauses.mockReset();
+    mockGetReport.mockReset();
+    mockAuth.mockResolvedValue({ id: 1, role: "user" });
+    mockGetContract.mockResolvedValue({
+      id: 1, userId: 1, plan: "standard", fileName: "Zmluva.pdf", createdAt: new Date("2026-06-01"),
+    });
+    mockGetClauses.mockResolvedValue(honestyClauses);
+  });
+
+  it("unsigned DOCX carries the draft header label and never claims lawyer verification", async () => {
+    mockGetReport.mockResolvedValue({
+      id: 1, contractId: 1, summary: "Zmluva obsahuje riziká.", recommendation: "Odporúčame úpravu.",
+      lawyerName: null, isSigned: 0,
+    });
+
+    const res = await request(app)
+      .get("/api/contracts/1/report.docx")
+      .buffer(true)
+      .parse(binaryParser);
+    expect(res.status).toBe(200);
+
+    const xml = await extractDocxXml(res.body as Buffer);
+    expect(xml).toContain("PRACOVNÁ VERZIA");
+    expect(xml).toContain("čaká na overenie advokátom");
+    expect(xml).not.toContain("overený advokátom");
+  });
+
+  it("signed DOCX keeps the verified wording and has no draft label", async () => {
+    mockGetReport.mockResolvedValue({
+      id: 1, contractId: 1, summary: "Zmluva obsahuje riziká.", recommendation: "Odporúčame úpravu.",
+      lawyerName: "JUDr. Test", isSigned: 1,
+    });
+
+    const res = await request(app)
+      .get("/api/contracts/1/report.docx")
+      .buffer(true)
+      .parse(binaryParser);
+    expect(res.status).toBe(200);
+
+    const xml = await extractDocxXml(res.body as Buffer);
+    expect(xml).toContain("overený advokátom");
+    expect(xml).toContain("JUDr. Test");
+    expect(xml).not.toContain("PRACOVNÁ VERZIA");
+  });
+
+  it("unsigned lawyerName is not presented as verification", async () => {
+    // Even if a lawyer name is already stored, an unsigned report must not
+    // render the "Overil" line.
+    mockGetReport.mockResolvedValue({
+      id: 1, contractId: 1, summary: "Zmluva obsahuje riziká.", recommendation: "Odporúčame úpravu.",
+      lawyerName: "JUDr. Test", isSigned: 0,
+    });
+
+    const res = await request(app)
+      .get("/api/contracts/1/report.docx")
+      .buffer(true)
+      .parse(binaryParser);
+    expect(res.status).toBe(200);
+
+    const xml = await extractDocxXml(res.body as Buffer);
+    expect(xml).toContain("PRACOVNÁ VERZIA");
+    expect(xml).not.toContain("Overil: ");
+    expect(xml).not.toContain("overený advokátom");
+  });
+
+  it("unsigned final DOCX also carries the draft label and unsigned disclaimer", async () => {
+    mockGetReport.mockResolvedValue({
+      id: 1, contractId: 1, summary: "Zmluva obsahuje riziká.", recommendation: "Odporúčame úpravu.",
+      lawyerName: null, isSigned: 0,
+    });
+
+    const res = await request(app)
+      .post("/api/contracts/1/report-final.docx")
+      .send({ decisions: { "1": "accepted" }, lang: "sk" })
+      .buffer(true)
+      .parse(binaryParser);
+    expect(res.status).toBe(200);
+
+    const xml = await extractDocxXml(res.body as Buffer);
+    expect(xml).toContain("PRACOVNÁ VERZIA");
+    expect(xml).toContain("čaká na overenie advokátom");
+    expect(xml).not.toContain("overený advokátom");
   });
 });

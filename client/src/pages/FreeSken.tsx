@@ -7,7 +7,9 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useParams } from "wouter";
 import { Link } from "wouter";
-import { Loader2, AlertTriangle, AlertCircle, CheckCircle, Lock, ArrowRight, Shield } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Loader2, AlertCircle, CheckCircle, Lock, ArrowRight, Shield, Mail } from "lucide-react";
 import { PRICING_PLANS } from "@shared/types";
 import { useT } from "@/i18n";
 
@@ -145,7 +147,9 @@ const TX = {
 };
 
 export default function FreeSken() {
-  const { isAuthenticated } = useAuth({ redirectOnUnauthenticated: true });
+  // Anonymous free-scan visitors are welcome here: access is enforced
+  // server-side (owner session or claim-token cookie), so no login redirect.
+  const { isAuthenticated } = useAuth();
   const { t, locale, localePath } = useT();
   const planNames = [t.pricing.basicTitle, t.pricing.standardTitle, t.pricing.premiumTitle];
   const planPrices = [t.pricing.basicPrice, t.pricing.standardPrice, t.pricing.premiumPrice];
@@ -154,9 +158,31 @@ export default function FreeSken() {
   const params = useParams<{ id: string }>();
   const contractId = parseInt(params.id || "0");
 
+  const [leadEmail, setLeadEmail] = useState("");
+  const [emailSaved, setEmailSaved] = useState(false);
+
+  const attachEmailMutation = trpc.contracts.attachEmail.useMutation({
+    onSuccess: () => {
+      setEmailSaved(true);
+      toast.success(t.wp1.freeScanEmailSaved);
+    },
+    onError: () => {
+      toast.error(t.wp1.freeScanEmailInvalid);
+    },
+  });
+
+  const handleAttachEmail = () => {
+    const email = leadEmail.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error(t.wp1.freeScanEmailInvalid);
+      return;
+    }
+    attachEmailMutation.mutate({ contractId, email });
+  };
+
   const { data, isLoading } = trpc.contracts.getById.useQuery(
     { id: contractId },
-    { enabled: isAuthenticated && contractId > 0, refetchInterval: 5000 }
+    { enabled: contractId > 0, refetchInterval: 5000 }
   );
 
   if (isLoading) {
@@ -348,6 +374,46 @@ export default function FreeSken() {
                 {tx.guarantee}
               </p>
             </div>
+
+            {/* Anonymous lead capture: attach an e-mail to the free scan */}
+            {!isAuthenticated && (
+              <div className="mt-6 border-t border-background/15 pt-6" data-testid="freescan-email-block">
+                <div className="max-w-md mx-auto text-center">
+                  <p className="font-sans font-semibold mb-1 flex items-center justify-center gap-2">
+                    <Mail className="h-4 w-4" aria-hidden="true" /> {t.wp1.freeScanEmailTitle}
+                  </p>
+                  <p className="text-xs opacity-70 font-sans mb-3">{t.wp1.freeScanEmailDesc}</p>
+                  {emailSaved ? (
+                    <p className="text-sm font-sans flex items-center justify-center gap-2" data-testid="freescan-email-saved">
+                      <CheckCircle className="h-4 w-4" aria-hidden="true" /> {t.wp1.freeScanEmailSaved}
+                    </p>
+                  ) : (
+                    <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                      <input
+                        type="email"
+                        value={leadEmail}
+                        onChange={(e) => setLeadEmail(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") handleAttachEmail(); }}
+                        placeholder="vas@email.sk"
+                        className="rounded-md border border-background/30 bg-background/10 px-3 py-2 text-sm font-sans text-background placeholder:text-background/50 focus:outline-none focus:ring-2 focus:ring-background/40 w-full sm:w-64"
+                        data-testid="freescan-email-input"
+                      />
+                      <Button
+                        variant="secondary"
+                        className="font-sans"
+                        disabled={attachEmailMutation.isPending || !leadEmail.trim()}
+                        onClick={handleAttachEmail}
+                        data-testid="freescan-email-submit"
+                      >
+                        {attachEmailMutation.isPending
+                          ? <Loader2 className="h-4 w-4 animate-spin" />
+                          : t.wp1.freeScanEmailButton}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* What's included in full report */}
