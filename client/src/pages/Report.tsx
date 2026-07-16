@@ -917,6 +917,36 @@ function ReportContent({
             <DeepAnalysis data={data.deepAnalysis} locale={locale} />
           )}
 
+          {/* Bonuses for paid plans: real deliverables promised on the price
+              cards. Pages are noindex on the marketing domain; the library of
+              clauses is a premium extra. */}
+          {!isLimited && contract.plan !== "basic" && (
+            <div className="mb-8 rounded-lg border border-green-200 bg-green-50/60 p-5" data-testid="report-bonuses">
+              <p className="font-serif text-lg mb-2">
+                {locale === "en" ? "Your bonuses" : "Vaše bonusy"}
+              </p>
+              <ul className="space-y-1.5 text-sm font-sans">
+                <li>
+                  <a className="text-green-700 underline underline-offset-2" href="https://bod.legal/bonus-toto-nikdy-nepodpisuj.html" target="_blank" rel="noopener">
+                    {locale === "en" ? "Never sign this: 12 clauses that can sink a company" : "Toto nikdy nepodpisujte: 12 klauzúl, ktoré vedia firmu potopiť"}
+                  </a>
+                </li>
+                <li>
+                  <a className="text-green-700 underline underline-offset-2" href="https://bod.legal/bonus-vyjednavacie-emaily.html" target="_blank" rel="noopener">
+                    {locale === "en" ? "5 negotiation e-mails ready to send" : "5 vyjednávacích e-mailov pripravených na poslanie"}
+                  </a>
+                </li>
+                {contract.plan === "premium" && (
+                  <li>
+                    <a className="text-green-700 underline underline-offset-2" href="https://bod.legal/bonus-kniznica-klauzul.html" target="_blank" rel="noopener">
+                      {locale === "en" ? "Library of vetted clauses (premium)" : "Knižnica overených klauzúl (prémiový bonus)"}
+                    </a>
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
+
           {/* Clause Findings */}
           {clauses && clauses.length > 0 && (
             <div className="mb-8">
