@@ -569,7 +569,11 @@ type ReportPageData = Omit<ContractGetByIdOutput, "report"> & {
  * is available, so no hooks ever run after an early return (rules of hooks).
  */
 export default function Report() {
-  const { isAuthenticated, user: authUser } = useAuth({ redirectOnUnauthenticated: true });
+  // No forced login: a free-scan visitor reaches their report through the
+  // claim-token cookie, and access is enforced server-side (owner, admin, or a
+  // matching claim). Forcing a redirect here also crashed the page, because the
+  // Manus login it triggered does not exist on a self-hosted deployment.
+  const { isAuthenticated, user: authUser } = useAuth();
   const { locale, localePath } = useT();
   const tx = TX[locale === "hu" ? "en" : locale];
   const params = useParams<{ id: string }>();
