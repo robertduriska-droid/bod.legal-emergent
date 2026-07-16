@@ -79,8 +79,11 @@ a { color: inherit; }
   text-align: center;
 }
 .btn:hover { transform: translateY(-1px); }
-.btn-primary { background: var(--ink); color: var(--paper); box-shadow: 0 1px 2px rgba(20,18,12,.2); }
-.btn-primary:hover { background: #000; box-shadow: 0 4px 14px rgba(20,18,12,.22); }
+/* The conversion button is brand green: an ink-black button camouflages
+   against the dark hero right beside it, and the one thing the primary CTA
+   must never do is blend in. */
+.btn-primary { background: var(--green); color: #fff; box-shadow: 0 1px 2px rgba(20,60,35,.25); }
+.btn-primary:hover { background: #256b43; box-shadow: 0 4px 14px rgba(20,60,35,.3); }
 .btn-hero { background: var(--paper); color: var(--ink); }
 .btn-hero:hover { background: #fff; }
 .btn-ghost { border: 1px solid var(--line); color: var(--ink); background: transparent; }
