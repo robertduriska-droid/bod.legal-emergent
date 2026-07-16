@@ -1,15 +1,20 @@
-// Object storage helpers — self-hosted on Cloudflare R2 (S3-compatible).
+// Object storage helpers — Cloudflare R2 when configured, local-disk fallback
+// otherwise.
 //
 // Public API is unchanged from the original Manus template (storagePut /
-// storageGet / storageGetSignedUrl) so nothing downstream had to change. The
-// only difference is the backend: instead of asking a Manus Forge server for a
-// presigned URL, we talk to R2 directly via the AWS S3 SDK (see _core/r2.ts).
+// storageGet / storageGetSignedUrl) so nothing downstream had to change.
+// Backend selection is automatic:
+//   - R2_* env vars present  -> Cloudflare R2 via the AWS S3 SDK (_core/r2.ts)
+//   - otherwise              -> local disk (_core/diskStorage.ts), so a fresh
+//     deployment works end to end before any storage keys exist.
 //
 // Download URLs are returned as /manus-storage/{key}; that route (storageProxy)
-// 307-redirects to a short-lived presigned GET so the bucket stays private.
+// 307-redirects to a short-lived presigned GET on R2, or streams from disk in
+// fallback mode.
 
 import { randomUUID } from "crypto";
-import { r2PutObject, r2PresignGet } from "./_core/r2";
+import { r2PutObject, r2PresignGet, isR2Configured } from "./_core/r2";
+import { diskPutObject } from "./_core/diskStorage";
 
 function normalizeKey(relKey: string): string {
   return relKey.replace(/^\/+/, "");
@@ -28,13 +33,29 @@ function toBuffer(data: Buffer | Uint8Array | string): Buffer {
   return Buffer.from(data);
 }
 
+/** Base URL this server is reachable at, for self-referencing download URLs
+ *  in disk-fallback mode (analysis downloads the file over HTTP). */
+function selfBaseUrl(): string {
+  const configured = process.env.APP_BASE_URL;
+  if (configured) return configured.replace(/\/+$/, "");
+  return `http://localhost:${process.env.PORT || 3000}`;
+}
+
 export async function storagePut(
   relKey: string,
   data: Buffer | Uint8Array | string,
   contentType = "application/octet-stream",
 ): Promise<{ key: string; url: string }> {
   const key = appendHashSuffix(normalizeKey(relKey));
-  await r2PutObject(key, toBuffer(data), contentType);
+  const body = toBuffer(data);
+  if (isR2Configured()) {
+    await r2PutObject(key, body, contentType);
+  } else {
+    console.warn(
+      `[Storage] R2 not configured, storing "${key}" on local disk (ephemeral). Set R2_* env vars for persistence.`,
+    );
+    await diskPutObject(key, body, contentType);
+  }
   return { key, url: `/manus-storage/${key}` };
 }
 
@@ -45,5 +66,10 @@ export async function storageGet(relKey: string): Promise<{ key: string; url: st
 
 export async function storageGetSignedUrl(relKey: string): Promise<string> {
   const key = normalizeKey(relKey);
-  return r2PresignGet(key, 3600);
+  if (isR2Configured()) {
+    return r2PresignGet(key, 3600);
+  }
+  // Disk fallback: the proxy route streams the file; absolute URL so server-side
+  // consumers (analysis text extraction) can fetch it too.
+  return `${selfBaseUrl()}/manus-storage/${key}`;
 }
