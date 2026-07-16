@@ -138,6 +138,11 @@ function Router() {
   return (
     <Suspense fallback={<PageLoader />}>
       <Switch>
+        {/* Only Slovak and English are live: one advokat registered with the
+            Slovak Bar (SAK) reviews and signs every report, so the whole chain
+            runs under Slovak law. The /cz and /hu routes are parked together
+            with their translations (see ENABLED_LOCALES in @/i18n); restore
+            them when a lawyer admitted in that jurisdiction can sign. */}
         {/* Slovak routes (default, no prefix) */}
         <Route path="/" component={HomePage} />
         <Route path="/dashboard" component={DashboardPage} />
@@ -153,24 +158,7 @@ function Router() {
         <Route path="/preview/:id" component={FreeSkenPage} />
         <Route path="/vzorovy-report" component={SampleReportPage} />
         <Route path="/trial" component={TrialPage} />
-        <Route path="/cz/trial" component={TrialPage} />
         <Route path="/en/trial" component={TrialPage} />
-        <Route path="/hu/trial" component={TrialPage} />
-
-        {/* Czech routes (/cz prefix) */}
-        <Route path="/cz" component={HomePage} />
-        <Route path="/cz/dashboard" component={DashboardPage} />
-        <Route path="/cz/upload" component={UploadPage} />
-        <Route path="/cz/contract/:id" component={ContractDetailPage} />
-        <Route path="/cz/report/:id" component={ReportPage} />
-        <Route path="/cz/admin" component={AdminPanelPage} />
-        <Route path="/cz/admin/review/:id" component={AdminReviewPage} />
-        <Route path="/cz/about" component={AboutPage} />
-        <Route path="/cz/vop" component={VOPPage} />
-        <Route path="/cz/gdpr" component={GDPRPage} />
-        <Route path="/cz/cookies" component={CookiesPage} />
-        <Route path="/cz/preview/:id" component={FreeSkenPage} />
-        <Route path="/cz/vzorovy-report" component={SampleReportPage} />
 
         {/* English routes (/en prefix) */}
         <Route path="/en" component={HomePage} />
@@ -186,21 +174,6 @@ function Router() {
         <Route path="/en/cookies" component={CookiesPage} />
         <Route path="/en/preview/:id" component={FreeSkenPage} />
         <Route path="/en/sample-report" component={SampleReportPage} />
-
-        {/* Hungarian routes (/hu prefix) */}
-        <Route path="/hu" component={HomePage} />
-        <Route path="/hu/dashboard" component={DashboardPage} />
-        <Route path="/hu/upload" component={UploadPage} />
-        <Route path="/hu/contract/:id" component={ContractDetailPage} />
-        <Route path="/hu/report/:id" component={ReportPage} />
-        <Route path="/hu/admin" component={AdminPanelPage} />
-        <Route path="/hu/admin/review/:id" component={AdminReviewPage} />
-        <Route path="/hu/about" component={AboutPage} />
-        <Route path="/hu/vop" component={VOPPage} />
-        <Route path="/hu/gdpr" component={GDPRPage} />
-        <Route path="/hu/cookies" component={CookiesPage} />
-        <Route path="/hu/preview/:id" component={FreeSkenPage} />
-        <Route path="/hu/sample-report" component={SampleReportPage} />
 
         <Route path="/404" component={NotFoundPage} />
         <Route component={NotFoundPage} />

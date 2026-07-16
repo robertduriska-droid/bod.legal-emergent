@@ -8,6 +8,21 @@ import { hu } from "./hu";
 export type { Locale, Translations };
 export { sk, cz, en, hu };
 
+// ─── Enabled locales ────────────────────────────────────────────────────────
+// Single source of truth for which language versions are live.
+//
+// Only Slovak and English are enabled: every report is reviewed and signed by
+// one advokat registered with the Slovak Bar (SAK), so the whole chain from AI
+// analysis to lawyer sign-off runs under Slovak law. The Czech and Hungarian
+// translations stay in the repo, parked, ready to switch back on the day a
+// lawyer admitted in that jurisdiction can sign those reports: add the locale
+// back to this list and restore its routes in App.tsx.
+export const ENABLED_LOCALES: Locale[] = ["sk", "en"];
+
+export function isLocaleEnabled(locale: string): locale is Locale {
+  return (ENABLED_LOCALES as string[]).includes(locale);
+}
+
 const translations: Record<Locale, Translations> = { sk, cz, en, hu };
 
 export function getTranslations(locale: Locale): Translations {
@@ -39,14 +54,11 @@ export function useT() {
 // ─── Locale detection from URL ──────────────────────────────────────────────
 
 export function detectLocaleFromPath(path: string): Locale {
-  if (path.startsWith("/en") && (path === "/en" || path.startsWith("/en/"))) {
-    return "en";
-  }
-  if (path.startsWith("/cz") && (path === "/cz" || path.startsWith("/cz/"))) {
-    return "cz";
-  }
-  if (path.startsWith("/hu") && (path === "/hu" || path.startsWith("/hu/"))) {
-    return "hu";
+  for (const locale of ENABLED_LOCALES) {
+    if (locale === "sk") continue; // Slovak is the unprefixed default
+    if (path === `/${locale}` || path.startsWith(`/${locale}/`)) {
+      return locale;
+    }
   }
   return "sk";
 }

@@ -1,12 +1,18 @@
 import { useLocation } from "wouter";
-import { useT, type Locale } from "@/i18n";
+import { useT, ENABLED_LOCALES, type Locale } from "@/i18n";
 
-const LOCALES: { code: Locale; label: string }[] = [
-  { code: "sk", label: "SK" },
-  { code: "cz", label: "CZ" },
-  { code: "en", label: "EN" },
-  { code: "hu", label: "HU" },
-];
+const LOCALE_LABELS: Record<Locale, string> = {
+  sk: "SK",
+  cz: "CZ",
+  en: "EN",
+  hu: "HU",
+};
+
+// Only the locales we can actually deliver end to end (see ENABLED_LOCALES).
+const LOCALES: { code: Locale; label: string }[] = ENABLED_LOCALES.map(code => ({
+  code,
+  label: LOCALE_LABELS[code],
+}));
 
 export default function LanguageSwitcher() {
   const { locale, switchLocalePath } = useT();

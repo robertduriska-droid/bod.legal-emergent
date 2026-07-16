@@ -205,10 +205,21 @@ describe("SYSTEM_PROMPTS playbook regression", () => {
     }
   });
 
-  it.each(Object.keys(SYSTEM_PROMPTS))("%s prompt cites njt.hu for Hungarian law", (lang) => {
-    expect(SYSTEM_PROMPTS[lang]).toContain("njt.hu");
-    // Ptk. is the backbone of Hungarian contract law; keep the real link handy.
-    expect(SYSTEM_PROMPTS[lang]).toContain("https://njt.hu/jogszabaly/2013-5-00-00");
+  // Every report is signed by an advokat registered with the Slovak Bar, so the
+  // service reviews Slovak law only. Prompts must never cite foreign statutes we
+  // cannot stand behind, and must tell the client plainly when a contract falls
+  // outside that scope.
+  it.each(Object.keys(SYSTEM_PROMPTS))("%s prompt cites no foreign statute databases", (lang) => {
+    for (const foreign of ["njt.hu", "ekr.gov.hu"]) {
+      expect(SYSTEM_PROMPTS[lang]).not.toContain(foreign);
+    }
+  });
+
+  it("live prompts flag non-Slovak contracts as unverified by a lawyer", () => {
+    expect(SYSTEM_PROMPTS.sk).toContain('AK JURISDICTION NIE JE "SK"');
+    expect(SYSTEM_PROMPTS.sk).toContain("BEZ overenia advokátom");
+    expect(SYSTEM_PROMPTS.en).toContain('IF JURISDICTION IS NOT "SK"');
+    expect(SYSTEM_PROMPTS.en).toContain("WITHOUT lawyer verification");
   });
 
   it("sk and cz prompts state the no-dash output rule", () => {
