@@ -9,13 +9,20 @@
     <title>bod.legal | AI kontrola zmlúv s overením advokátom</title>
     <meta name="description" content="Nahrajte zmluvu a do 24 hodín dostanete report s identifikovanými rizikami, odkazmi na právne predpisy a návrhmi úprav. Každý report overuje advokát." />
     <meta name="robots" content="index, follow" />
-    <link rel="canonical" href="https://bodlegal-mqcbxxfs.manus.space/" />
+    <!--
+      Ziadny staticky canonical. Toto je jednostrankova aplikacia, teda vsetky
+      cesty servuju tento jeden subor: staticky canonical by kazdej podstranke
+      povedal, ze je duplikat domovskej stranky, a Google by ich vyhodil z
+      indexu. Predtym tu bol canonical na manus.space, cim sa cely web
+      oznacoval za duplikat uz mrtveho manusoveho webu. Ak bude treba
+      canonical na uroven cesty, musi ho nastavovat router, nie tento subor.
+    -->
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="bod.legal | AI kontrola zmlúv s overením advokátom" />
     <meta property="og:description" content="Nahrajte zmluvu a do 24 hodín dostanete report s identifikovanými rizikami, odkazmi na právne predpisy a návrhmi úprav." />
-    <meta property="og:url" content="https://bodlegal-mqcbxxfs.manus.space/" />
+    <meta property="og:url" content="https://app.bod.legal/" />
     <meta property="og:site_name" content="bod.legal" />
     <meta property="og:locale" content="sk_SK" />
 
@@ -39,7 +46,7 @@
       "@type": "LegalService",
       "name": "bod.legal",
       "description": "AI kontrola zmlúv s overením advokátom. Report do 24 hodín.",
-      "url": "https://bodlegal-mqcbxxfs.manus.space",
+      "url": "https://app.bod.legal",
       "provider": {
         "@type": "Organization",
         "name": "KILIAN LEGAL s.r.o.",
@@ -60,7 +67,7 @@
         "bestRating": "5",
         "worstRating": "1"
       },
-      "priceRange": "149-399 EUR",
+      "priceRange": "249-497 EUR",
       "areaServed": {
         "@type": "Country",
         "name": "Slovakia"

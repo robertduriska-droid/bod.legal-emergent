@@ -1,4 +1,19 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://bodlegal-mqcbxxfs.manus.space/sitemap.xml
+# Klientske dokumenty sa neindexuju. Tieto cesty zobrazuju obsah zmluv a
+# nalezy z analyzy, teda udaje kryte mlcanlivostou podla § 23 zakona
+# c. 586/2003 Z. z. Doteraz tu bolo iba "Allow: /", cim boli vyhladavace
+# pozvane prehladavat aj ich.
+Disallow: /report/
+Disallow: /contract/
+Disallow: /preview/
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /en/report/
+Disallow: /en/contract/
+Disallow: /en/preview/
+Disallow: /en/dashboard
+Disallow: /en/admin
+
+Sitemap: https://app.bod.legal/sitemap.xml

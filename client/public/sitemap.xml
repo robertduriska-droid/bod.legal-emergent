@@ -1,38 +1,89 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Verejne stranky bod.legal. Iba adresy, ktore skutocne existuju v App.tsx.
+  Klientske cesty (/report, /contract, /preview, /dashboard, /admin) tu
+  zamerne nie su a robots.txt ich zakazuje prehladavat.
+-->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://bodlegal-mqcbxxfs.manus.space/</loc>
+    <loc>https://app.bod.legal/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://bodlegal-mqcbxxfs.manus.space/upload</loc>
+    <loc>https://app.bod.legal/upload</loc>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://bodlegal-mqcbxxfs.manus.space/vzorovy-report</loc>
+    <loc>https://app.bod.legal/vzorovy-report</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://bodlegal-mqcbxxfs.manus.space/about</loc>
+    <loc>https://app.bod.legal/trial</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://app.bod.legal/about</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://bodlegal-mqcbxxfs.manus.space/vop</loc>
+    <loc>https://app.bod.legal/vop</loc>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
-    <loc>https://bodlegal-mqcbxxfs.manus.space/gdpr</loc>
+    <loc>https://app.bod.legal/gdpr</loc>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
-    <loc>https://bodlegal-mqcbxxfs.manus.space/cookies</loc>
+    <loc>https://app.bod.legal/cookies</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
+  </url>
+
+  <url>
+    <loc>https://app.bod.legal/en</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://app.bod.legal/en/upload</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://app.bod.legal/en/sample-report</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://app.bod.legal/en/trial</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://app.bod.legal/en/about</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://app.bod.legal/en/terms</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://app.bod.legal/en/privacy</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://app.bod.legal/en/cookies</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.2</priority>
   </url>
 </urlset>
