@@ -5,7 +5,7 @@ import { sdk } from "./_core/sdk";
 import { invokeLLM } from "./_core/llm";
 import { getContractById, getClausesByContractId, getReportByContractId, isClauseExcluded } from "./db";
 import { getInterRegularBase64, getInterBoldBase64 } from "./fonts/font-data";
-import { signOffLine } from "@shared/advokat";
+import { signOffLines } from "@shared/advokat";
 import { aiOutputStatement, AI_MARKING_KEYWORDS, AI_MARKING_CREATOR } from "@shared/aiMarking";
 
 type Lang = "sk" | "en";
@@ -329,11 +329,13 @@ async function generateReportPdf(
     doc.setFont("Inter", "bold");
     doc.text(L.verifiedBy, margin, y);
     doc.setFont("Inter", "normal");
-    doc.text(
-      `${signOffLine(report.lawyerName)} (${report.signedAt ? new Date(report.signedAt).toLocaleDateString(L.dateLocale) : ""})`,
-      margin + 28,
-      y
-    );
+    const signLines = signOffLines(report.lawyerName, lang);
+    const signDate = report.signedAt ? ` (${new Date(report.signedAt).toLocaleDateString(L.dateLocale)})` : "";
+    doc.text(`${signLines[0]}${signDate}`, margin + 28, y);
+    for (const extra of signLines.slice(1)) {
+      y += 5;
+      doc.text(extra, margin + 28, y);
+    }
     y += 6;
   }
   y += 8;

@@ -21,7 +21,7 @@ import {
 } from "docx";
 import { sdk } from "./_core/sdk";
 import { getContractById, getClausesByContractId, getReportByContractId, isClauseExcluded } from "./db";
-import { signOffLine } from "@shared/advokat";
+import { signOffLines } from "@shared/advokat";
 import { aiOutputStatement, AI_MARKING_KEYWORDS, AI_MARKING_CREATOR } from "@shared/aiMarking";
 
 type Lang = "sk" | "en";
@@ -199,7 +199,9 @@ async function generateReportDocx(
       new Paragraph({
         children: [
           new TextRun({ text: `${l.verifiedBy}: `, bold: true }),
-          new TextRun({ text: signOffLine(report.lawyerName) }),
+          ...signOffLines(report.lawyerName, lang).map((line, i) =>
+            new TextRun(i === 0 ? { text: line } : { text: line, break: 1 })
+          ),
         ],
         spacing: { after: 200 },
       })

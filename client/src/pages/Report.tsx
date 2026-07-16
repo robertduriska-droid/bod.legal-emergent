@@ -19,7 +19,7 @@ import { LEGAL_SOURCES } from "@shared/types";
 import { useT } from "@/i18n";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../server/routers";
-import { ADVOKAT } from "@shared/advokat";
+import { signOffLines } from "@shared/advokat";
 
 const RISK_COLORS = {
   high: "bg-red-100 text-red-800 border-red-200",
@@ -811,11 +811,15 @@ function ReportContent({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-sans font-semibold text-green-900">
-                    {tx.lawyerCardTitle}: {report.lawyerName}
+                    {tx.lawyerCardTitle}: {signOffLines(report.lawyerName, locale === "en" ? "en" : "sk")[0]}
                   </p>
+                  {signOffLines(report.lawyerName, locale === "en" ? "en" : "sk")[1] && (
+                    <p className="text-xs text-green-700 font-sans mt-0.5">
+                      {signOffLines(report.lawyerName, locale === "en" ? "en" : "sk")[1]}
+                    </p>
+                  )}
                   <p className="text-xs text-green-700 font-sans mt-0.5">
                     {tx.lawyerCardFirm}
-                    {ADVOKAT.sakId ? ` · ${tx.lawyerCardSAK} ${ADVOKAT.sakId}` : ""}
                   </p>
                   <p className="text-xs text-muted-foreground font-sans mt-0.5">
                     {report.signedAt ? new Date(report.signedAt).toLocaleDateString(tx.dateLocale) : ""}

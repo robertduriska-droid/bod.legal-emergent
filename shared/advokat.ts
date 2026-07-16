@@ -30,15 +30,69 @@ export function isAdvokatConfigured(): boolean {
 }
 
 /**
- * The sign-off line for a signed deliverable, e.g.
- * "JUDr. Michal Kilian, LL.M., SAK reg. 7185".
- *
- * @param lawyerName the name stored on the report at signing time. It wins over
- *   the config, so a report signed by someone else keeps their name; the SAK
- *   number is only appended when the name matches the configured advokát.
+ * The advokátsky koncipient who performs reviews under the advokát's
+ * supervision (zákon č. 586/2003 Z. z.). The employment relationship is what
+ * makes this lawful: the koncipient reviews, the advokát answers for it, and
+ * every deliverable the koncipient signs must say both things.
  */
+export const KONCIPIENT = {
+  name: "JUDr. Róbert Ďuriška",
+  titleSk: "advokátsky koncipient",
+  titleEn: "trainee lawyer (advokátsky koncipient)",
+};
+
+/**
+ * Signer resolution is diacritics- and title-insensitive because lawyerName is
+ * stored from the signer's Google profile at signing time ("Robert Duriska"),
+ * not from this config ("JUDr. Róbert Ďuriška"). Matching on the bare surname
+ * survives both spellings.
+ */
+function normalize(s: string): string {
+  return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}
+
+export type Signer = "advokat" | "koncipient" | "other";
+
+export function resolveSigner(lawyerName: string | null | undefined): Signer {
+  const n = normalize((lawyerName || "").trim());
+  if (!n) return "advokat"; // legacy rows with no name: the configured advokát signed
+  if (n.includes("kilian")) return "advokat";
+  if (n.includes("duriska")) return "koncipient";
+  return "other";
+}
+
+/**
+ * The sign-off block for a signed deliverable, one string per line.
+ *
+ * - the advokát signs alone: name + SAK number;
+ * - the koncipient signs: their own name and title on line one, the
+ *   responsible advokát with the SAK number on line two. The number belongs
+ *   to the advokát, so it may never sit next to anyone else's bare name;
+ * - anyone else: their name only, no number, no borrowed authority.
+ */
+export function signOffLines(
+  lawyerName: string | null | undefined,
+  lang: "sk" | "en" = "sk",
+): string[] {
+  switch (resolveSigner(lawyerName)) {
+    case "advokat":
+      return [`${ADVOKAT.name}, SAK reg. č. ${ADVOKAT.sakId}`];
+    case "koncipient":
+      return lang === "en"
+        ? [
+            `${KONCIPIENT.name}, ${KONCIPIENT.titleEn}`,
+            `Responsible attorney: ${ADVOKAT.name}, SAK reg. no. ${ADVOKAT.sakId}`,
+          ]
+        : [
+            `${KONCIPIENT.name}, ${KONCIPIENT.titleSk}`,
+            `Za správnosť zodpovedá: ${ADVOKAT.name}, advokát, SAK reg. č. ${ADVOKAT.sakId}`,
+          ];
+    default:
+      return [(lawyerName || "").trim()];
+  }
+}
+
+/** Single-line variant for narrow layouts; joins the block with a separator. */
 export function signOffLine(lawyerName: string | null | undefined): string {
-  const name = (lawyerName || "").trim() || ADVOKAT.name;
-  const sameLawyer = name === ADVOKAT.name;
-  return sameLawyer && ADVOKAT.sakId ? `${name}, SAK reg. ${ADVOKAT.sakId}` : name;
+  return signOffLines(lawyerName).join(" · ");
 }
