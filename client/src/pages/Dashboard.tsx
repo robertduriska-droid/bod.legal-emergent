@@ -80,11 +80,12 @@ export default function Dashboard() {
     ? { reviewed: "Zkontrolované smlouvy", avgTime: "Průměrný čas dodání", riskAreas: "Nejčastější rizikové oblasti" }
     : { reviewed: "Skontrolované zmluvy", avgTime: "Priemerný čas dodania", riskAreas: "Najčastejšie rizikové oblasti" };
 
+  // Contracts come in Slovak or English, analysed under Slovak law either
+  // way, so the filter matches contract.language. The old third tab offered
+  // Czech contracts, which the service does not accept.
   const jurisdictionLabels: Record<string, string> = locale === "en"
-    ? { all: "All", sk: "Slovak", cz: "Czech" }
-    : locale === "cz"
-    ? { all: "Všechny", sk: "Slovenské", cz: "České" }
-    : { all: "Všetky", sk: "Slovenské", cz: "České" };
+    ? { all: "All", sk: "Slovak", en: "English" }
+    : { all: "Všetky", sk: "Slovenské", en: "Anglické" };
 
   const STATUS_MAP: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; icon: typeof Clock }> = {
     pending: { label: t.dashboard.status.pending, variant: "secondary", icon: Clock },
@@ -205,8 +206,8 @@ export default function Dashboard() {
                 <ToggleGroupItem value="sk" className="font-sans text-xs px-3 h-8">
                   🇸🇰 {jurisdictionLabels.sk}
                 </ToggleGroupItem>
-                <ToggleGroupItem value="cz" className="font-sans text-xs px-3 h-8">
-                  🇨🇿 {jurisdictionLabels.cz}
+                <ToggleGroupItem value="en" className="font-sans text-xs px-3 h-8">
+                  🇬🇧 {jurisdictionLabels.en}
                 </ToggleGroupItem>
               </ToggleGroup>
             </div>
