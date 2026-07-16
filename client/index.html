@@ -9,14 +9,8 @@
     <title>bod.legal | AI kontrola zmlúv s overením advokátom</title>
     <meta name="description" content="Nahrajte zmluvu a do 24 hodín dostanete report s identifikovanými rizikami, odkazmi na právne predpisy a návrhmi úprav. Každý report overuje advokát." />
     <meta name="robots" content="index, follow" />
-    <!--
-      Ziadny staticky canonical. Toto je jednostrankova aplikacia, teda vsetky
-      cesty servuju tento jeden subor: staticky canonical by kazdej podstranke
-      povedal, ze je duplikat domovskej stranky, a Google by ich vyhodil z
-      indexu. Predtym tu bol canonical na manus.space, cim sa cely web
-      oznacoval za duplikat uz mrtveho manusoveho webu. Ak bude treba
-      canonical na uroven cesty, musi ho nastavovat router, nie tento subor.
-    -->
+    <!-- Canonical patri routeru: kazda cesta servuje tento subor, takze
+         staticky canonical by z podstranok spravil duplikaty domovskej. -->
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
