@@ -9,7 +9,7 @@ import Footer from "@/components/Footer";
 import DemoAnimation from "@/components/DemoAnimation";
 import SplashIntro from "@/components/SplashIntro";
 import { PRICING_PLANS } from "@shared/types";
-import { ADVOKAT, SAK_REGISTER_SEARCH_URL, isAdvokatConfigured } from "@/lib/advokat";
+import { ADVOKAT, SAK_REGISTER_SEARCH_URL, isAdvokatConfigured } from "@shared/advokat";
 import { useT } from "@/i18n";
 
 export default function Home() {

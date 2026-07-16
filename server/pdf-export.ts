@@ -5,6 +5,7 @@ import { sdk } from "./_core/sdk";
 import { invokeLLM } from "./_core/llm";
 import { getContractById, getClausesByContractId, getReportByContractId, isClauseExcluded } from "./db";
 import { getInterRegularBase64, getInterBoldBase64 } from "./fonts/font-data";
+import { signOffLine } from "@shared/advokat";
 
 type Lang = "sk" | "en";
 
@@ -317,7 +318,7 @@ async function generateReportPdf(
     doc.text(L.verifiedBy, margin, y);
     doc.setFont("Inter", "normal");
     doc.text(
-      `${report.lawyerName} (${report.signedAt ? new Date(report.signedAt).toLocaleDateString(L.dateLocale) : ""})`,
+      `${signOffLine(report.lawyerName)} (${report.signedAt ? new Date(report.signedAt).toLocaleDateString(L.dateLocale) : ""})`,
       margin + 28,
       y
     );

@@ -2,10 +2,10 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Scale, Shield, Brain, Users, Lock, UserCheck } from "lucide-react";
 import { useT } from "@/i18n";
-// Created by WP1 (client/src/lib/advokat.ts). Until the config is filled the
+// Advokát identity lives in shared/advokat.ts. Until the config is filled the
 // section renders in generic mode; access is guarded below so empty fields
 // never produce a fabricated identity.
-import { ADVOKAT, SAK_REGISTER_SEARCH_URL, isAdvokatConfigured } from "@/lib/advokat";
+import { ADVOKAT, SAK_REGISTER_SEARCH_URL, isAdvokatConfigured } from "@shared/advokat";
 import { CONTACT } from "@/lib/contact";
 
 // Table row types drive which rows get mailto:/tel:/website link treatment,

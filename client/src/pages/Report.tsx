@@ -19,6 +19,7 @@ import { LEGAL_SOURCES } from "@shared/types";
 import { useT } from "@/i18n";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../server/routers";
+import { ADVOKAT } from "@shared/advokat";
 
 const RISK_COLORS = {
   high: "bg-red-100 text-red-800 border-red-200",
@@ -813,7 +814,8 @@ function ReportContent({
                     {tx.lawyerCardTitle}: {report.lawyerName}
                   </p>
                   <p className="text-xs text-green-700 font-sans mt-0.5">
-                    {tx.lawyerCardFirm} · {tx.lawyerCardSAK} 19668
+                    {tx.lawyerCardFirm}
+                    {ADVOKAT.sakId ? ` · ${tx.lawyerCardSAK} ${ADVOKAT.sakId}` : ""}
                   </p>
                   <p className="text-xs text-muted-foreground font-sans mt-0.5">
                     {report.signedAt ? new Date(report.signedAt).toLocaleDateString(tx.dateLocale) : ""}
