@@ -90,7 +90,8 @@ async function maybeMailWeekly(now: Date): Promise<void> {
   });
 }
 
-export function startWeeklyStats(app: Express): void {
+/** Route must register BEFORE the SPA static catch-all or it never matches. */
+export function registerStatsEndpoint(app: Express): void {
   app.get("/api/debug/stats", async (_req: Request, res: Response) => {
     const stats = await computeWeeklyStats();
     if (!stats) {
@@ -99,7 +100,10 @@ export function startWeeklyStats(app: Express): void {
     }
     res.json(stats);
   });
+}
 
+/** The Monday mailer; safe to start only after listen. */
+export function startWeeklyStatsMailer(): void {
   const tick = setInterval(() => {
     maybeMailWeekly(new Date()).catch(err => console.error("[WeeklyStats] failed:", err));
   }, 60 * 60 * 1000);
