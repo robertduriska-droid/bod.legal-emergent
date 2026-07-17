@@ -16,6 +16,7 @@ import { startRetentionJob } from "./retentionJob";
 import { registerEmailDebug } from "./emailDebug";
 import { registerMarketingSite } from "./marketingSite";
 import { startAnalysisWatchdog } from "./analysisWatchdog";
+import { startReviewReminder, registerReviewReminderDebug } from "./reviewReminder";
 import { registerStatsEndpoint, startWeeklyStatsMailer } from "./weeklyStats";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -54,6 +55,7 @@ async function startServer() {
   registerGoogleAuthRoutes(app);
   registerEmailDebug(app);
   registerStatsEndpoint(app);
+  registerReviewReminderDebug(app);
   registerPdfExport(app);
   registerDocxExport(app);
   // tRPC API
@@ -83,6 +85,7 @@ async function startServer() {
     // After listen: background jobs must never delay or block serving.
     startRetentionJob();
     startAnalysisWatchdog();
+    startReviewReminder();
     startWeeklyStatsMailer();
   });
 }
