@@ -55,6 +55,46 @@ function allTemplates(): { name: string; subject: string; html: string }[] {
   ];
 }
 
+describe("emailNewContractForReview full report", () => {
+  it("embeds the whole report so the reviewer can read it in the inbox", () => {
+    const { subject, html } = emailNewContractForReview({
+      contractName: "zmluva.docx",
+      reviewUrl: "https://app.bod.legal/admin/review/30",
+      uploaderName: "Jana",
+      plan: "standard",
+      report: {
+        summary: "Zmluva obsahuje viacero rizikových klauzúl.",
+        recommendation: "Pred podpisom vyžiadať úpravy.",
+        riskSummary: { high: 2, medium: 1, low: 0 },
+        negotiationChecklist: ["Vyžiadať strop zodpovednosti"],
+        clauses: [
+          { title: "Vylúčenie zodpovednosti", riskLevel: "high", excerpt: "Dodávateľ nezodpovedá za škodu.", finding: "Klauzula prenáša riziko na klienta.", legalBasis: "§ 386 Obchodného zákonníka", suggestedEdit: "Doplniť vzájomný strop." },
+        ],
+        deep: {
+          riskScore: 5,
+          dealBreakers: [{ title: "Prevod IP bez odplaty", detail: "Článok 11.2." }],
+          missingProvisions: [{ title: "Chýba strop zodpovednosti" }],
+          verificationNotes: "Nálezy sú konzistentné.",
+        },
+      },
+    });
+    expect(subject).toContain("zmluva.docx");
+    expect(html).toContain("Vylúčenie zodpovednosti");
+    expect(html).toContain("§ 386 Obchodného zákonníka");
+    expect(html).toContain("Doplniť vzájomný strop.");
+    expect(html).toContain("Hĺbková analýza (Mike OS)");
+    expect(html).toContain("Prevod IP bez odplaty");
+    expect(html).toContain("Vyžiadať strop zodpovednosti");
+    expect(html).toContain("Otvoriť kontrolu a podpísať");
+  });
+
+  it("degrades to the short note when no report data is given", () => {
+    const { html } = emailNewContractForReview({ contractName: "x.pdf", reviewUrl: "https://app.bod.legal/admin/review/1" });
+    expect(html).toContain("Otvoriť kontrolu");
+    expect(html).not.toContain("Hĺbková analýza");
+  });
+});
+
 describe("house rules for every template", () => {
   it.each(allTemplates().map(t => [t.name, t] as const))("%s carries the operator footer and the 30-day deletion note", (_name, t) => {
     expect(t.html).toContain("KILIAN LEGAL s.r.o.");

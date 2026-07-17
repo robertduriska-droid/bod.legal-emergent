@@ -14,8 +14,9 @@
 import type { Express, Request, Response } from "express";
 import { eq } from "drizzle-orm";
 import { contracts } from "../../drizzle/schema";
+import { getClausesByContractId, getReportByContractId, getDeepAnalysisByContract, isClauseExcluded } from "../db";
 import { getDb } from "../db";
-import { sendEmail, escapeHtml } from "../email";
+import { sendEmail, escapeHtml, emailNewContractForReview } from "../email";
 import { ENV } from "./env";
 import { getAppBaseUrl } from "../email";
 
@@ -77,6 +78,54 @@ export function startReviewReminder(): void {
 }
 
 /**
+ * Rebuild the full report from stored data and re-send it to the review inbox
+ * for every contract still in review. This is the rescue path for contracts
+ * whose original completion e-mail (which carries the report) was lost, and
+ * the path that lets the reviewer re-read a report on demand.
+ */
+export async function resendFullReports(): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  const to = process.env.OWNER_EMAIL || ENV.sendgridFromEmail;
+  if (!to) return 0;
+
+  const waiting = await db.select().from(contracts).where(eq(contracts.status, "in_review"));
+  const baseUrl = getAppBaseUrl();
+  let sent = 0;
+  for (const c of waiting) {
+    const [clauses, report, deep] = await Promise.all([
+      getClausesByContractId(c.id).then(cl => cl.filter(x => !isClauseExcluded(x))).catch(() => []),
+      getReportByContractId(c.id).catch(() => undefined),
+      getDeepAnalysisByContract(c.id).catch(() => null),
+    ]);
+    const rs = (report?.riskSummary || null) as { high?: number; medium?: number; low?: number; negotiationChecklist?: string[] } | null;
+    const { subject, html } = emailNewContractForReview({
+      contractName: c.fileName,
+      reviewUrl: `${baseUrl}/admin/review/${c.id}`,
+      plan: c.plan,
+      report: {
+        summary: report?.summary ?? null,
+        recommendation: report?.recommendation ?? null,
+        riskSummary: rs ? { high: rs.high || 0, medium: rs.medium || 0, low: rs.low || 0 } : null,
+        negotiationChecklist: rs?.negotiationChecklist || null,
+        clauses: clauses.map(cl => ({
+          title: cl.title, riskLevel: (cl.overriddenRiskLevel || cl.riskLevel) as string,
+          excerpt: cl.excerpt, finding: cl.finding, legalBasis: cl.legalBasis, suggestedEdit: cl.suggestedEdit,
+        })),
+        deep: deep ? {
+          riskScore: deep.riskScore,
+          dealBreakers: (deep.dealBreakers as { title?: string; detail?: string }[]) || [],
+          missingProvisions: (deep.missingProvisions as { title?: string; detail?: string }[]) || [],
+          verificationNotes: deep.verificationNotes,
+        } : null,
+      },
+    });
+    if (await sendEmail({ to, subject, html })) sent++;
+  }
+  return sent;
+}
+
+/**
  * Manual flush endpoint. GET /api/debug/review-reminder resets the throttle
  * and sweeps immediately, so a waiting contract can be re-alerted on demand
  * (used to confirm delivery and to rescue a queue whose one-shot alert was
@@ -87,5 +136,10 @@ export function registerReviewReminderDebug(app: Express): void {
     lastRemindedAt = 0;
     const waiting = await sweepReviewQueue().catch(() => -1);
     res.json({ waiting, sentTo: process.env.OWNER_EMAIL || ENV.sendgridFromEmail || null });
+  });
+  // Re-send the FULL report (not just the digest) for every waiting contract.
+  app.get("/api/debug/resend-reports", async (_req: Request, res: Response) => {
+    const sent = await resendFullReports().catch(() => -1);
+    res.json({ sent, sentTo: process.env.OWNER_EMAIL || ENV.sendgridFromEmail || null });
   });
 }

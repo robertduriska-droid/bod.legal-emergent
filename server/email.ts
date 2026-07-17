@@ -209,21 +209,107 @@ export function emailAnalysisAwaitingReview(params: {
 }
 
 /** Admin notice: a new contract finished AI analysis and needs lawyer review. */
+/** Colour chip for a clause risk level, used inside the readable report. */
+function riskChip(level: string): string {
+  const map: Record<string, [string, string, string]> = {
+    high: ["#f9e9e5", "#b3432f", "Vysoké"],
+    medium: ["#f8efdc", "#b07818", "Stredné"],
+    low: ["#e8f2ec", "#2e7d4f", "Nízke"],
+  };
+  const [bg, fg, label] = map[level] || ["#eee", "#555", level];
+  return `<span style="background:${bg};color:${fg};font-size:12px;font-weight:700;border-radius:99px;padding:2px 10px;">${label}</span>`;
+}
+
+export interface ReviewReportData {
+  summary?: string | null;
+  recommendation?: string | null;
+  riskSummary?: { high: number; medium: number; low: number } | null;
+  negotiationChecklist?: string[] | null;
+  clauses?: {
+    title: string;
+    riskLevel: string;
+    excerpt?: string | null;
+    finding?: string | null;
+    legalBasis?: string | null;
+    suggestedEdit?: string | null;
+  }[];
+  deep?: {
+    riskScore?: number;
+    dealBreakers?: { title?: string; detail?: string }[];
+    missingProvisions?: { title?: string; detail?: string }[];
+    verificationNotes?: string | null;
+  } | null;
+}
+
+/**
+ * Full report rendered into the review e-mail body, so the reviewer can read
+ * the whole analysis in the inbox without opening the app. Everything is
+ * optional: when the rich data is absent the e-mail degrades to the short
+ * "waiting for review" note plus the button.
+ */
+function reportBodyHtml(r: ReviewReportData): string {
+  const parts: string[] = [];
+  const rs = r.riskSummary;
+  if (rs) {
+    parts.push(`<p style="margin:14px 0 6px;font-weight:700;">Sumár rizík</p>
+      <p style="margin:0 0 14px;">${riskChip("high")} ${rs.high} &nbsp; ${riskChip("medium")} ${rs.medium} &nbsp; ${riskChip("low")} ${rs.low}</p>`);
+  }
+  if (r.summary) parts.push(`<p style="margin:14px 0 4px;font-weight:700;">Zhrnutie</p><p style="margin:0 0 14px;white-space:pre-line;">${escapeHtml(r.summary)}</p>`);
+  if (r.recommendation) parts.push(`<p style="margin:14px 0 4px;font-weight:700;">Odporúčanie</p><p style="margin:0 0 14px;white-space:pre-line;">${escapeHtml(r.recommendation)}</p>`);
+
+  const deep = r.deep;
+  const checklist = (r.negotiationChecklist || []).filter(x => x && x.trim());
+  if (deep || checklist.length) {
+    parts.push(`<p style="margin:20px 0 4px;font-weight:700;">Hĺbková analýza (Mike OS)</p>`);
+    if (deep?.riskScore) parts.push(`<p style="margin:0 0 8px;">Celkové rizikové skóre: <strong>${Math.min(5, Math.max(1, deep.riskScore))} z 5</strong></p>`);
+    const list = (title: string, items: { title?: string; detail?: string }[], color?: string) => {
+      if (!items?.length) return;
+      parts.push(`<p style="margin:10px 0 4px;font-weight:700;">${title}</p><ul style="margin:0 0 10px;padding-left:18px;">`
+        + items.map(i => `<li style="margin:3px 0;">${i.title ? `<strong${color ? ` style="color:${color}"` : ""}>${escapeHtml(i.title)}</strong>${i.detail ? ": " : ""}` : ""}${i.detail ? escapeHtml(i.detail) : ""}</li>`).join("")
+        + `</ul>`);
+    };
+    list("Kritické riziká (deal-breakers)", deep?.dealBreakers || [], "#b3432f");
+    list("Chýbajúce ustanovenia", deep?.missingProvisions || []);
+    if (checklist.length) parts.push(`<p style="margin:10px 0 4px;font-weight:700;">Kontrolný zoznam na rokovanie</p><ul style="margin:0 0 10px;padding-left:18px;">${checklist.map(c => `<li style="margin:3px 0;">${escapeHtml(c)}</li>`).join("")}</ul>`);
+    if (deep?.verificationNotes) parts.push(`<p style="margin:10px 0 4px;font-weight:700;">Poznámky z kontroly konzistencie</p><p style="margin:0 0 14px;font-style:italic;">${escapeHtml(deep.verificationNotes)}</p>`);
+  }
+
+  const clauses = r.clauses || [];
+  if (clauses.length) {
+    parts.push(`<p style="margin:20px 0 8px;font-weight:700;">Detailné nálezy (${clauses.length})</p>`);
+    for (const c of clauses) {
+      parts.push(`<div style="border-left:3px solid #e3e0d9;padding:2px 0 2px 14px;margin:0 0 16px;">
+        <p style="margin:0 0 4px;">${riskChip(c.riskLevel)} <strong>${escapeHtml(c.title)}</strong></p>
+        ${c.excerpt ? `<p style="margin:4px 0;color:#807d75;font-size:13px;font-style:italic;">„${escapeHtml(c.excerpt)}"</p>` : ""}
+        ${c.finding ? `<p style="margin:4px 0;white-space:pre-line;">${escapeHtml(c.finding)}</p>` : ""}
+        ${c.legalBasis ? `<p style="margin:4px 0;font-size:13px;"><strong>Právny základ:</strong> ${escapeHtml(c.legalBasis)}</p>` : ""}
+        ${c.suggestedEdit ? `<p style="margin:4px 0;font-size:13px;"><strong>Navrhovaná úprava:</strong> ${escapeHtml(c.suggestedEdit)}</p>` : ""}
+      </div>`);
+    }
+  }
+  return parts.join("\n");
+}
+
 export function emailNewContractForReview(params: {
   contractName: string;
   reviewUrl: string;
   uploaderName?: string;
+  plan?: string;
+  report?: ReviewReportData;
 }) {
-  const { contractName, reviewUrl, uploaderName } = params;
+  const { contractName, reviewUrl, uploaderName, plan, report } = params;
+  const body = report ? reportBodyHtml(report) : "";
   return {
-    subject: `[bod.legal] Nová zmluva na kontrolu: ${contractName}`,
+    subject: `[bod.legal] Na kontrolu: ${contractName}`,
     html: emailLayout(`
-        <p>Nová zmluva bola nahraná a AI analýza je dokončená. Čaká na kontrolu advokátskou kanceláriou alebo advokátom.</p>
+        <p>Nová zmluva bola nahraná a AI analýza je dokončená. Čaká na kontrolu advokátskou kanceláriou alebo advokátom. Celý report je nižšie, podpísať ho môžete cez tlačidlo.</p>
         <table style="margin: 16px 0; border-collapse: collapse;">
           <tr><td style="padding: 4px 12px 4px 0; color: #666;">Zmluva:</td><td style="padding: 4px 0;"><strong>${escapeHtml(contractName)}</strong></td></tr>
+          ${plan ? `<tr><td style="padding: 4px 12px 4px 0; color: #666;">Plán:</td><td style="padding: 4px 0;">${escapeHtml(plan)}</td></tr>` : ""}
           ${uploaderName ? `<tr><td style="padding: 4px 12px 4px 0; color: #666;">Nahral:</td><td style="padding: 4px 0;">${escapeHtml(uploaderName)}</td></tr>` : ""}
         </table>
-        ${buttonHtml(reviewUrl, "Otvoriť kontrolu")}`),
+        ${buttonHtml(reviewUrl, "Otvoriť kontrolu a podpísať")}
+        ${body ? `<hr style="border:none;border-top:1px solid #e3e0d9;margin:22px 0;">${body}` : ""}`),
   };
 }
 

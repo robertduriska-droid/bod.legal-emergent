@@ -1045,6 +1045,25 @@ export async function analyzeContract(contractId: number): Promise<void> {
         contractName: contract.fileName,
         reviewUrl: `${baseUrl}/admin/review/${contract.id}`,
         uploaderName: user?.name || undefined,
+        plan: contract.plan,
+        // The whole report travels in the e-mail so the reviewer can read it
+        // in the inbox; the fields mirror what the app and the PDF/DOCX show.
+        report: {
+          summary: analysis.summary,
+          recommendation: analysis.recommendation,
+          riskSummary: { high: analysis.riskSummary.high, medium: analysis.riskSummary.medium, low: analysis.riskSummary.low },
+          negotiationChecklist: analysis.riskSummary.negotiationChecklist,
+          clauses: clauseRecords.map(c => ({
+            title: c.title, riskLevel: c.riskLevel, excerpt: c.excerpt,
+            finding: c.finding, legalBasis: c.legalBasis, suggestedEdit: c.suggestedEdit,
+          })),
+          deep: {
+            riskScore: analysis.riskScore,
+            dealBreakers: analysis.dealBreakers,
+            missingProvisions: analysis.riskSummary.missingClauses.map(m => ({ title: m.name, detail: m.why })),
+            verificationNotes: analysis.verificationNotes || null,
+          },
+        },
       });
       sendEmail({ to: lawyerEmail, subject, html }).catch(err => console.warn("[Email] New review failed:", err));
 
