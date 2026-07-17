@@ -374,8 +374,8 @@ describe("DOCX verification honesty", () => {
 
     const xml = await extractDocxXml(res.body as Buffer);
     expect(xml).toContain("PRACOVNÁ VERZIA");
-    expect(xml).toContain("čaká na overenie advokátom");
-    expect(xml).not.toContain("overený advokátom");
+    expect(xml).toContain("čaká na overenie advokátskou kanceláriou alebo advokátom");
+    expect(xml).not.toContain("overený advokátskou kanceláriou alebo advokátom");
   });
 
   it("signed DOCX keeps the verified wording and has no draft label", async () => {
@@ -391,7 +391,7 @@ describe("DOCX verification honesty", () => {
     expect(res.status).toBe(200);
 
     const xml = await extractDocxXml(res.body as Buffer);
-    expect(xml).toContain("overený advokátom");
+    expect(xml).toContain("overený advokátskou kanceláriou alebo advokátom");
     expect(xml).toContain("JUDr. Test");
     expect(xml).not.toContain("PRACOVNÁ VERZIA");
   });
@@ -413,7 +413,7 @@ describe("DOCX verification honesty", () => {
     const xml = await extractDocxXml(res.body as Buffer);
     expect(xml).toContain("PRACOVNÁ VERZIA");
     expect(xml).not.toContain("Overil: ");
-    expect(xml).not.toContain("overený advokátom");
+    expect(xml).not.toContain("overený advokátskou kanceláriou alebo advokátom");
   });
 
   it("unsigned final DOCX also carries the draft label and unsigned disclaimer", async () => {
@@ -431,7 +431,7 @@ describe("DOCX verification honesty", () => {
 
     const xml = await extractDocxXml(res.body as Buffer);
     expect(xml).toContain("PRACOVNÁ VERZIA");
-    expect(xml).toContain("čaká na overenie advokátom");
-    expect(xml).not.toContain("overený advokátom");
+    expect(xml).toContain("čaká na overenie advokátskou kanceláriou alebo advokátom");
+    expect(xml).not.toContain("overený advokátskou kanceláriou alebo advokátom");
   });
 });

@@ -67,7 +67,7 @@ export const en: Translations = {
     step1Desc: "Upload a PDF or DOCX. Choose a plan based on your contract's scope and pay online.",
     step2Title: "2. AI analysis",
     step2Desc: "AI analyzes every clause, identifies risks, and adds references to Slov-Lex and EUR-Lex.",
-    step3Title: "3. Lawyer verification",
+    step3Title: "3. Law firm or attorney verification",
     step3Desc: "With Standard and Premium plans, a lawyer verifies findings, adds notes, and signs the report.",
   },
   whyNot: {
@@ -75,7 +75,7 @@ export const en: Translations = {
     subtitle: "General AI tools don't understand the Slovak legal system. bod.legal is built on Slovak and European legal regulations.",
     feature1Title: "Slov-Lex citations",
     feature1Desc: "Every finding references a specific paragraph of applicable law.",
-    feature2Title: "Lawyer verification",
+    feature2Title: "Law firm or attorney verification",
     feature2Desc: "With Standard and Premium reviews, a lawyer verifies AI outputs and takes responsibility for accuracy.",
     feature3Title: "Attorney-client privilege",
     feature3Desc: "Your documents are protected by statutory confidentiality obligations.",
@@ -99,7 +99,7 @@ export const en: Translations = {
     row4Label: "Analysis format",
     row4Bod: "Clause by clause",
     row4Trad: "Summary opinion",
-    row5Label: "Lawyer verification",
+    row5Label: "Law firm or attorney verification",
     row5Bod: "Standard and above",
     row5Trad: "Yes",
     row6Label: "Suggested edits (redline)",
@@ -123,7 +123,7 @@ export const en: Translations = {
     standardTime: "within 24 hours",
     standardFeatures: [
       "Everything from Basic review",
-      "Lawyer verification (SAK)",
+      "Law firm or attorney verification (SAK)",
       "Specific edit suggestions",
       "Priority support",
       "Up to 50 pages",
@@ -162,7 +162,7 @@ export const en: Translations = {
       },
       {
         question: "Is the analysis legally binding?",
-        answer: "The report serves as an informational basis for your decision. With Standard and Premium plans, it is verified by a lawyer registered with the Slovak Bar Association.",
+        answer: "The report serves as an informational basis for your decision. With Standard and Premium plans, it is verified by the law firm or an attorney registered with the Slovak Bar Association.",
       },
       {
         question: "How is confidentiality ensured?",
@@ -198,7 +198,7 @@ export const en: Translations = {
     button: "Upload contract",
   },
   footer: {
-    description: "AI contract review with lawyer verification. Operated by KILIAN LEGAL s.r.o.",
+    description: "AI contract review with law firm or attorney verification. Operated by KILIAN LEGAL s.r.o.",
     product: "Product",
     legalInfo: "Legal information",
     company: "Company",
@@ -237,7 +237,7 @@ export const en: Translations = {
     uploadFreePreview: "Upload and get free preview",
     uploadAndPay: "Upload and proceed to payment",
     continueLabel: "Continue",
-    basicNote: "Free scan: AI analyzes your contract and shows the top 3 risks for free, no sign-in and no card. For a full report with lawyer verification, choose the Standard or Premium review.",
+    basicNote: "Free scan: AI analyzes your contract and shows the top 3 risks for free, no sign-in and no card. For a full report with law firm or attorney verification, choose the Standard or Premium review.",
     paidNote: "After uploading, you will be redirected to the secure Stripe payment gateway. Analysis starts automatically after successful payment.",
     testCardNote: "Test mode: use card 4242 4242 4242 4242, any future date and CVC.",
     loginNote: "After signing in you will finish your order, your selections stay saved.",
@@ -303,7 +303,7 @@ export const en: Translations = {
     desc: "Complete contract memory implementation from inventory to monitoring.",
     includes: [
       "Inventory and digitization of all existing contracts",
-      "AI analysis + lawyer verification for every contract",
+      "AI analysis + law firm or attorney verification for every contract",
       "Creation of a company Playbook (rules for future contracts)",
       "Expiration and renewal monitoring setup",
       "Team training on system usage",
@@ -319,7 +319,7 @@ export const en: Translations = {
         name: "Check",
         price: "from 249 EUR",
         desc: "One-time review of a single contract",
-        features: ["AI analysis + lawyer verification", "Report within 24 hours", "Slov-Lex & EUR-Lex citations", "PDF + DOCX export"],
+        features: ["AI analysis + law firm or attorney verification", "Report within 24 hours", "Slov-Lex & EUR-Lex citations", "PDF + DOCX export"],
         cta: "Upload contract",
       },
       {

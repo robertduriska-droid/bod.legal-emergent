@@ -178,7 +178,7 @@ export function emailReportReady(params: {
         ${riskSummaryHtml(riskSummary)}
         ${findingsListHtml(topFindings)}
         ${buttonHtml(reportUrl, "Zobraziť report")}
-        <p style="color: #666; font-size: 14px;">Tento report vygenerovala AI systému bod.legal. Pri Štandardnej a Prémiovej kontrole nálezy overuje a podpisuje advokát.</p>
+        <p style="color: #666; font-size: 14px;">Tento report vygenerovala AI systému bod.legal. Pri Štandardnej a Prémiovej kontrole nálezy overuje a podpisuje advokátska kancelária alebo advokát.</p>
         <p style="color: #666; font-size: 14px;">Platíte pevnú cenu vopred. Žiadna hodinová sadzba, žiadne prekvapenie na faktúre.</p>`),
   };
 }
@@ -197,7 +197,7 @@ export function emailAnalysisAwaitingReview(params: {
   const { contractName, reportUrl, recipientName, topFindings, riskSummary } = params;
 
   return {
-    subject: `[bod.legal] AI analýza je hotová, advokát ju overuje: ${contractName}`,
+    subject: `[bod.legal] AI analýza je hotová, advokátska kancelária ju overuje: ${contractName}`,
     html: emailLayout(`
         <p>Dobrý deň${recipientName ? ` ${escapeHtml(recipientName)}` : ""},</p>
         <p>AI analýza vašej zmluvy <strong>${escapeHtml(contractName)}</strong> je hotová.</p>
@@ -218,7 +218,7 @@ export function emailNewContractForReview(params: {
   return {
     subject: `[bod.legal] Nová zmluva na kontrolu: ${contractName}`,
     html: emailLayout(`
-        <p>Nová zmluva bola nahraná a AI analýza je dokončená. Čaká na kontrolu advokátom.</p>
+        <p>Nová zmluva bola nahraná a AI analýza je dokončená. Čaká na kontrolu advokátskou kanceláriou alebo advokátom.</p>
         <table style="margin: 16px 0; border-collapse: collapse;">
           <tr><td style="padding: 4px 12px 4px 0; color: #666;">Zmluva:</td><td style="padding: 4px 0;"><strong>${escapeHtml(contractName)}</strong></td></tr>
           ${uploaderName ? `<tr><td style="padding: 4px 12px 4px 0; color: #666;">Nahral:</td><td style="padding: 4px 0;">${escapeHtml(uploaderName)}</td></tr>` : ""}
@@ -274,7 +274,7 @@ export function emailFreeScanFollowUp(
         <ul style="margin: 16px 0; padding-left: 20px; list-style: none;">
           ${findingsHtml}
         </ul>
-        <p>Plný report so všetkými nálezmi a overením advokáta získate za pevnú cenu.</p>
+        <p>Plný report so všetkými nálezmi a overením advokátskou kanceláriou alebo advokátom získate za pevnú cenu.</p>
         ${buttonHtml(contractUrl, "Zobraziť moju zmluvu")}`),
   };
 }

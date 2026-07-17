@@ -93,7 +93,7 @@ describe("emailReportReady (basic plan deliverable)", () => {
 
   it("never claims blanket lawyer verification", () => {
     expect(rendered.html).not.toContain("Každý report overuje advokát");
-    expect(rendered.html).toContain("Pri Štandardnej a Prémiovej kontrole nálezy overuje a podpisuje advokát.");
+    expect(rendered.html).toContain("Pri Štandardnej a Prémiovej kontrole nálezy overuje a podpisuje advokátska kancelária alebo advokát.");
   });
 
   it("carries the fixed-price ROI line without fabricated comparisons", () => {
@@ -116,7 +116,7 @@ describe("emailAnalysisAwaitingReview (in_review, honest state)", () => {
   });
 
   it("has the honest subject and preliminary-findings button", () => {
-    expect(rendered.subject).toContain("AI analýza je hotová, advokát ju overuje");
+    expect(rendered.subject).toContain("AI analýza je hotová, advokátska kancelária ju overuje");
     expect(rendered.html).toContain("Zobraziť predbežné nálezy");
   });
 
@@ -169,7 +169,7 @@ describe("emailFreeScanFollowUp (anonymous funnel)", () => {
 
   it("upsells the paid tier without claiming the free scan is verified", () => {
     const { html } = emailFreeScanFollowUp({ id: 5, fileName: "najomna.pdf" }, SAMPLE_FINDINGS);
-    expect(html).toContain("Plný report so všetkými nálezmi a overením advokáta získate za pevnú cenu.");
+    expect(html).toContain("Plný report so všetkými nálezmi a overením advokátskou kanceláriou alebo advokátom získate za pevnú cenu.");
     expect(html).not.toContain("overený advokátom");
     expect(html).not.toContain("podpísal");
   });

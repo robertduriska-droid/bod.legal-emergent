@@ -416,8 +416,8 @@ describe("PDF verification honesty", () => {
 
     const text = await extractPdfText(res.body);
     expect(text).toContain("PRACOVNÁ VERZIA");
-    expect(text).toContain("čaká na overenie advokátom");
-    expect(text).not.toContain("overený advokátom");
+    expect(text).toContain("čaká na overenie advokátskou kanceláriou alebo advokátom");
+    expect(text).not.toContain("overený advokátskou kanceláriou alebo advokátom");
   });
 
   it("signed report keeps the verified wording and has no draft watermark", async () => {
@@ -444,7 +444,7 @@ describe("PDF verification honesty", () => {
     expect(res.status).toBe(200);
 
     const text = await extractPdfText(res.body);
-    expect(text).toContain("overený advokátom");
+    expect(text).toContain("overený advokátskou kanceláriou alebo advokátom");
     expect(text).toContain("JUDr. Test");
     expect(text).not.toContain("PRACOVNÁ VERZIA");
   });

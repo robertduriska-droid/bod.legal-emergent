@@ -2,7 +2,7 @@ import type { Translations } from "./types";
 
 export const sk: Translations = {
   meta: {
-    title: "bod.legal | AI kontrola zmlúv s overením advokátom",
+    title: "bod.legal | AI kontrola zmlúv s overením advokátskou kanceláriou alebo advokátom",
     description: "Nahrajte zmluvu a do 24 hodín dostanete report s identifikovanými rizikami, odkazmi na právne predpisy a návrhmi úprav.",
   },
   header: {
@@ -24,7 +24,7 @@ export const sk: Translations = {
   hero: {
     titleLine1: "Dostali ste zmluvu",
     titleLine2: "na podpis?",
-    subtitle: "Nahrajte zmluvu a do 24 hodín dostanete report s rizikami, odkazmi na zákony a návrhmi úprav. Pri Štandardnej a Prémiovej kontrole report overí a podpíše advokát.",
+    subtitle: "Nahrajte zmluvu a do 24 hodín dostanete report s rizikami, odkazmi na zákony a návrhmi úprav. Pri Štandardnej a Prémiovej kontrole report overí a podpíše advokátska kancelária alebo advokát.",
     ctaUpload: "Nahrať zmluvu",
     ctaPricing: "Pozrieť cenník",
     ctaTrial: "Vyskúšať zadarmo",
@@ -123,7 +123,7 @@ export const sk: Translations = {
     standardTime: "do 24 hodín",
     standardFeatures: [
       "Všetko zo Základnej kontroly",
-      "Overenie advokátom (SAK)",
+      "Overenie kanceláriou alebo advokátom (SAK)",
       "Návrhy konkrétnych úprav",
       "Prioritná podpora",
       "Do 50 strán",
@@ -162,7 +162,7 @@ export const sk: Translations = {
       },
       {
         question: "Je analýza právne záväzná?",
-        answer: "Report slúži ako informačný podklad pre vaše rozhodnutie. Pri Štandardnej a Prémiovej kontrole je overený advokátom zapísaným v SAK.",
+        answer: "Report slúži ako informačný podklad pre vaše rozhodnutie. Pri Štandardnej a Prémiovej kontrole je overený advokátskou kanceláriou alebo advokátom zapísaným v SAK.",
       },
       {
         question: "Ako je zabezpečená dôvernosť?",
@@ -178,7 +178,7 @@ export const sk: Translations = {
       },
       {
         question: "Čo ak sa AI pomýli? Kto zodpovedá?",
-        answer: "Pri Štandardnej a Prémiovej kontrole nálezy overuje advokát. Za overený report zodpovedá advokátska kancelária, ktorá má zákonné poistenie zodpovednosti. Bezplatný sken je informačný náhľad bez overenia.",
+        answer: "Pri Štandardnej a Prémiovej kontrole nálezy overuje advokátska kancelária alebo advokát. Za overený report zodpovedá advokátska kancelária, ktorá má zákonné poistenie zodpovednosti. Bezplatný sken je informačný náhľad bez overenia.",
       },
       {
         question: "Je bezplatný sken naozaj zadarmo?",
@@ -198,7 +198,7 @@ export const sk: Translations = {
     button: "Nahrať zmluvu",
   },
   footer: {
-    description: "Kontrola zmlúv s AI a overením advokátom. Prevádzkované KILIAN LEGAL s.r.o.",
+    description: "Kontrola zmlúv s AI a overením advokátskou kanceláriou alebo advokátom. Prevádzkované KILIAN LEGAL s.r.o.",
     product: "Produkt",
     legalInfo: "Právne informácie",
     company: "Spoločnosť",
@@ -303,7 +303,7 @@ export const sk: Translations = {
     desc: "Kompletná implementácia zmluvnej pamäte od inventúry po monitoring.",
     includes: [
       "Inventúra a digitalizácia všetkých existujúcich zmlúv",
-      "AI analýza + overenie advokátom pre každú zmluvu",
+      "AI analýza + overenie advokátskou kanceláriou alebo advokátom pre každú zmluvu",
       "Vytvorenie firemného Playbooku (pravidlá pre budúce zmluvy)",
       "Nastavenie monitoringu exspirácií a obnov",
       "Školenie tímu na používanie systému",
@@ -319,7 +319,7 @@ export const sk: Translations = {
         name: "Check",
         price: "od 249 eur",
         desc: "Jednorazová kontrola jednej zmluvy",
-        features: ["AI analýza + overenie advokátom", "Report do 24 hodín", "Slov-Lex a EUR-Lex citácie", "PDF + DOCX export"],
+        features: ["AI analýza + overenie advokátskou kanceláriou alebo advokátom", "Report do 24 hodín", "Slov-Lex a EUR-Lex citácie", "PDF + DOCX export"],
         cta: "Nahrať zmluvu",
       },
       {
