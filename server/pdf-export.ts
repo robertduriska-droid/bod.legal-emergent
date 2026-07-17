@@ -3,7 +3,7 @@ import { jsPDF } from "jspdf";
 import QRCode from "qrcode";
 import { sdk } from "./_core/sdk";
 import { invokeLLM } from "./_core/llm";
-import { getContractById, getClausesByContractId, getReportByContractId, isClauseExcluded } from "./db";
+import { getContractById, getClausesByContractId, getReportByContractId, getDeepAnalysisByContract, isClauseExcluded } from "./db";
 import { getInterRegularBase64, getInterBoldBase64 } from "./fonts/font-data";
 import { signOffLines } from "@shared/advokat";
 import { aiOutputStatement, AI_MARKING_KEYWORDS, AI_MARKING_CREATOR } from "@shared/aiMarking";
@@ -27,6 +27,12 @@ const LABELS = {
     summaryTitle: "Zhrnutie",
     recommendationTitle: "Odporúčanie",
     executiveSummaryTitle: "Manažérske zhrnutie",
+    deepTitle: "Hĺbková analýza (Mike OS)",
+    deepScore: (n: number) => `Celkové rizikové skóre: ${n} z 5`,
+    dealBreakersTitle: "Kritické riziká (deal-breakers)",
+    missingTitle: "Chýbajúce ustanovenia",
+    checklistTitle: "Kontrolný zoznam na rokovanie",
+    verificationNotesTitle: "Poznámky z kontroly konzistencie",
     findingsTitle: (n: number) => `Detailné nálezy (${n} klauzúl)`,
     legalBasis: "Právny základ:",
     suggestedEdit: "Navrhovaná úprava:",
@@ -64,6 +70,12 @@ const LABELS = {
     summaryTitle: "Summary",
     recommendationTitle: "Recommendation",
     executiveSummaryTitle: "Executive Summary",
+    deepTitle: "Deep Analysis (Mike OS)",
+    deepScore: (n: number) => `Overall risk score: ${n} of 5`,
+    dealBreakersTitle: "Deal-breakers",
+    missingTitle: "Missing provisions",
+    checklistTitle: "Negotiation checklist",
+    verificationNotesTitle: "Verification notes",
     findingsTitle: (n: number) => `Detailed Findings (${n} clauses)`,
     legalBasis: "Legal basis:",
     suggestedEdit: "Suggested edit:",
@@ -152,7 +164,8 @@ export function registerPdfExport(app: Express) {
       // Generate PDF with online report URL for QR code (locale-aware)
       const origin = req.headers.origin || `${req.protocol}://${req.headers.host}`;
       const reportUrl = lang === "en" ? `${origin}/en/report/${contractId}` : `${origin}/report/${contractId}`;
-      const pdf = await generateReportPdf(contract, clauses, report, reportUrl, lang, executiveSummary);
+      const deep = await getDeepAnalysisByContract(contractId).catch(() => null);
+      const pdf = await generateReportPdf(contract, clauses, report, reportUrl, lang, executiveSummary, deep);
       const pdfBuffer = Buffer.from(pdf.output("arraybuffer"));
 
       // Send PDF response
@@ -242,7 +255,8 @@ async function generateReportPdf(
   report: any,
   reportUrl: string,
   lang: Lang,
-  executiveSummary: string | null
+  executiveSummary: string | null,
+  deep: any = null
 ): Promise<jsPDF> {
   const L = LABELS[lang];
   // Verification is only claimed once the lawyer signed the report.
@@ -456,6 +470,71 @@ async function generateReportPdf(
       y += 5;
     }
     y += 8;
+  }
+
+  // ─── Deep analysis (Mike OS) ──────────────────────────────────────────────
+  // The client pays for this layer; the PDF is the artifact they keep and
+  // forward, so it must carry it, not just the web report.
+  {
+    const rs = report.riskSummary as { negotiationChecklist?: string[] } | null;
+    const checklist = Array.isArray(rs?.negotiationChecklist)
+      ? rs!.negotiationChecklist!.filter((x: unknown) => typeof x === "string" && (x as string).trim())
+      : [];
+    const breakers: { title?: string; detail?: string }[] = Array.isArray(deep?.dealBreakers) ? deep.dealBreakers : [];
+    const missing: { title?: string; detail?: string }[] = Array.isArray(deep?.missingProvisions) ? deep.missingProvisions : [];
+
+    const writeWrapped = (text: string, size: number, font: "normal" | "bold", color?: [number, number, number]) => {
+      doc.setFontSize(size);
+      doc.setFont("Inter", font);
+      if (color) doc.setTextColor(...color); else doc.setTextColor(20, 20, 20);
+      for (const line of doc.splitTextToSize(text, contentWidth)) {
+        checkPage(6);
+        doc.text(line, margin, y);
+        y += 5;
+      }
+      doc.setTextColor(20, 20, 20);
+    };
+
+    if (deep || checklist.length) {
+      checkPage(30);
+      doc.setFontSize(14);
+      doc.setFont("Inter", "bold");
+      doc.text(L.deepTitle, margin, y);
+      y += 8;
+
+      if (deep?.riskScore) {
+        writeWrapped(L.deepScore(Math.min(5, Math.max(1, Number(deep.riskScore) || 3))), 10, "bold");
+        y += 3;
+      }
+      if (breakers.length) {
+        writeWrapped(L.dealBreakersTitle, 11, "bold");
+        for (const b of breakers) {
+          if (b?.title) writeWrapped(`• ${b.title}`, 10, "bold", [179, 67, 47]);
+          if (b?.detail) writeWrapped(String(b.detail), 10, "normal");
+          y += 1;
+        }
+        y += 3;
+      }
+      if (missing.length) {
+        writeWrapped(L.missingTitle, 11, "bold");
+        for (const m of missing) {
+          if (m?.title) writeWrapped(`• ${m.title}`, 10, "bold");
+          if (m?.detail) writeWrapped(String(m.detail), 10, "normal");
+          y += 1;
+        }
+        y += 3;
+      }
+      if (checklist.length) {
+        writeWrapped(L.checklistTitle, 11, "bold");
+        for (const item of checklist) writeWrapped(`• ${item}`, 10, "normal");
+        y += 3;
+      }
+      if (deep?.verificationNotes) {
+        writeWrapped(L.verificationNotesTitle, 11, "bold");
+        writeWrapped(String(deep.verificationNotes), 10, "normal");
+      }
+      y += 8;
+    }
   }
 
   // ─── Clause Findings ──────────────────────────────────────────────────────

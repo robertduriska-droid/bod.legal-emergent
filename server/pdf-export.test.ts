@@ -17,6 +17,7 @@ vi.mock("./db", () => ({
   getContractById: vi.fn(),
   getClausesByContractId: vi.fn(),
   getReportByContractId: vi.fn(),
+  getDeepAnalysisByContract: vi.fn().mockResolvedValue(null),
   isClauseExcluded: (c: { lawyerApproved: number | null; lawyerAnnotation: string | null }) =>
     c.lawyerApproved === 0 && (c.lawyerAnnotation || "").startsWith("Vyradené advokátom"),
 }));

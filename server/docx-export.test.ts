@@ -16,17 +16,19 @@ vi.mock("./db", () => ({
   getContractById: vi.fn(),
   getClausesByContractId: vi.fn(),
   getReportByContractId: vi.fn(),
+  getDeepAnalysisByContract: vi.fn().mockResolvedValue(null),
   isClauseExcluded: (c: { lawyerApproved: number | null; lawyerAnnotation: string | null }) =>
     c.lawyerApproved === 0 && (c.lawyerAnnotation || "").startsWith("Vyradené advokátom"),
 }));
 
 import { sdk } from "./_core/sdk";
-import { getContractById, getClausesByContractId, getReportByContractId } from "./db";
+import { getContractById, getClausesByContractId, getReportByContractId, getDeepAnalysisByContract } from "./db";
 
 const mockAuth = sdk.authenticateRequest as ReturnType<typeof vi.fn>;
 const mockGetContract = getContractById as ReturnType<typeof vi.fn>;
 const mockGetClauses = getClausesByContractId as ReturnType<typeof vi.fn>;
 const mockGetReport = getReportByContractId as ReturnType<typeof vi.fn>;
+const mockGetDeep = getDeepAnalysisByContract as ReturnType<typeof vi.fn>;
 
 function createApp() {
   const app = express();
@@ -394,6 +396,34 @@ describe("DOCX verification honesty", () => {
     expect(xml).toContain("overený advokátskou kanceláriou alebo advokátom");
     expect(xml).toContain("JUDr. Test");
     expect(xml).not.toContain("PRACOVNÁ VERZIA");
+  });
+
+  it("carries the Mike OS deep analysis into the paid DOCX", async () => {
+    // The client pays for the deep layer; the DOCX they keep must contain it.
+    mockGetReport.mockResolvedValue({
+      id: 1, contractId: 1, summary: "Zmluva obsahuje riziká.", recommendation: "Odporúčame úpravu.",
+      riskSummary: { high: 1, medium: 0, low: 0, negotiationChecklist: ["Vyžiadajte strop zodpovednosti"] },
+      lawyerName: "JUDr. Test", isSigned: 1,
+    });
+    mockGetDeep.mockResolvedValueOnce({
+      contractId: 1, riskScore: 5,
+      dealBreakers: [{ title: "Prevod IP bez odplaty", detail: "Článok 11.2 prevádza všetky práva bez náhrady." }],
+      missingProvisions: [{ title: "Chýba strop zodpovednosti", detail: "Zmluva nemá žiadne obmedzenie náhrady škody." }],
+      verificationNotes: "Nálezy sú vzájomne konzistentné.",
+    });
+
+    const res = await request(app)
+      .get("/api/contracts/1/report.docx")
+      .buffer(true)
+      .parse(binaryParser);
+    expect(res.status).toBe(200);
+
+    const xml = await extractDocxXml(res.body as Buffer);
+    expect(xml).toContain("Hĺbková analýza (Mike OS)");
+    expect(xml).toContain("Prevod IP bez odplaty");
+    expect(xml).toContain("Chýba strop zodpovednosti");
+    expect(xml).toContain("Vyžiadajte strop zodpovednosti");
+    expect(xml).toContain("Celkové rizikové skóre: 5 / 5");
   });
 
   it("unsigned lawyerName is not presented as verification", async () => {

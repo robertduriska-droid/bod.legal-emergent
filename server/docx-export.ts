@@ -20,7 +20,7 @@ import {
   NumberFormat,
 } from "docx";
 import { sdk } from "./_core/sdk";
-import { getContractById, getClausesByContractId, getReportByContractId, isClauseExcluded } from "./db";
+import { getContractById, getClausesByContractId, getReportByContractId, getDeepAnalysisByContract, isClauseExcluded } from "./db";
 import { signOffLines } from "@shared/advokat";
 import { aiOutputStatement, AI_MARKING_KEYWORDS, AI_MARKING_CREATOR } from "@shared/aiMarking";
 
@@ -41,6 +41,12 @@ const LABELS = {
     low: "Nízke",
     summary: "Zhrnutie",
     recommendation: "Odporúčanie",
+    deepTitle: "Hĺbková analýza (Mike OS)",
+    deepScore: "Celkové rizikové skóre",
+    dealBreakersTitle: "Kritické riziká (deal-breakers)",
+    missingTitle: "Chýbajúce ustanovenia",
+    checklistTitle: "Kontrolný zoznam na rokovanie",
+    verificationNotesTitle: "Poznámky z kontroly konzistencie",
     findings: "Detailné nálezy",
     legalBasis: "Právny základ",
     suggestedEdit: "Navrhovaná úprava",
@@ -73,6 +79,12 @@ const LABELS = {
     low: "Low",
     summary: "Summary",
     recommendation: "Recommendation",
+    deepTitle: "Deep Analysis (Mike OS)",
+    deepScore: "Overall risk score",
+    dealBreakersTitle: "Deal-breakers",
+    missingTitle: "Missing provisions",
+    checklistTitle: "Negotiation checklist",
+    verificationNotesTitle: "Verification notes",
     findings: "Detailed Findings",
     legalBasis: "Legal basis",
     suggestedEdit: "Suggested edit",
@@ -132,7 +144,8 @@ async function generateReportDocx(
   contract: any,
   clauses: any[],
   report: any,
-  lang: Lang
+  lang: Lang,
+  deep: any = null
 ): Promise<Buffer> {
   const l = LABELS[lang];
   // Verification is only claimed once the lawyer signed the report.
@@ -258,6 +271,64 @@ async function generateReportDocx(
   }
 
   // ─── Track Changes Note ────────────────────────────────────────────────────
+  // ─── Deep analysis (Mike OS) ──────────────────────────────────────────────
+  // The client pays for this layer; the DOCX is the artifact they keep and
+  // forward, so it must carry it, not just the web report.
+  {
+    const rs = report.riskSummary as { negotiationChecklist?: string[] } | null;
+    const checklist = Array.isArray(rs?.negotiationChecklist)
+      ? rs!.negotiationChecklist!.filter((x: unknown) => typeof x === "string" && (x as string).trim())
+      : [];
+    const breakers: { title?: string; detail?: string }[] = Array.isArray(deep?.dealBreakers) ? deep.dealBreakers : [];
+    const missing: { title?: string; detail?: string }[] = Array.isArray(deep?.missingProvisions) ? deep.missingProvisions : [];
+
+    if (deep || checklist.length) {
+      children.push(
+        new Paragraph({
+          heading: HeadingLevel.HEADING_2,
+          children: [new TextRun({ text: l.deepTitle })],
+          spacing: { after: 100, before: 300 },
+        })
+      );
+      if (deep?.riskScore) {
+        children.push(
+          new Paragraph({
+            children: [new TextRun({ text: `${l.deepScore}: ${Math.min(5, Math.max(1, Number(deep.riskScore) || 3))} / 5`, bold: true })],
+            spacing: { after: 150 },
+          })
+        );
+      }
+      const pushList = (title: string, items: { title?: string; detail?: string }[], titleColor?: string) => {
+        if (!items.length) return;
+        children.push(
+          new Paragraph({ children: [new TextRun({ text: title, bold: true })], spacing: { after: 80, before: 100 } })
+        );
+        for (const it of items) {
+          const runs: TextRun[] = [];
+          if (it?.title) runs.push(new TextRun({ text: `• ${it.title}`, bold: true, ...(titleColor ? { color: titleColor } : {}) }));
+          if (it?.detail) runs.push(new TextRun({ text: `${it?.title ? ": " : "• "}${it.detail}` }));
+          if (runs.length) children.push(new Paragraph({ children: runs, spacing: { after: 60 } }));
+        }
+      };
+      pushList(l.dealBreakersTitle, breakers, "CC0000");
+      pushList(l.missingTitle, missing);
+      if (checklist.length) {
+        children.push(
+          new Paragraph({ children: [new TextRun({ text: l.checklistTitle, bold: true })], spacing: { after: 80, before: 100 } })
+        );
+        for (const item of checklist) {
+          children.push(new Paragraph({ children: [new TextRun({ text: `• ${item}` })], spacing: { after: 60 } }));
+        }
+      }
+      if (deep?.verificationNotes) {
+        children.push(
+          new Paragraph({ children: [new TextRun({ text: l.verificationNotesTitle, bold: true })], spacing: { after: 60, before: 100 } }),
+          new Paragraph({ children: [new TextRun({ text: String(deep.verificationNotes), italics: true })], spacing: { after: 200 } })
+        );
+      }
+    }
+  }
+
   children.push(
     new Paragraph({
       children: [new TextRun({ text: l.trackChangesNote, italics: true, color: "555555", size: 18 })],
@@ -730,7 +801,8 @@ export function registerDocxExport(app: Express) {
         return;
       }
 
-      const buffer = await generateReportDocx(contract, clauses, report, lang);
+      const deep = await getDeepAnalysisByContract(contractId).catch(() => null);
+      const buffer = await generateReportDocx(contract, clauses, report, lang, deep);
 
       const filename = `bod-legal-report-${contractId}-${lang}.docx`;
       res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
