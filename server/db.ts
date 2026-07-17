@@ -696,3 +696,69 @@ export async function markTrialAnalysisUsed(userId: number): Promise<void> {
   await ensureTrialsTable();
   await db.update(trials).set({ freeAnalysisUsed: 1 }).where(eq(trials.userId, userId));
 }
+
+/**
+ * AI quality from the lawyer's own corrections. On a signed report every clause
+ * was reviewed (signing is gated on a full pass), so signed reports are a clean
+ * sample. For each reviewed clause the lawyer either kept it (AI correct),
+ * changed its risk level (AI right that it is a risk, wrong on the level), or
+ * excluded it (AI flagged a non-issue: a false positive).
+ *
+ * MEASURES PRECISION, NOT RECALL: this cannot see what the AI MISSED, because
+ * the review flow has no way to add a finding. Adding that is how recall would
+ * later be measured.
+ */
+/**
+ * Pure derivation of the quality figures from raw counts, extracted so the
+ * arithmetic is unit-tested without a database.
+ */
+export function deriveAiQuality(total: number, falsePositives: number, severityCorrected: number, signedReports: number) {
+  const fp = Math.max(0, falsePositives);
+  const corrected = Math.max(0, severityCorrected);
+  const acceptedAsIs = Math.max(0, total - fp - corrected);
+  return {
+    signedReports,
+    reviewedClauses: total,
+    acceptedAsIs,
+    severityCorrected: corrected,
+    falsePositives: fp,
+    precisionPct: total ? Math.round(((total - fp) / total) * 100) : 0,
+  };
+}
+
+export async function getAiQualityStats(): Promise<{
+  signedReports: number;
+  reviewedClauses: number;
+  acceptedAsIs: number;
+  severityCorrected: number;
+  falsePositives: number;
+  precisionPct: number;
+} | null> {
+  const db = await getDb();
+  if (!db) return null;
+
+  const excludedExpr = sql`(${clauses.lawyerApproved} = 0 and ${clauses.lawyerAnnotation} like 'Vyradené advokátom%')`;
+  const overriddenExpr = sql`(${clauses.overriddenRiskLevel} is not null and ${clauses.overriddenRiskLevel} <> ${clauses.riskLevel})`;
+
+  const rows = await db
+    .select({
+      total: sql<number>`count(*)`,
+      fp: sql<number>`sum(case when ${excludedExpr} then 1 else 0 end)`,
+      corrected: sql<number>`sum(case when not ${excludedExpr} and ${overriddenExpr} then 1 else 0 end)`,
+    })
+    .from(clauses)
+    .innerJoin(reports, eq(reports.contractId, clauses.contractId))
+    .where(eq(reports.isSigned, 1));
+
+  const signedRows = await db
+    .select({ n: sql<number>`count(*)` })
+    .from(reports)
+    .where(eq(reports.isSigned, 1));
+
+  return deriveAiQuality(
+    Number(rows[0]?.total) || 0,
+    Number(rows[0]?.fp) || 0,
+    Number(rows[0]?.corrected) || 0,
+    Number(signedRows[0]?.n) || 0,
+  );
+}

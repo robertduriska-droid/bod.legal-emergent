@@ -12,6 +12,7 @@ import {
   getContractById,
   getContractsByUserId,
   getAllContracts,
+  getAiQualityStats,
   updateContractStatus,
   createClauses,
   getClausesByContractId,
@@ -398,6 +399,11 @@ export const appRouter = router({
     /** Get all contracts (admin only) */
     allContracts: adminProcedure.query(async () => {
       return getAllContracts();
+    }),
+
+    /** AI quality from lawyer corrections on signed reports (precision only). */
+    aiQuality: adminProcedure.query(async () => {
+      return getAiQualityStats();
     }),
 
     /** Get contract detail for review */
