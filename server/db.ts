@@ -712,17 +712,55 @@ export async function markTrialAnalysisUsed(userId: number): Promise<void> {
  * Pure derivation of the quality figures from raw counts, extracted so the
  * arithmetic is unit-tested without a database.
  */
-export function deriveAiQuality(total: number, falsePositives: number, severityCorrected: number, signedReports: number) {
+/**
+ * Insert a finding the lawyer noticed but the AI missed. Marked lawyerAdded=1
+ * and pre-approved, it counts toward recall, never toward precision.
+ */
+export async function createManualFinding(data: {
+  contractId: number;
+  title: string;
+  finding: string;
+  riskLevel: "high" | "medium" | "low";
+  excerpt?: string | null;
+  legalBasis?: string | null;
+  suggestedEdit?: string | null;
+}): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const existing = await db.select().from(clauses).where(eq(clauses.contractId, data.contractId));
+  const nextNumber = existing.reduce((m, c) => Math.max(m, c.clauseNumber), 0) + 1;
+  await db.insert(clauses).values({
+    contractId: data.contractId,
+    clauseNumber: nextNumber,
+    title: data.title,
+    excerpt: data.excerpt ?? null,
+    riskLevel: data.riskLevel,
+    finding: data.finding,
+    suggestedEdit: data.suggestedEdit ?? null,
+    legalBasis: data.legalBasis ?? null,
+    lawyerAdded: 1,
+    lawyerApproved: 1,
+  });
+}
+
+export function deriveAiQuality(total: number, falsePositives: number, severityCorrected: number, misses: number, signedReports: number) {
   const fp = Math.max(0, falsePositives);
   const corrected = Math.max(0, severityCorrected);
+  const miss = Math.max(0, misses);
   const acceptedAsIs = Math.max(0, total - fp - corrected);
+  // Real risks the AI flagged and the lawyer kept (as-is or with the level
+  // corrected). These are the recall numerator; the lawyer-added findings are
+  // the misses the AI should have caught.
+  const aiRealHits = acceptedAsIs + corrected;
   return {
     signedReports,
     reviewedClauses: total,
     acceptedAsIs,
     severityCorrected: corrected,
     falsePositives: fp,
+    misses: miss,
     precisionPct: total ? Math.round(((total - fp) / total) * 100) : 0,
+    recallPct: (aiRealHits + miss) ? Math.round((aiRealHits / (aiRealHits + miss)) * 100) : 0,
   };
 }
 
@@ -732,7 +770,9 @@ export async function getAiQualityStats(): Promise<{
   acceptedAsIs: number;
   severityCorrected: number;
   falsePositives: number;
+  misses: number;
   precisionPct: number;
+  recallPct: number;
 } | null> {
   const db = await getDb();
   if (!db) return null;
@@ -742,9 +782,10 @@ export async function getAiQualityStats(): Promise<{
 
   const rows = await db
     .select({
-      total: sql<number>`count(*)`,
-      fp: sql<number>`sum(case when ${excludedExpr} then 1 else 0 end)`,
-      corrected: sql<number>`sum(case when not ${excludedExpr} and ${overriddenExpr} then 1 else 0 end)`,
+      total: sql<number>`sum(case when ${clauses.lawyerAdded} = 0 then 1 else 0 end)`,
+      fp: sql<number>`sum(case when ${clauses.lawyerAdded} = 0 and ${excludedExpr} then 1 else 0 end)`,
+      corrected: sql<number>`sum(case when ${clauses.lawyerAdded} = 0 and not ${excludedExpr} and ${overriddenExpr} then 1 else 0 end)`,
+      misses: sql<number>`sum(case when ${clauses.lawyerAdded} = 1 then 1 else 0 end)`,
     })
     .from(clauses)
     .innerJoin(reports, eq(reports.contractId, clauses.contractId))
@@ -759,6 +800,7 @@ export async function getAiQualityStats(): Promise<{
     Number(rows[0]?.total) || 0,
     Number(rows[0]?.fp) || 0,
     Number(rows[0]?.corrected) || 0,
+    Number(rows[0]?.misses) || 0,
     Number(signedRows[0]?.n) || 0,
   );
 }

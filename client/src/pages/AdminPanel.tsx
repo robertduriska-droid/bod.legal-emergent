@@ -187,11 +187,17 @@ export default function AdminPanel() {
                     z {aiQuality.signedReports} podpísaných reportov · {aiQuality.reviewedClauses} klauzúl
                   </span>
                 </div>
-                <div className="flex items-end gap-6 mb-4">
+                <div className="flex items-end gap-10 mb-4">
                   <div>
                     <p className="text-4xl font-serif text-green-700">{aiQuality.precisionPct}%</p>
-                    <p className="text-xs text-muted-foreground font-sans">presnosť (nálezy, ktoré advokát uznal)</p>
+                    <p className="text-xs text-muted-foreground font-sans">presnosť (z označeného sedelo)</p>
                   </div>
+                  {(aiQuality.misses > 0 || aiQuality.recallPct > 0) && (
+                    <div>
+                      <p className="text-4xl font-serif text-blue-700">{aiQuality.recallPct}%</p>
+                      <p className="text-xs text-muted-foreground font-sans">úplnosť (z rizík AI zachytila)</p>
+                    </div>
+                  )}
                 </div>
                 <div className="grid grid-cols-3 gap-3 text-center">
                   <div className="rounded-md bg-green-50 border border-green-200 p-3">
@@ -208,7 +214,7 @@ export default function AdminPanel() {
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground font-sans mt-3">
-                  Meria sa presnosť: čo AI označila a advokát to uznal. Neukazuje, čo AI prehliadla.
+                  Presnosť: z toho, čo AI označila, koľko advokát uznal. Úplnosť: z rizík, ktoré v zmluve boli, koľko ich AI zachytila (počíta nálezy, ktoré advokát pridal ako zmeškané: {aiQuality.misses}).
                 </p>
               </CardContent>
             </Card>

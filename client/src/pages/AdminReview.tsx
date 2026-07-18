@@ -252,6 +252,14 @@ export default function AdminReview() {
     },
   });
 
+  const addFindingMutation = trpc.admin.addFinding.useMutation({
+    onSuccess: () => {
+      utils.admin.getContractForReview.invalidate({ id: contractId });
+      setAddOpen(false);
+      setAddTitle(""); setAddFinding(""); setAddBasis(""); setAddRisk("high");
+      toast.success("Nález pridaný");
+    },
+  });
   const signMutation = trpc.admin.signReport.useMutation({
     onSuccess: () => {
       toast.success(tx.reportSigned);
@@ -269,6 +277,11 @@ export default function AdminReview() {
   const [editSuggestion, setEditSuggestion] = useState("");
   const [editNote, setEditNote] = useState("");
   const [signDialogOpen, setSignDialogOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [addTitle, setAddTitle] = useState("");
+  const [addFinding, setAddFinding] = useState("");
+  const [addBasis, setAddBasis] = useState("");
+  const [addRisk, setAddRisk] = useState<"high" | "medium" | "low">("high");
   const rowRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
   // Load user comments for this contract
@@ -917,6 +930,73 @@ export default function AdminReview() {
               );
             })}
           </div>
+
+          {/* Add a finding the AI missed. Feeds the recall metric; a pre-approved
+              clause marked lawyerAdded so it never counts against precision. */}
+          {contract.status === "in_review" && (
+            <div className="mt-6">
+              {!addOpen ? (
+                <Button variant="outline" size="sm" className="font-sans" onClick={() => setAddOpen(true)}>
+                  + Pridať nález, ktorý AI vynechala
+                </Button>
+              ) : (
+                <Card className="border-blue-200">
+                  <CardContent className="p-4 space-y-3">
+                    <p className="font-serif text-base">Nález, ktorý AI vynechala</p>
+                    <input
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-sans"
+                      placeholder="Názov nálezu (napr. Chýba doložka o vyššej moci)"
+                      value={addTitle}
+                      onChange={(e) => setAddTitle(e.target.value)}
+                    />
+                    <Textarea
+                      className="w-full font-sans"
+                      placeholder="Čo je problém a prečo je rizikový"
+                      value={addFinding}
+                      onChange={(e) => setAddFinding(e.target.value)}
+                    />
+                    <input
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-sans"
+                      placeholder="Právny základ (voliteľné), napr. § 374 Obchodného zákonníka"
+                      value={addBasis}
+                      onChange={(e) => setAddBasis(e.target.value)}
+                    />
+                    <div className="flex items-center gap-2">
+                      {(["high", "medium", "low"] as const).map((r) => (
+                        <button
+                          key={r}
+                          type="button"
+                          onClick={() => setAddRisk(r)}
+                          className={`text-xs font-sans rounded-full px-3 py-1 border ${addRisk === r ? "bg-primary text-primary-foreground border-primary" : "border-input"}`}
+                        >
+                          {r === "high" ? "Vysoké" : r === "medium" ? "Stredné" : "Nízke"}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        className="font-sans"
+                        disabled={!addTitle.trim() || !addFinding.trim() || addFindingMutation.isPending}
+                        onClick={() => addFindingMutation.mutate({
+                          contractId,
+                          title: addTitle.trim(),
+                          finding: addFinding.trim(),
+                          riskLevel: addRisk,
+                          legalBasis: addBasis.trim() || undefined,
+                        })}
+                      >
+                        {addFindingMutation.isPending ? "Pridávam..." : "Pridať nález"}
+                      </Button>
+                      <Button variant="ghost" size="sm" className="font-sans" onClick={() => setAddOpen(false)}>
+                        Zrušiť
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
         </div>
       </main>
       <Footer />

@@ -13,6 +13,7 @@ import {
   getContractsByUserId,
   getAllContracts,
   getAiQualityStats,
+  createManualFinding,
   updateContractStatus,
   createClauses,
   getClausesByContractId,
@@ -433,6 +434,22 @@ export const appRouter = router({
           lawyerApproved: input.lawyerApproved,
           overriddenRiskLevel: input.overriddenRiskLevel,
         });
+        return { success: true };
+      }),
+
+    /** Add a finding the AI missed. Feeds recall, never precision. */
+    addFinding: adminProcedure
+      .input(z.object({
+        contractId: z.number(),
+        title: z.string().min(1).max(500),
+        finding: z.string().min(1).max(4000),
+        riskLevel: z.enum(["high", "medium", "low"]),
+        excerpt: z.string().max(2000).optional(),
+        legalBasis: z.string().max(500).optional(),
+        suggestedEdit: z.string().max(4000).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        await createManualFinding(input);
         return { success: true };
       }),
 

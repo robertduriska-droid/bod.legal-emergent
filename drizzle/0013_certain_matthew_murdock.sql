@@ -1,0 +1,1 @@
+ALTER TABLE `clauses` ADD `lawyerAdded` int DEFAULT 0 NOT NULL;

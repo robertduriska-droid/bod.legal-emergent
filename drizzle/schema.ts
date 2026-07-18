@@ -99,6 +99,12 @@ export const clauses = mysqlTable("clauses", {
   lawyerApproved: int("lawyerApproved").default(0),
   /** Whether lawyer overrode the risk level */
   overriddenRiskLevel: mysqlEnum("overriddenRiskLevel", ["high", "medium", "low"]),
+  /**
+   * 1 when the lawyer ADDED this finding because the AI missed it. These
+   * clauses power the recall (completeness) metric: they are the misses. They
+   * are excluded from precision counting, since the AI never flagged them.
+   */
+  lawyerAdded: int("lawyerAdded").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
