@@ -14,6 +14,7 @@ vi.mock("./db", () => ({
   getNotifyPhone: vi.fn(async () => null),
   createDeepAnalysis: vi.fn(async () => {}),
   getActivePlaybookRules: vi.fn(async () => []),
+  setContractSourceText: vi.fn(async () => {}),
 }));
 vi.mock("./storage", () => ({
   storageGetSignedUrl: vi.fn(async () => "https://storage.example.com/file"),

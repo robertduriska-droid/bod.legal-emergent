@@ -62,6 +62,14 @@ export const contracts = mysqlTable("contracts", {
    * promise covers the uploaded document, and the client paid for the report.
    */
   fileDeletedAt: timestamp("fileDeletedAt"),
+  /**
+   * Extracted plain text of the uploaded contract, kept so the whole-contract
+   * redline can be rebuilt on download without re-fetching the file (which
+   * retention deletes after 30 days). It IS the document content, so retention
+   * clears it together with the file; a signed report keeps its findings, not
+   * the source text.
+   */
+  sourceText: text("sourceText"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

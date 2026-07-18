@@ -81,7 +81,8 @@ export async function purgeExpiredUploads(now: Date = new Date()): Promise<Purge
       // delete, which S3 treats as a no-op. Marking first would risk claiming a
       // file was deleted while it is still in the bucket.
       await storageDelete(contract.fileKey);
-      await db.update(contracts).set({ fileDeletedAt: now }).where(eq(contracts.id, contract.id));
+      // sourceText is the document content; clear it with the file.
+      await db.update(contracts).set({ fileDeletedAt: now, sourceText: null }).where(eq(contracts.id, contract.id));
       result.purged++;
     } catch (err) {
       // Leave fileDeletedAt NULL so the next pass retries this one.

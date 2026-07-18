@@ -839,3 +839,11 @@ export async function deletePlaybookRule(id: number): Promise<void> {
   if (!db) throw new Error("Database not available");
   await db.delete(playbookRules).where(eq(playbookRules.id, id));
 }
+
+/** Store the extracted contract text (capped to fit a TEXT column ~64KB). */
+export async function setContractSourceText(id: number, text: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  const capped = text.length > 60000 ? text.slice(0, 60000) : text;
+  await db.update(contracts).set({ sourceText: capped }).where(eq(contracts.id, id));
+}

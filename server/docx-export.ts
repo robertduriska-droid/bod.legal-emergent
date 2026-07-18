@@ -23,6 +23,7 @@ import { sdk } from "./_core/sdk";
 import { getContractById, getClausesByContractId, getReportByContractId, getDeepAnalysisByContract, isClauseExcluded } from "./db";
 import { signOffLines } from "@shared/advokat";
 import { aiOutputStatement, AI_MARKING_KEYWORDS, AI_MARKING_CREATOR } from "@shared/aiMarking";
+import { generateWholeRedlineDocx } from "./wholeRedline";
 
 type Lang = "sk" | "en";
 
@@ -812,6 +813,48 @@ export function registerDocxExport(app: Express) {
     } catch (error: any) {
       console.error("[DOCX Export] Error:", error);
       res.status(500).json({ error: "Failed to generate DOCX" });
+    }
+  });
+
+  // ─── Whole-contract redline ─────────────────────────────────────────────────
+  // GET /api/contracts/:id/report-redline.docx
+  // The client's own contract with the approved edits as tracked changes.
+  app.get("/api/contracts/:id/report-redline.docx", async (req: Request, res: Response) => {
+    try {
+      const user = await sdk.authenticateRequest(req);
+      if (!user) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+      const contractId = parseInt(req.params.id);
+      if (isNaN(contractId)) { res.status(400).json({ error: "Invalid contract ID" }); return; }
+      const lang: Lang = req.query.lang === "en" ? "en" : "sk";
+
+      const contract = await getContractById(contractId);
+      if (!contract) { res.status(404).json({ error: "Contract not found" }); return; }
+      if (contract.userId !== user.id && user.role !== "admin") { res.status(403).json({ error: "Forbidden" }); return; }
+      // Whole-contract redline is the Premium deliverable ("Redline dokument")
+      // the price card promises; Standard keeps the per-clause track changes.
+      if (contract.plan !== "premium") { res.status(403).json({ error: "Redline celej zmluvy je súčasťou Prémiovej kontroly." }); return; }
+
+      // The source text is cleared by retention after 30 days; say so plainly.
+      if (!contract.sourceText) {
+        res.status(410).json({ error: "Zdrojový text zmluvy už nie je dostupný (vymazaný po 30 dňoch). Redline sa nedá zostaviť." });
+        return;
+      }
+
+      const clauses = (await getClausesByContractId(contractId)).filter(c => !isClauseExcluded(c));
+      const edits = clauses
+        .filter(c => c.suggestedEdit && c.suggestedEdit.trim())
+        .map(c => ({ excerpt: c.excerpt, suggestedEdit: c.suggestedEdit, title: c.title }));
+
+      const buffer = await generateWholeRedlineDocx(contract.sourceText, edits, lang);
+      const filename = `bod-legal-zmluva-s-reviziami-${contractId}-${lang}.docx`;
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.setHeader("Content-Length", buffer.length.toString());
+      res.send(buffer);
+    } catch (error: any) {
+      console.error("[Redline Export] Error:", error);
+      res.status(500).json({ error: "Failed to generate redline" });
     }
   });
 

@@ -38,6 +38,9 @@ const TX = {
     generating: "Generujem PDF...",
     downloadPdf: "Stiahnuť report (PDF)",
     downloadDocx: "Stiahnuť s revíziami (DOCX)",
+    redlineDownload: "Stiahnuť celú zmluvu s revíziami",
+    redlineHint: "Vaša zmluva so zapracovanými zmenami, pripravená poslať druhej strane.",
+    redlineGone: "Zdrojový text zmluvy už nie je dostupný (mažeme ho po 30 dňoch).",
     docxSuccess: "DOCX bol úspešne vygenerovaný",
     docxSuccessDesc: "Otvorte v MS Word a použite Revízie → Prijať/Odmietnuť.",
     docxError: "Chyba pri generovaní DOCX",
@@ -131,6 +134,9 @@ const TX = {
     generating: "Generating PDF...",
     downloadPdf: "Download report (PDF)",
     downloadDocx: "Download with track changes (DOCX)",
+    redlineDownload: "Download the whole contract redlined",
+    redlineHint: "Your contract with the edits applied, ready to send to the other side.",
+    redlineGone: "The contract source text is no longer available (deleted after 30 days).",
     docxSuccess: "DOCX generated successfully",
     docxSuccessDesc: "Open in MS Word and use Review → Accept/Reject.",
     docxError: "Error generating DOCX",
@@ -224,6 +230,9 @@ const TX = {
     generating: "Generuji PDF...",
     downloadPdf: "Stáhnout report (PDF)",
     downloadDocx: "Stáhnout s revizemi (DOCX)",
+    redlineDownload: "Stáhnout celou smlouvu s revizemi",
+    redlineHint: "Vaše smlouva se zapracovanými změnami, připravená poslat druhé straně.",
+    redlineGone: "Zdrojový text smlouvy již není dostupný (mažeme po 30 dnech).",
     docxSuccess: "DOCX byl úspěšně vygenerován",
     docxSuccessDesc: "Otevřete v MS Word a použijte Revize → Přijmout/Odmítnout.",
     docxError: "Chyba při generování DOCX",
@@ -308,6 +317,59 @@ const TX = {
     negotiationChecklistTitle: "Kontrolní seznam na jednání",
   },
 };
+
+function DownloadRedlineButton({ contractId, tx }: { contractId: number; tx: typeof TX.sk }) {
+  const { locale } = useT();
+  const [downloading, setDownloading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/contracts/${contractId}/report-redline.docx?lang=${locale}`, {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({ error: tx.docxError }));
+        // 410: retention deleted the source text; say it plainly.
+        throw new Error(response.status === 410 ? tx.redlineGone : (errData.error || tx.docxError));
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const disposition = response.headers.get("Content-Disposition");
+      const filenameMatch = disposition?.match(/filename="(.+?)"/);
+      a.download = filenameMatch?.[1] || `bod-legal-zmluva-s-reviziami-${contractId}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success(tx.redlineDownload);
+    } catch (err: any) {
+      const msg = err.message || tx.docxError;
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  return (
+    <div className="text-center">
+      <Button className="font-sans" onClick={handleDownload} disabled={downloading}>
+        {downloading ? (
+          <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {tx.generatingDocx}</>
+        ) : (
+          <><FileDown className="mr-2 h-4 w-4" /> {tx.redlineDownload}</>
+        )}
+      </Button>
+      <p className="text-xs text-muted-foreground font-sans mt-1 max-w-xs mx-auto">{tx.redlineHint}</p>
+      {error && <p className="text-sm text-red-600 font-sans mt-2">{error}</p>}
+    </div>
+  );
+}
 
 function DownloadPdfButton({ contractId, tx }: { contractId: number; tx: typeof TX.sk }) {
   const { locale } = useT();
@@ -1469,6 +1531,7 @@ function ReportContent({
           {/* Download buttons - only for paid plans */}
           {!isLimited && (
             <div className="flex flex-col sm:flex-row gap-3 justify-center flex-wrap mb-8">
+              {contract.plan === "premium" && <DownloadRedlineButton contractId={contractId} tx={tx} />}
               <DownloadPdfButton contractId={contractId} tx={tx} />
               <DownloadDocxButton contractId={contractId} tx={tx} />
               {viewMode !== 'off' && totalEditable > 0 && totalDecided === totalEditable && (

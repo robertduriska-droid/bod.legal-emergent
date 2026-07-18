@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ENV } from "./_core/env";
-import { getContractById, createClauses, createReport, updateContractStatus, createNotification, getUserById, getNotifyPhone, createDeepAnalysis, getActivePlaybookRules } from "./db";
+import { getContractById, createClauses, createReport, updateContractStatus, createNotification, getUserById, getNotifyPhone, createDeepAnalysis, getActivePlaybookRules, setContractSourceText } from "./db";
 import { notifyOwner } from "./_core/notification";
 import { notifyClient, notifyAdmins } from "./twilio";
 import { sendEmail, emailReportReady, emailAnalysisAwaitingReview, emailNewContractForReview, getAppBaseUrl } from "./email";
@@ -902,6 +902,9 @@ export async function analyzeContract(contractId: number): Promise<void> {
       ? await extractPdfText(fileUrl)
       : await extractDocxText(fileUrl);
     console.log(`[Analysis] Extracted ${contractText.length} chars from ${isPdf ? "PDF" : "DOCX"}`);
+    // Keep the source text so the whole-contract redline can be rebuilt on
+    // download; retention clears it with the file after 30 days.
+    await setContractSourceText(contractId, contractText).catch(err => console.warn("[Analysis] sourceText store failed:", err));
 
     const language = contract.language || "sk";
     const playbook = await getActivePlaybookRules().catch(() => []);
