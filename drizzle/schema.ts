@@ -347,3 +347,22 @@ export const trials = mysqlTable("trials", {
 
 export type Trial = typeof trials.$inferSelect;
 export type InsertTrial = typeof trials.$inferInsert;
+
+/**
+ * Firm playbook: durable rules the lawyer teaches the analysis. Every active
+ * rule is injected into the system prompt of every future analysis, so the
+ * product compounds on the lawyer's own corrections. A competitor can copy the
+ * app but not KILIAN LEGAL's accumulated rules. Kept human-in-the-loop: a rule
+ * exists only because the lawyer wrote or promoted it, never silently.
+ */
+export const playbookRules = mysqlTable("playbook_rules", {
+  id: int("id").autoincrement().primaryKey(),
+  /** The instruction, e.g. "Vždy skontroluj doložku o vyššej moci." */
+  text: text("text").notNull(),
+  /** Only active rules reach the prompt. */
+  active: int("active").default(1).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type PlaybookRule = typeof playbookRules.$inferSelect;
+export type InsertPlaybookRule = typeof playbookRules.$inferInsert;

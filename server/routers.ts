@@ -14,6 +14,10 @@ import {
   getAllContracts,
   getAiQualityStats,
   createManualFinding,
+  listPlaybookRules,
+  createPlaybookRule,
+  setPlaybookRuleActive,
+  deletePlaybookRule,
   updateContractStatus,
   createClauses,
   getClausesByContractId,
@@ -422,6 +426,29 @@ export const appRouter = router({
     aiQuality: adminProcedure.query(async () => {
       return getAiQualityStats();
     }),
+
+    /** Firm playbook: rules the lawyer teaches the analysis. */
+    playbookList: adminProcedure.query(async () => {
+      return listPlaybookRules();
+    }),
+    playbookAdd: adminProcedure
+      .input(z.object({ text: z.string().min(3).max(2000) }))
+      .mutation(async ({ input }) => {
+        await createPlaybookRule(input.text);
+        return { success: true };
+      }),
+    playbookToggle: adminProcedure
+      .input(z.object({ id: z.number(), active: z.boolean() }))
+      .mutation(async ({ input }) => {
+        await setPlaybookRuleActive(input.id, input.active);
+        return { success: true };
+      }),
+    playbookDelete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await deletePlaybookRule(input.id);
+        return { success: true };
+      }),
 
     /** Get contract detail for review */
     getContractForReview: adminProcedure

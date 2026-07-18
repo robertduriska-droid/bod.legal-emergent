@@ -13,6 +13,7 @@ vi.mock("./db", () => ({
   getUserById: vi.fn(async () => ({ name: "Test User", email: "client@example.com" })),
   getNotifyPhone: vi.fn(async () => null),
   createDeepAnalysis: vi.fn(async () => {}),
+  getActivePlaybookRules: vi.fn(async () => []),
 }));
 vi.mock("./storage", () => ({
   storageGetSignedUrl: vi.fn(async () => "https://storage.example.com/file"),
@@ -297,6 +298,24 @@ describe("buildAnalysisRequest (prompt assembly, no model call)", () => {
     const userText = messages[1].content[0].text as string;
     expect(userText).not.toContain("jan@firma.sk");
     expect(userText).toContain("zastupuje túto stranu zmluvy: objednávateľ");
+  });
+
+  it("injects active firm playbook rules into the system prompt", () => {
+    const { messages } = buildAnalysisRequest({
+      language: "sk", contractText: skNdaText, plan: "standard",
+      playbook: ["Vždy skontroluj doložku o vyššej moci.", "Nehlás štandardnú 30-dňovú splatnosť ako riziko."],
+    });
+    const system = messages[0].content as string;
+    expect(system).toContain("PRAVIDLÁ KANCELÁRIE");
+    expect(system).toContain("Vždy skontroluj doložku o vyššej moci.");
+    expect(system).toContain("Nehlás štandardnú 30-dňovú splatnosť ako riziko.");
+  });
+
+  it("adds no playbook block when there are no rules", () => {
+    const withNone = buildAnalysisRequest({ language: "sk", contractText: skNdaText, plan: "standard" });
+    expect(withNone.messages[0].content).not.toContain("PRAVIDLÁ KANCELÁRIE");
+    const withEmpty = buildAnalysisRequest({ language: "sk", contractText: skNdaText, plan: "standard", playbook: ["  ", ""] });
+    expect(withEmpty.messages[0].content).not.toContain("PRAVIDLÁ KANCELÁRIE");
   });
 
   it("assembles the SK NDA request for the basic plan", () => {

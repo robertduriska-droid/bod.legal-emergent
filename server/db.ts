@@ -1,6 +1,6 @@
 import { eq, desc, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, contracts, clauses, reports, notifications, clauseDecisions, feedback, InsertContract, InsertClause, InsertReport, InsertNotification, InsertFeedback, Contract, Clause, Report, Notification, ClauseDecision, Feedback } from "../drizzle/schema";
+import { InsertUser, users, contracts, clauses, reports, notifications, clauseDecisions, feedback, playbookRules, PlaybookRule, InsertContract, InsertClause, InsertReport, InsertNotification, InsertFeedback, Contract, Clause, Report, Notification, ClauseDecision, Feedback } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -803,4 +803,39 @@ export async function getAiQualityStats(): Promise<{
     Number(rows[0]?.misses) || 0,
     Number(signedRows[0]?.n) || 0,
   );
+}
+
+// ─── Firm playbook ──────────────────────────────────────────────────────────
+
+/** Active playbook rules, newest first; injected into every analysis prompt. */
+export async function getActivePlaybookRules(): Promise<string[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select().from(playbookRules).where(eq(playbookRules.active, 1)).orderBy(desc(playbookRules.createdAt));
+  return rows.map(r => r.text).filter(t => t && t.trim());
+}
+
+/** All rules for the admin manager. */
+export async function listPlaybookRules(): Promise<PlaybookRule[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(playbookRules).orderBy(desc(playbookRules.createdAt));
+}
+
+export async function createPlaybookRule(text: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(playbookRules).values({ text: text.trim(), active: 1 });
+}
+
+export async function setPlaybookRuleActive(id: number, active: boolean): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(playbookRules).set({ active: active ? 1 : 0 }).where(eq(playbookRules.id, id));
+}
+
+export async function deletePlaybookRule(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(playbookRules).where(eq(playbookRules.id, id));
 }

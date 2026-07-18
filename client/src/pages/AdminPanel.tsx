@@ -63,6 +63,15 @@ export default function AdminPanel() {
   const { data: aiQuality } = trpc.admin.aiQuality.useQuery(undefined, {
     enabled: user?.role === "admin",
   });
+  const utils = trpc.useUtils();
+  const { data: playbook } = trpc.admin.playbookList.useQuery(undefined, {
+    enabled: user?.role === "admin",
+  });
+  const [newRule, setNewRule] = useState("");
+  const invalidatePlaybook = () => utils.admin.playbookList.invalidate();
+  const addRule = trpc.admin.playbookAdd.useMutation({ onSuccess: () => { setNewRule(""); invalidatePlaybook(); } });
+  const toggleRule = trpc.admin.playbookToggle.useMutation({ onSuccess: invalidatePlaybook });
+  const deleteRule = trpc.admin.playbookDelete.useMutation({ onSuccess: invalidatePlaybook });
 
   const [tab, setTab] = useState<FilterTab>("review");
 
@@ -219,6 +228,65 @@ export default function AdminPanel() {
               </CardContent>
             </Card>
           )}
+
+          {/* Firm playbook: rules the lawyer teaches the AI. Every active rule is
+              injected into every future analysis, so the product compounds on
+              the lawyer's corrections. Human-in-the-loop by design. */}
+          <Card className="mb-8">
+            <CardContent className="p-5">
+              <div className="flex items-baseline justify-between mb-1">
+                <h2 className="font-serif text-lg">Playbook kancelárie</h2>
+                <span className="text-xs text-muted-foreground font-sans">
+                  {(playbook || []).filter((r: any) => r.active).length} aktívnych pravidiel v každej analýze
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground font-sans mb-3">
+                Pravidlá, ktoré učíte AI. Každé aktívne pravidlo dostane AI pri každej ďalšej kontrole zmluvy. Napríklad: „Vždy skontroluj doložku o vyššej moci." alebo „Nehláste ako riziko štandardnú 30-dňovú splatnosť."
+              </p>
+              <div className="flex gap-2 mb-4">
+                <input
+                  className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm font-sans"
+                  placeholder="Nové pravidlo pre AI"
+                  value={newRule}
+                  onChange={(e) => setNewRule(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && newRule.trim().length >= 3) addRule.mutate({ text: newRule.trim() }); }}
+                />
+                <Button
+                  size="sm"
+                  className="font-sans"
+                  disabled={newRule.trim().length < 3 || addRule.isPending}
+                  onClick={() => addRule.mutate({ text: newRule.trim() })}
+                >
+                  Pridať
+                </Button>
+              </div>
+              {(playbook || []).length === 0 ? (
+                <p className="text-sm text-muted-foreground font-sans">Zatiaľ žiadne pravidlá. Prvé pravidlo pridáte vyššie.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {(playbook || []).map((r: any) => (
+                    <li key={r.id} className={`flex items-start gap-3 text-sm font-sans rounded-md border p-2.5 ${r.active ? "border-green-200 bg-green-50/50" : "border-input bg-muted/30 opacity-60"}`}>
+                      <button
+                        type="button"
+                        title={r.active ? "Vypnúť" : "Zapnúť"}
+                        onClick={() => toggleRule.mutate({ id: r.id, active: !r.active })}
+                        className={`mt-0.5 h-4 w-4 rounded-full shrink-0 border ${r.active ? "bg-green-500 border-green-600" : "bg-transparent border-muted-foreground"}`}
+                      />
+                      <span className="flex-1">{r.text}</span>
+                      <button
+                        type="button"
+                        title="Zmazať"
+                        onClick={() => deleteRule.mutate({ id: r.id })}
+                        className="text-muted-foreground hover:text-red-600 shrink-0"
+                      >
+                        ✕
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Priority queue: express first, then oldest, with SLA countdown */}
           {pendingReview.length > 0 && (

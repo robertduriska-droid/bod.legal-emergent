@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ENV } from "./_core/env";
-import { getContractById, createClauses, createReport, updateContractStatus, createNotification, getUserById, getNotifyPhone, createDeepAnalysis } from "./db";
+import { getContractById, createClauses, createReport, updateContractStatus, createNotification, getUserById, getNotifyPhone, createDeepAnalysis, getActivePlaybookRules } from "./db";
 import { notifyOwner } from "./_core/notification";
 import { notifyClient, notifyAdmins } from "./twilio";
 import { sendEmail, emailReportReady, emailAnalysisAwaitingReview, emailNewContractForReview, getAppBaseUrl } from "./email";
@@ -714,9 +714,10 @@ export function buildAnalysisRequest(opts: {
   contractText: string;
   plan: string;
   clientParty?: string | null;
+  playbook?: string[];
   maxChars?: number;
 }): { messages: { role: string; content: any }[]; responseFormat: any; redaction: RedactionCounts } {
-  const { language, contractText, plan, clientParty } = opts;
+  const { language, contractText, plan, clientParty, playbook } = opts;
 
   // PII redaction happens HERE, at the single choke point where contract text
   // enters a model request, so no code path can reach the model with personal
@@ -749,10 +750,17 @@ export function buildAnalysisRequest(opts: {
   if (plan === "basic") parts.push(t.basicNote);
   parts.push(`${t.schemaNote}\n${JSON.stringify(jsonSchema)}`);
 
+  // The firm playbook: durable rules the lawyer taught the analysis, injected
+  // into the system prompt so every analysis compounds on past corrections.
+  const rules = (playbook || []).map(r => r.trim()).filter(Boolean);
+  const playbookBlock = rules.length
+    ? `\n\nPRAVIDLÁ KANCELÁRIE (dodržuj ich prednostne, pochádzajú od advokáta):\n` + rules.map(r => `- ${r}`).join("\n")
+    : "";
+
   return {
     redaction,
     messages: [
-      { role: "system", content: getSystemPrompt(language) },
+      { role: "system", content: getSystemPrompt(language) + playbookBlock },
       { role: "user", content: [{ type: "text", text: parts.join("\n\n") }] },
     ],
     responseFormat: {
@@ -896,11 +904,13 @@ export async function analyzeContract(contractId: number): Promise<void> {
     console.log(`[Analysis] Extracted ${contractText.length} chars from ${isPdf ? "PDF" : "DOCX"}`);
 
     const language = contract.language || "sk";
+    const playbook = await getActivePlaybookRules().catch(() => []);
     const { messages, responseFormat, redaction } = buildAnalysisRequest({
       language,
       contractText,
       plan: contract.plan,
       clientParty: contract.clientParty,
+      playbook,
     });
     // Log what was scrubbed, never the values themselves.
     console.log(`[Analysis] Redacted before model call: ${summarizeRedaction(redaction)}`);
