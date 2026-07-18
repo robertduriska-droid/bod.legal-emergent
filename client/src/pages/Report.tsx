@@ -20,6 +20,7 @@ import { useT } from "@/i18n";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../server/routers";
 import { signOffLines } from "@shared/advokat";
+import { computeVerdict } from "@shared/verdict";
 
 const RISK_COLORS = {
   high: "bg-red-100 text-red-800 border-red-200",
@@ -677,6 +678,18 @@ function ReportContent({
     (item) => typeof item === "string" && item.trim().length > 0
   );
 
+  // The one answer a non-lawyer opens the report for: can I sign this?
+  const verdict = computeVerdict({
+    high: verdictCounts.high,
+    medium: verdictCounts.medium,
+    dealBreakers: Array.isArray(data.deepAnalysis?.dealBreakers) ? data.deepAnalysis!.dealBreakers.length : 0,
+  });
+  const verdictStyle = {
+    stop: { box: "border-red-300 bg-red-50", title: "text-red-800", dot: "bg-red-500" },
+    caution: { box: "border-amber-300 bg-amber-50", title: "text-amber-800", dot: "bg-amber-500" },
+    go: { box: "border-green-300 bg-green-50", title: "text-green-800", dot: "bg-green-500" },
+  }[verdict.level];
+
   const isClauseChecked = (clause: { lawyerAnnotation: string | null; lawyerApproved: number | null }) =>
     report.isSigned === 1 || !!clause.lawyerAnnotation || clause.lawyerApproved === 1;
 
@@ -835,6 +848,21 @@ function ReportContent({
             <div className="mb-6 flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4" role="status">
               <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
               <p className="text-sm font-sans text-amber-900">{tx.reviewBanner}</p>
+            </div>
+          )}
+
+          {/* Can I sign this? The single verdict, before the detail. */}
+          {(riskSummary || (clauses && clauses.length > 0)) && (
+            <div className={`mb-6 rounded-lg border p-5 flex items-start gap-4 ${verdictStyle.box}`}>
+              <span className={`mt-1 h-3 w-3 rounded-full shrink-0 ${verdictStyle.dot}`} aria-hidden="true" />
+              <div>
+                <p className={`font-serif text-xl ${verdictStyle.title}`}>
+                  {locale === "en" ? verdict.titleEn : verdict.titleSk}
+                </p>
+                <p className="text-sm font-sans text-foreground/80 mt-1">
+                  {locale === "en" ? verdict.detailEn : verdict.detailSk}
+                </p>
+              </div>
             </div>
           )}
 

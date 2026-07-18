@@ -6,6 +6,7 @@ import { invokeLLM } from "./_core/llm";
 import { getContractById, getClausesByContractId, getReportByContractId, getDeepAnalysisByContract, isClauseExcluded } from "./db";
 import { getInterRegularBase64, getInterBoldBase64 } from "./fonts/font-data";
 import { signOffLines } from "@shared/advokat";
+import { computeVerdict } from "@shared/verdict";
 import { aiOutputStatement, AI_MARKING_KEYWORDS, AI_MARKING_CREATOR } from "@shared/aiMarking";
 
 type Lang = "sk" | "en";
@@ -20,6 +21,7 @@ const LABELS = {
     plan: "Plán:",
     date: "Dátum:",
     verifiedBy: "Overil:",
+    verdictHeading: "Môžem to podpísať?",
     riskSummaryTitle: "Sumár rizík",
     riskHigh: "Vysoké",
     riskMedium: "Stredné",
@@ -63,6 +65,7 @@ const LABELS = {
     plan: "Plan:",
     date: "Date:",
     verifiedBy: "Verified by:",
+    verdictHeading: "Can I sign this?",
     riskSummaryTitle: "Risk Summary",
     riskHigh: "High",
     riskMedium: "Medium",
@@ -379,6 +382,36 @@ async function generateReportPdf(
     }
     doc.setTextColor(0, 0, 0);
     y += 10;
+  }
+
+  // ─── Verdict: can I sign this? ────────────────────────────────────────────
+  {
+    const rsForVerdict = report.riskSummary as { high?: number; medium?: number } | null;
+    const dbCount = Array.isArray(deep?.dealBreakers) ? deep.dealBreakers.length : 0;
+    if (rsForVerdict || dbCount) {
+      const v = computeVerdict({ high: rsForVerdict?.high || 0, medium: rsForVerdict?.medium || 0, dealBreakers: dbCount });
+      const color: [number, number, number] = v.level === "stop" ? [179, 67, 47] : v.level === "caution" ? [176, 120, 24] : [46, 125, 79];
+      checkPage(28);
+      doc.setFontSize(9);
+      doc.setFont("Inter", "bold");
+      doc.setTextColor(120, 120, 120);
+      doc.text(L.verdictHeading, margin, y);
+      y += 6;
+      doc.setFontSize(15);
+      doc.setTextColor(...color);
+      doc.text(lang === "en" ? v.titleEn : v.titleSk, margin, y);
+      y += 6;
+      doc.setFontSize(10);
+      doc.setFont("Inter", "normal");
+      doc.setTextColor(30, 30, 30);
+      for (const line of doc.splitTextToSize(lang === "en" ? v.detailEn : v.detailSk, contentWidth)) {
+        checkPage(6);
+        doc.text(line, margin, y);
+        y += 5;
+      }
+      doc.setTextColor(20, 20, 20);
+      y += 8;
+    }
   }
 
   // ─── Risk Summary ─────────────────────────────────────────────────────────
