@@ -356,11 +356,12 @@ export function emailFreeScanFollowUp(
     subject: "Vaša zmluva: 3 riziká, ktoré našla AI",
     html: emailLayout(`
         <p>Dobrý deň,</p>
-        <p>AI systému bod.legal skontrolovala vašu zmluvu <strong>${escapeHtml(contract.fileName)}</strong> a našla tieto riziká:</p>
+        <p>Tú zmluvu písala druhá strana. Pre seba. AI systému bod.legal ju prečítala klauzulu po klauzule a toto sú tri najväčšie riziká vo vašej zmluve <strong>${escapeHtml(contract.fileName)}</strong>:</p>
         <ul style="margin: 16px 0; padding-left: 20px; list-style: none;">
           ${findingsHtml}
         </ul>
-        <p>Plný report so všetkými nálezmi a overením advokátskou kanceláriou alebo advokátom získate za pevnú cenu.</p>
-        ${buttonHtml(contractUrl, "Zobraziť moju zmluvu")}`),
+        <p>Toto sú len tri z celého reportu. Plná kontrola vám dá <strong>všetky nálezy po klauzulách</strong>, ku každému <strong>konkrétny paragraf</strong>, <strong>navrhované úpravy pripravené na poslanie druhej strane</strong> a <strong>podpis advokáta</strong> zapísaného v SAK. Report do 24 hodín, inak neplatíte nič.</p>
+        ${buttonHtml(contractUrl, "Chcem celý report")}
+        <p style="font-size: 13px; color: #666;">Najhoršie, čo sa môže stať: dozviete sa, že zmluva je v poriadku.</p>`),
   };
 }

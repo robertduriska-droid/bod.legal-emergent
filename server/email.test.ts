@@ -209,7 +209,12 @@ describe("emailFreeScanFollowUp (anonymous funnel)", () => {
 
   it("upsells the paid tier without claiming the free scan is verified", () => {
     const { html } = emailFreeScanFollowUp({ id: 5, fileName: "najomna.pdf" }, SAMPLE_FINDINGS);
-    expect(html).toContain("Plný report so všetkými nálezmi a overením advokátskou kanceláriou alebo advokátom získate za pevnú cenu.");
+    // Upsell: the paid report adds clause-level findings, citations, edits and
+    // a lawyer signature, with the live 24h guarantee.
+    expect(html).toContain("podpis advokáta");
+    expect(html).toContain("Report do 24 hodín, inak neplatíte nič.");
+    expect(html).toContain("Chcem celý report");
+    // Honesty: the free scan itself is never presented as lawyer-verified.
     expect(html).not.toContain("overený advokátom");
     expect(html).not.toContain("podpísal");
   });

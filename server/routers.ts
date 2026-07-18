@@ -57,11 +57,11 @@ import {
 import { randomUUID } from "crypto";
 import type { TrpcContext } from "./_core/context";
 import { storagePut } from "./storage";
-import { analyzeContract } from "./analysis";
+import { analyzeContract, selectTopFindings } from "./analysis";
 import { runAssistant } from "./assistant";
 import { notifyClient, notifyAdmins } from "./twilio";
 import { notifyOwner } from "./_core/notification";
-import { sendEmail, emailReviewCompleted } from "./email";
+import { sendEmail, emailReviewCompleted, emailFreeScanFollowUp } from "./email";
 import { LEGAL_SOURCES, RISK_CATEGORIES, PRICING_PLANS } from "@shared/types";
 import Stripe from "stripe";
 import { ENV } from "./_core/env";
@@ -369,6 +369,22 @@ export const appRouter = router({
           throw new TRPCError({ code: "FORBIDDEN", message: "Not allowed" });
         }
         await setContractClaimEmail(input.contractId, input.email);
+
+        // Highest-intent moment: the visitor just handed over their e-mail on
+        // the free scan. Send them their own top 3 risks with a buy CTA right
+        // now, instead of only pinging the owner and letting the lead cool.
+        try {
+          const cls = await getClausesByContractId(input.contractId);
+          const top = selectTopFindings(cls as any);
+          const { subject, html } = emailFreeScanFollowUp(
+            { id: input.contractId, fileName: contract.fileName },
+            top.map(f => ({ title: f.title, riskLevel: f.riskLevel })),
+          );
+          sendEmail({ to: input.email, subject, html }).catch(err => console.warn("[Email] Free-scan follow-up failed:", err));
+        } catch (err) {
+          console.warn("[Email] Free-scan follow-up build failed:", err);
+        }
+
         notifyOwner({
           title: "Nový kontakt z bezplatného skenu",
           content: `Návštevník nechal e-mail ${input.email} pri zmluve "${contract.fileName}" (ID ${contract.id}).`,
