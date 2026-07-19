@@ -68,7 +68,9 @@ export default function Home() {
             <p className="text-lg md:text-xl text-hero-text/70 mb-4 max-w-2xl mx-auto font-sans">
               {t.hero.subtitle}
             </p>
-            <p className="text-xs tracking-[0.25em] uppercase text-hero-text/35 mb-8 font-sans font-medium">
+            {/* The firm's motto: it is the promise, so it reads as one, not as
+                faint fine print. Bigger, near-white, spaced. */}
+            <p className="text-base md:text-xl tracking-[0.3em] uppercase text-hero-text/90 mb-8 font-sans font-semibold">
               {t.splash.motto}
             </p>
             <div className="flex flex-col items-center gap-3">
