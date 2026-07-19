@@ -14,6 +14,7 @@
 
 import io
 import json
+import os
 import markdown
 
 PAGES = {
@@ -122,8 +123,25 @@ def convert(md_text: str) -> str:
     return html
 
 
+def convert_inapp(md_text: str) -> str:
+    """Same verified markdown->HTML pipeline as the marketing pages, but also
+    drops the two lead lines (Poskytovateľ / Účinné od) because the in-app
+    React page renders the document title and effective date in its own header
+    chrome. Keeps the app and the marketing site on ONE source of truth."""
+    html = convert(md_text)
+    lines = html.split("\n")
+    while lines and (
+        lines[0].strip() == ""
+        or lines[0].startswith("<p>Poskytovate")
+        or lines[0].startswith("<p>Účinn")
+    ):
+        lines.pop(0)
+    return "\n".join(lines)
+
+
 def main() -> None:
     docs = json.load(io.open("docs.json", encoding="utf-8"))
+    inapp: dict = {}
     for doc in docs:
         key = doc["key"]
         if key not in PAGES:
@@ -132,7 +150,24 @@ def main() -> None:
         io.open(filename, "w", encoding="utf-8", newline="\n").write(
             page(title, convert(doc["markdown"]))
         )
+        inapp[key] = {"title": title, "html": convert_inapp(doc["markdown"])}
         print(f"{filename} <- {key} ({len(doc['markdown'])} znakov markdownu)")
+
+    # Emit the module the in-app React legal pages import, so app.bod.legal and
+    # bod.legal render the SAME verified text and can never drift apart again.
+    ts_path = os.path.join("..", "client", "src", "generated", "legal-docs.ts")
+    os.makedirs(os.path.dirname(ts_path), exist_ok=True)
+    body = json.dumps(inapp, ensure_ascii=False, indent=2)
+    ts = (
+        "// AUTO-GENERATED from marketing/docs.json by marketing/build_docs.py.\n"
+        "// Do not edit by hand. Regenerate: cd marketing && python build_docs.py\n"
+        f'export const LEGAL_EFFECTIVE_DATE = "{EFFECTIVE_DATE}";\n'
+        'export type LegalDocKey = "vop" | "gdpr" | "cookies" | "ai";\n'
+        "export interface LegalDoc { title: string; html: string; }\n"
+        f"export const LEGAL_DOCS: Record<LegalDocKey, LegalDoc> = {body};\n"
+    )
+    io.open(ts_path, "w", encoding="utf-8", newline="\n").write(ts)
+    print(f"{ts_path} <- {len(inapp)} docs (in-app module)")
 
 
 if __name__ == "__main__":

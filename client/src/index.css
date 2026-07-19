@@ -105,3 +105,9 @@
   min-width: 0;
   min-height: 0;
 }
+
+/* Legal document tables (rendered from the generated legal-docs module) scroll
+   horizontally on small screens instead of overflowing the page. */
+.table-scroll {
+  overflow-x: auto;
+}
