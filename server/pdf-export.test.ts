@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
+import { ForbiddenError } from "@shared/_core/errors";
 
 /**
  * Unit tests for the PDF export endpoint logic.
@@ -44,8 +45,8 @@ describe("PDF Export Endpoint", () => {
     app.use(express.default.json());
     registerPdfExport(app);
 
-    // Mock auth to return null
-    (sdk.authenticateRequest as any).mockResolvedValue(null);
+    // authenticateRequest throws (it never returns null) on a missing/invalid session.
+    (sdk.authenticateRequest as any).mockRejectedValue(ForbiddenError("Invalid session cookie"));
 
     const request = await import("supertest").then(m => m.default);
     const res = await request(app).get("/api/contracts/1/report.pdf");
