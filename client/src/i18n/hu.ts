@@ -53,7 +53,7 @@ export const hu: Translations = {
     highRisk: "Magas kockázat",
     mediumRisk: "Közepes kockázat",
     lowRisk: "Alacsony kockázat",
-    generatedDate: "Készült: 2025. július 10.",
+    generatedDate: "Készült: 2026. július 10.",
     downloadPdf: "PDF letöltése",
     tabUpload: "Feltöltés",
     tabAnalysis: "Elemzés",

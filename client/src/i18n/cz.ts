@@ -53,7 +53,7 @@ export const cz: Translations = {
     highRisk: "Vysoké riziko",
     mediumRisk: "Střední riziko",
     lowRisk: "Nízké riziko",
-    generatedDate: "Vygenerováno 10. července 2025",
+    generatedDate: "Vygenerováno 10. července 2026",
     downloadPdf: "Stáhnout PDF",
     tabUpload: "Nahrání",
     tabAnalysis: "Analýza",

@@ -2,13 +2,13 @@ import type { Express } from "express";
 import { r2PresignGet, isR2Configured } from "./r2";
 import { diskGetObject } from "./diskStorage";
 
-// Serves stored files via /manus-storage/{key}. With R2 configured the bucket
+// Serves stored files via /file-storage/{key}. With R2 configured the bucket
 // stays private and we 307-redirect to a short-lived presigned GET URL; in
 // disk-fallback mode (no R2_* env vars) the file streams straight from disk.
-// (Route path kept identical to the original template so existing DB rows and
-// client links keep working.)
+// The legacy /manus-storage/* path is kept as an alias so any file URL stored
+// before the rename still resolves.
 export function registerStorageProxy(app: Express) {
-  app.get("/manus-storage/*", async (req, res) => {
+  app.get(["/file-storage/*", "/manus-storage/*"], async (req, res) => {
     const key = (req.params as Record<string, string>)[0];
     if (!key) {
       res.status(400).send("Missing storage key");

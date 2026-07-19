@@ -4,7 +4,7 @@
 // use the AWS SDK already bundled in this project (@aws-sdk/client-s3 +
 // s3-request-presigner). Configure via the R2_* env vars (see .env.example).
 //
-// Keys are stored flat; downloads are served through /manus-storage/{key}
+// Keys are stored flat; downloads are served through /file-storage/{key}
 // (see storageProxy.ts) which 307-redirects to a short-lived presigned GET URL,
 // so the bucket itself stays private.
 
@@ -69,7 +69,7 @@ export async function r2DeleteObject(key: string): Promise<void> {
 }
 
 /** Short-lived presigned GET URL. Used both server-side (to read a file for
- *  analysis) and by the /manus-storage proxy (307 redirect to the browser). */
+ *  analysis) and by the /file-storage proxy (307 redirect to the browser). */
 export async function r2PresignGet(key: string, expiresInSeconds = 3600): Promise<string> {
   const s3 = getClient();
   return getSignedUrl(s3, new GetObjectCommand({ Bucket: ENV.r2Bucket, Key: key }), {

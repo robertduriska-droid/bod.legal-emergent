@@ -8,7 +8,7 @@
 //   - otherwise              -> local disk (_core/diskStorage.ts), so a fresh
 //     deployment works end to end before any storage keys exist.
 //
-// Download URLs are returned as /manus-storage/{key}; that route (storageProxy)
+// Download URLs are returned as /file-storage/{key}; that route (storageProxy)
 // 307-redirects to a short-lived presigned GET on R2, or streams from disk in
 // fallback mode.
 
@@ -56,7 +56,7 @@ export async function storagePut(
     );
     await diskPutObject(key, body, contentType);
   }
-  return { key, url: `/manus-storage/${key}` };
+  return { key, url: `/file-storage/${key}` };
 }
 
 /**
@@ -77,7 +77,7 @@ export async function storageDelete(relKey: string): Promise<void> {
 
 export async function storageGet(relKey: string): Promise<{ key: string; url: string }> {
   const key = normalizeKey(relKey);
-  return { key, url: `/manus-storage/${key}` };
+  return { key, url: `/file-storage/${key}` };
 }
 
 export async function storageGetSignedUrl(relKey: string): Promise<string> {
@@ -87,5 +87,5 @@ export async function storageGetSignedUrl(relKey: string): Promise<string> {
   }
   // Disk fallback: the proxy route streams the file; absolute URL so server-side
   // consumers (analysis text extraction) can fetch it too.
-  return `${selfBaseUrl()}/manus-storage/${key}`;
+  return `${selfBaseUrl()}/file-storage/${key}`;
 }

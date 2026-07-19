@@ -244,7 +244,7 @@ export type InsertChatMessage = typeof chatMessages.$inferInsert;
 
 /**
  * Attachments table - supporting files & media uploaded against a contract
- * (stored via the Forge/S3 storage layer; fileUrl is a /manus-storage/ path).
+ * (stored via the Forge/S3 storage layer; fileUrl is a /file-storage/ path).
  */
 export const attachments = mysqlTable("attachments", {
   id: int("id").autoincrement().primaryKey(),

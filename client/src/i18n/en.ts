@@ -53,7 +53,7 @@ export const en: Translations = {
     highRisk: "High risk",
     mediumRisk: "Medium risk",
     lowRisk: "Low risk",
-    generatedDate: "Generated July 10, 2025",
+    generatedDate: "Generated July 10, 2026",
     downloadPdf: "Download PDF",
     tabUpload: "Upload",
     tabAnalysis: "Analysis",
