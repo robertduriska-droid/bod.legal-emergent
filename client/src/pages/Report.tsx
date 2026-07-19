@@ -107,6 +107,7 @@ const TX = {
     lawyerCardTitle: "Overil",
     lawyerCardSAK: "SAK č.",
     lawyerCardFirm: "KILIAN LEGAL s.r.o.",
+    liabilityLine: "Za správnosť ručí advokát podľa zákona o advokácii, povinne poistený so zákonným minimom 1,5 mil. eur.",
     surveyTitle: "Bol pre vás report užitočný?",
     surveyThanks: "Ďakujeme za spätnú väzbu!",
     surveyCommentPlaceholder: "Voliteľné: čo by sme mohli zlepšiť?",
@@ -203,6 +204,7 @@ const TX = {
     lawyerCardTitle: "Verified by",
     lawyerCardSAK: "Bar No.",
     lawyerCardFirm: "KILIAN LEGAL s.r.o.",
+    liabilityLine: "The attorney is professionally liable under the Slovak Advocacy Act and carries mandatory insurance (statutory minimum 1.5M eur).",
     surveyTitle: "Was this report helpful?",
     surveyThanks: "Thank you for your feedback!",
     surveyCommentPlaceholder: "Optional: What could we improve?",
@@ -299,6 +301,7 @@ const TX = {
     lawyerCardTitle: "Ověřil",
     lawyerCardSAK: "ČAK č.",
     lawyerCardFirm: "KILIAN LEGAL s.r.o.",
+    liabilityLine: "Za správnost ručí advokát podle zákona o advokacii, povinně pojištěný se zákonným minimem 1,5 mil. eur.",
     surveyTitle: "Byl pro vás report užitečný?",
     surveyThanks: "Děkujeme za zpětnou vazbu!",
     surveyCommentPlaceholder: "Volitelné: Co bychom mohli zlepšit?",
@@ -895,6 +898,9 @@ function ReportContent({
                   )}
                   <p className="text-xs text-green-700 font-sans mt-0.5">
                     {tx.lawyerCardFirm}
+                  </p>
+                  <p className="text-xs text-muted-foreground font-sans mt-1 leading-snug">
+                    {tx.liabilityLine}
                   </p>
                   <p className="text-xs text-muted-foreground font-sans mt-0.5">
                     {report.signedAt ? new Date(report.signedAt).toLocaleDateString(tx.dateLocale) : ""}

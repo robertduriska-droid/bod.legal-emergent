@@ -182,7 +182,7 @@ section.alt { background: var(--paper-warm); border-top: 1px solid var(--line); 
 .advokat-band { background: var(--hero); color: var(--hero-text); }
 .advokat-band .wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
 .advokat-band h2 { font-size: clamp(28px, 3.4vw, 38px); margin-bottom: 16px; }
-.advokat-band p { color: var(--hero-muted); }
+.advokat-band p { color: var(--hero-muted); margin-bottom: 22px; }
 .advokat-card {
   background: var(--card); color: var(--ink); border-radius: 14px; padding: 34px;
   box-shadow: 0 18px 50px rgba(0,0,0,.35);
@@ -379,3 +379,11 @@ section { padding: 104px 0; }
 }
 .guarantee-note strong { color: var(--green); }
 @media (max-width: 900px) { .price-grid { grid-template-columns: 1fr; } }
+
+/* Insurance / liability badge on the advokat card. The strongest trust lever,
+   so it gets a chip at the top of the card. */
+.ins-badge {
+  display: inline-block; background: var(--green-soft); color: var(--green);
+  font-size: 12px; font-weight: 700; letter-spacing: .02em;
+  border-radius: 99px; padding: 5px 12px; margin-bottom: 14px;
+}
