@@ -24,7 +24,7 @@ export const hu: Translations = {
   hero: {
     titleLine1: "Aláírandó",
     titleLine2: "szerződése van?",
-    subtitle: "Töltse fel szerződését, és 24 órán belül jelentést kap a kockázatokról, jogszabályi hivatkozásokkal és módosítási javaslatokkal. A Standard és Prémium csomagnál a jelentést ügyvéd ellenőrzi és írja alá.",
+    subtitle: "Töltse fel szerződését, és 24 órán belül jelentést kap a kockázatokról, jogszabályi hivatkozásokkal és módosítási javaslatokkal. A Standard és Prémium csomagnál a jelentést ügyvédi iroda vagy ügyvéd ellenőrzi és írja alá.",
     ctaUpload: "Szerződés feltöltése",
     ctaPricing: "Árak megtekintése",
     ctaTrial: "Ingyenes próba",
@@ -68,7 +68,7 @@ export const hu: Translations = {
     step2Title: "2. AI-elemzés",
     step2Desc: "Az AI minden klauzulát elemez, azonosítja a kockázatokat, és hivatkozásokat ad a Slov-Lexre, a zakonyprolidi.cz-re és az EUR-Lexre.",
     step3Title: "3. Ügyvédi ellenőrzés",
-    step3Desc: "A Standard és Prémium csomagoknál ügyvéd ellenőrzi a megállapításokat, megjegyzéseket fűz hozzájuk, és aláírja a jelentést.",
+    step3Desc: "A Standard és Prémium csomagoknál ügyvédi iroda vagy ügyvéd ellenőrzi a megállapításokat, megjegyzéseket fűz hozzájuk, és aláírja a jelentést.",
   },
   whyNot: {
     title: "Miért ne a ChatGPT?",
@@ -76,7 +76,7 @@ export const hu: Translations = {
     feature1Title: "Slov-Lex hivatkozások",
     feature1Desc: "Minden megállapítás az alkalmazandó jogszabály konkrét szakaszára hivatkozik.",
     feature2Title: "Ügyvédi ellenőrzés",
-    feature2Desc: "A Standard és Prémium csomagnál ügyvéd ellenőrzi az AI kimeneteit, és felelősséget vállal a pontosságért.",
+    feature2Desc: "A Standard és Prémium csomagnál ügyvédi iroda vagy ügyvéd ellenőrzi az AI kimeneteit, és felelősséget vállal a pontosságért.",
     feature3Title: "Ügyvédi titoktartás",
     feature3Desc: "Dokumentumait törvényben előírt titoktartási kötelezettség védi.",
     feature4Title: "Strukturált jelentés",
@@ -123,7 +123,7 @@ export const hu: Translations = {
     standardTime: "24 órán belül",
     standardFeatures: [
       "Minden az Alap ellenőrzésből",
-      "Ügyvédi ellenőrzés (MÜK)",
+      "Ügyvédi ellenőrzés (SAK)",
       "Konkrét módosítási javaslatok",
       "Elsőbbségi támogatás",
       "Legfeljebb 20 oldal",
@@ -162,7 +162,7 @@ export const hu: Translations = {
       },
       {
         question: "Jogilag kötelező érvényű az elemzés?",
-        answer: "A jelentés tájékoztató alapként szolgál a döntéséhez. A Standard és Prémium csomagoknál a Szlovák Ügyvédi Kamarában (SAK) bejegyzett ügyvéd ellenőrzi.",
+        answer: "A jelentés tájékoztató alapként szolgál a döntéséhez. A Standard és Prémium csomagoknál a Szlovák Ügyvédi Kamarában (SAK) bejegyzett ügyvédi iroda vagy ügyvéd ellenőrzi.",
       },
       {
         question: "Hogyan biztosított a titoktartás?",
@@ -174,7 +174,7 @@ export const hu: Translations = {
       },
       {
         question: "Ki az az ügyvéd, aki a jelentést ellenőrzi?",
-        answer: "A Standard és Prémium csomag jelentéseit a Szlovák Ügyvédi Kamarában bejegyzett ügyvéd ellenőrzi és írja alá. A szolgáltatást a KILIAN LEGAL s.r.o. ügyvédi iroda üzemelteti.",
+        answer: "A Standard és Prémium csomag jelentéseit a Szlovák Ügyvédi Kamarában bejegyzett ügyvédi iroda vagy ügyvéd ellenőrzi és írja alá. A szolgáltatást a KILIAN LEGAL s. r. o. ügyvédi iroda üzemelteti.",
       },
       {
         question: "Mi történik, ha az AI téved? Ki a felelős?",
@@ -189,7 +189,7 @@ export const hu: Translations = {
   reviews: {
     rating: "5.0",
     count: "70 értékelés a Google-on",
-    subtitle: "KILIAN LEGAL s.r.o. – a bod.legal üzemeltetője",
+    subtitle: "KILIAN LEGAL s. r. o. – a bod.legal üzemeltetője",
     viewAll: "Mind a 70 értékelés megtekintése a Google-on",
   },
   cta: {
@@ -198,7 +198,7 @@ export const hu: Translations = {
     button: "Szerződés feltöltése",
   },
   footer: {
-    description: "AI szerződéselemzés ügyvédi ellenőrzéssel. Üzemelteti a KILIAN LEGAL s.r.o.",
+    description: "AI szerződéselemzés ügyvédi ellenőrzéssel. Üzemelteti a KILIAN LEGAL s. r. o.",
     product: "Termék",
     legalInfo: "Jogi információk",
     company: "Cég",
@@ -237,7 +237,7 @@ export const hu: Translations = {
     uploadFreePreview: "Feltöltés és ingyenes előnézet",
     uploadAndPay: "Feltöltés és tovább a fizetéshez",
     continueLabel: "Tovább",
-    basicNote: "Ingyenes szken: az AI elemzi a szerződését, és ingyen megmutatja a 3 legnagyobb kockázatot, bejelentkezés és kártya nélkül. A teljes, ügyvéd által ellenőrzött jelentéshez válassza a Standard vagy Prémium csomagot.",
+    basicNote: "Ingyenes szken: az AI elemzi a szerződését, és ingyen megmutatja a 3 legnagyobb kockázatot, bejelentkezés és kártya nélkül. A teljes, ügyvédi iroda vagy ügyvéd által ellenőrzött jelentéshez válassza a Standard vagy Prémium csomagot.",
     paidNote: "A feltöltés után átirányítjuk a biztonságos Stripe fizetési kapuhoz. Az elemzés a sikeres fizetés után automatikusan elindul.",
     testCardNote: "Tesztmód: használja a 4242 4242 4242 4242 kártyát, bármely jövőbeli dátummal és CVC-vel.",
     loginNote: "Bejelentkezés után befejezi a megrendelést, a beállításai mentve maradnak.",
@@ -384,10 +384,18 @@ export const hu: Translations = {
     trialCardDesc: "Próbálja ki a bod.legal-t 15 napig. A kártyát csak ellenőrizzük, nem terheljük meg.",
     trialCardCta: "Tudjon meg többet a próbáról",
     advokatTitle: "Ki ellenőrzi a jelentéseket?",
-    advokatGeneric: "A Standard és Prémium jelentéseket a Szlovák Ügyvédi Kamarában bejegyzett ügyvéd ellenőrzi és írja alá. A szolgáltatást a KILIAN LEGAL s.r.o. ügyvédi iroda üzemelteti.",
+    advokatGeneric: "A Standard és Prémium jelentéseket a Szlovák Ügyvédi Kamarában bejegyzett ügyvédi iroda vagy ügyvéd ellenőrzi és írja alá. A szolgáltatást a KILIAN LEGAL s. r. o. ügyvédi iroda üzemelteti.",
     advokatRegisteredPrefix: "A Szlovák Ügyvédi Kamarában bejegyzett ügyvéd, nyilvántartási szám:",
     advokatVerifyLink: "Ellenőrzés a SAK névjegyzékében",
     signInEmail: "Bejelentkezés e-maillel",
+    authName: "Név",
+    authEmail: "E-mail",
+    authPassword: "Jelszó",
+    authSignIn: "Bejelentkezés e-maillel",
+    authCreateAccount: "Fiók létrehozása",
+    authToggleToRegister: "Nincs fiókja? Regisztráljon",
+    authToggleToLogin: "Van fiókja? Jelentkezzen be",
+    authFailed: "A bejelentkezés sikertelen. Ellenőrizze az adatokat, és próbálja újra.",
     reviewsHeading: "A KILIAN LEGAL ügyvédi iroda, a bod.legal üzemeltetőjének értékelései",
     comparisonSrLabel: "Összehasonlítás",
     consentText1: "Elfogadom az ",

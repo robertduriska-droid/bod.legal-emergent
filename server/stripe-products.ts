@@ -9,7 +9,7 @@
 export const STRIPE_PRODUCTS = {
   standard: {
     name: "Štandardná kontrola",
-    description: "AI analýza + overenie advokátom, návrhy úprav (do 20 strán, do 24h)",
+    description: "AI analýza + overenie advokátskou kanceláriou alebo advokátom, návrhy úprav (do 20 strán, do 24h)",
     priceAmount: 24900, // 249 €
     currency: "eur",
   },

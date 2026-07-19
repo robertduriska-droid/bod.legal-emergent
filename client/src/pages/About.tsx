@@ -18,7 +18,7 @@ const SECTION_TX = {
   sk: {
     advokatTitle: "Advokát, ktorý podpisuje reporty",
     advokatGeneric:
-      "Štandardné a Prémiové reporty overuje a podpisuje advokát zapísaný v Slovenskej advokátskej komore. Prevádzkovateľom služby je advokátska kancelária KILIAN LEGAL s.r.o.",
+      "Štandardné a Prémiové reporty overuje a podpisuje advokát zapísaný v Slovenskej advokátskej komore. Prevádzkovateľom služby je advokátska kancelária KILIAN LEGAL s. r. o.",
     advokatFilledLine: (sakId: string) =>
       `Advokát zapísaný v Slovenskej advokátskej komore, reg. č. ${sakId}`,
     advokatVerifyLink: "Overiť v zozname advokátov SAK",
@@ -34,7 +34,7 @@ const SECTION_TX = {
   cz: {
     advokatTitle: "Advokát, který podepisuje reporty",
     advokatGeneric:
-      "Standardní a Prémiové reporty ověřuje a podepisuje advokát zapsaný ve Slovenské advokátní komoře. Provozovatelem služby je advokátní kancelář KILIAN LEGAL s.r.o.",
+      "Standardní a Prémiové reporty ověřuje a podepisuje advokát zapsaný ve Slovenské advokátní komoře. Provozovatelem služby je advokátní kancelář KILIAN LEGAL s. r. o.",
     advokatFilledLine: (sakId: string) =>
       `Advokát zapsaný ve Slovenské advokátní komoře, reg. č. ${sakId}`,
     advokatVerifyLink: "Ověřit v seznamu advokátů SAK",
@@ -50,7 +50,7 @@ const SECTION_TX = {
   en: {
     advokatTitle: "The lawyer who signs the reports",
     advokatGeneric:
-      "Standard and Premium reports are verified and signed by a lawyer registered with the Slovak Bar Association. The service is operated by the law firm KILIAN LEGAL s.r.o.",
+      "Standard and Premium reports are verified and signed by a lawyer registered with the Slovak Bar Association. The service is operated by the law firm KILIAN LEGAL s. r. o.",
     advokatFilledLine: (sakId: string) =>
       `Lawyer registered with the Slovak Bar Association, reg. no. ${sakId}`,
     advokatVerifyLink: "Verify in the SAK register of lawyers",
@@ -66,7 +66,7 @@ const SECTION_TX = {
   hu: {
     advokatTitle: "Az ügyvéd, aki aláírja a jelentéseket",
     advokatGeneric:
-      "A Standard és Prémium jelentéseket a Szlovák Ügyvédi Kamarában bejegyzett ügyvéd ellenőrzi és írja alá. A szolgáltatást a KILIAN LEGAL s.r.o. ügyvédi iroda üzemelteti.",
+      "A Standard és Prémium jelentéseket a Szlovák Ügyvédi Kamarában bejegyzett ügyvédi iroda vagy ügyvéd ellenőrzi és írja alá. A szolgáltatást a KILIAN LEGAL s. r. o. ügyvédi iroda üzemelteti.",
     advokatFilledLine: (sakId: string) =>
       `A Szlovák Ügyvédi Kamarában bejegyzett ügyvéd, nyilvántartási szám: ${sakId}`,
     advokatVerifyLink: "Ellenőrzés a SAK ügyvédi névjegyzékében",
@@ -87,20 +87,20 @@ export default function About() {
   const contentByLocale = {
     en: {
       title: "About us",
-      intro: "bod.legal is a product of the law firm KILIAN LEGAL s.r.o. We combine legal expertise with AI technology for commercial contract review.",
+      intro: "bod.legal is a product of the law firm KILIAN LEGAL s. r. o. We combine legal expertise with AI technology for commercial contract review.",
       whatWeDoTitle: "What we do",
-      whatWeDoText: "We review commercial contracts for companies and entrepreneurs. AI analyzes every clause, identifies risks, and adds references to specific paragraphs of Slovak and European legal regulations. With Standard and Premium plans, a lawyer verifies findings and signs the report.",
+      whatWeDoText: "We review commercial contracts for companies and entrepreneurs. AI analyzes every clause, identifies risks, and adds references to specific paragraphs of Slovak and European legal regulations. With Standard and Premium plans, a law firm or lawyer verifies findings and signs the report.",
       features: [
-        { icon: Scale, title: "Lawyer verification", desc: "Reports for Standard and Premium plans are verified by a lawyer registered with the Slovak Bar Association." },
+        { icon: Scale, title: "Lawyer verification", desc: "Reports for Standard and Premium plans are verified by a law firm or lawyer registered with the Slovak Bar Association." },
         { icon: Brain, title: "AI analysis", desc: "Language models analyze the contract clause by clause with references to Slov-Lex and EUR-Lex." },
         { icon: Shield, title: "Security", desc: "Encrypted storage, GDPR compliance, and attorney-client privilege." },
         { icon: Users, title: "For businesses", desc: "We focus on commercial contracts: supply, framework, license, SPA, and similar." },
       ],
-      companyTitle: "KILIAN LEGAL s.r.o.",
+      companyTitle: "KILIAN LEGAL s. r. o.",
       tableRows: [
-        { label: "Company name", value: "KILIAN LEGAL s.r.o.", type: "text" as TableRowType },
+        { label: "Company name", value: "KILIAN LEGAL s. r. o.", type: "text" as TableRowType },
         { label: "Company ID", value: "53 957 008", type: "text" as TableRowType },
-        { label: "Registered office", value: "Hrudky 1401/46A, Chorvátsky Grob 900 25", type: "text" as TableRowType },
+        { label: "Registered office", value: "Hrudky 1401/46A, 900 25 Chorvátsky Grob", type: "text" as TableRowType },
         { label: "Date of registration", value: "20.07.2021", type: "text" as TableRowType },
         { label: "Legal form", value: "Limited liability company", type: "text" as TableRowType },
         { label: "Director", value: "Michal Kilian", type: "text" as TableRowType },
@@ -119,20 +119,20 @@ export default function About() {
     },
     sk: {
       title: "O nás",
-      intro: "bod.legal je produkt advokátskej kancelárie KILIAN LEGAL s.r.o. Kombinujeme právnu expertízu s AI technológiou na kontrolu obchodných zmlúv.",
+      intro: "bod.legal je produkt advokátskej kancelárie KILIAN LEGAL s. r. o. Kombinujeme právnu expertízu s AI technológiou na kontrolu obchodných zmlúv.",
       whatWeDoTitle: "Čo robíme",
-      whatWeDoText: "Kontrolujeme obchodné zmluvy pre firmy a podnikateľov. AI analyzuje každú klauzulu, identifikuje riziká a doplní odkazy na konkrétne paragrafy slovenských a európskych právnych predpisov. Pri Štandardnej a Prémiovej kontrole advokát overí nálezy a podpíše report.",
+      whatWeDoText: "Kontrolujeme obchodné zmluvy pre firmy a podnikateľov. AI analyzuje každú klauzulu, identifikuje riziká a doplní odkazy na konkrétne paragrafy slovenských a európskych právnych predpisov. Pri Štandardnej a Prémiovej kontrole advokátska kancelária alebo advokát overí nálezy a podpíše report.",
       features: [
-        { icon: Scale, title: "Overenie advokátom", desc: "Report pri Štandardnej a Prémiovej kontrole overuje advokát zapísaný v Slovenskej advokátskej komore." },
+        { icon: Scale, title: "Overenie advokátskou kanceláriou alebo advokátom", desc: "Report pri Štandardnej a Prémiovej kontrole overuje advokátska kancelária alebo advokát zapísaný v Slovenskej advokátskej komore." },
         { icon: Brain, title: "AI analýza", desc: "Jazykové modely analyzujú zmluvu klauzulu po klauzule s odkazmi na Slov-Lex a EUR-Lex." },
         { icon: Shield, title: "Bezpečnosť", desc: "Šifrované úložisko, GDPR súlad a advokátska mlčanlivosť." },
         { icon: Users, title: "Pre firmy", desc: "Zameriavame sa na obchodné zmluvy: dodávateľské, rámcové, licenčné, SPA a podobne." },
       ],
-      companyTitle: "KILIAN LEGAL s.r.o.",
+      companyTitle: "KILIAN LEGAL s. r. o.",
       tableRows: [
-        { label: "Obchodné meno", value: "KILIAN LEGAL s.r.o.", type: "text" as TableRowType },
+        { label: "Obchodné meno", value: "KILIAN LEGAL s. r. o.", type: "text" as TableRowType },
         { label: "IČO", value: "53 957 008", type: "text" as TableRowType },
-        { label: "Sídlo", value: "Hrudky 1401/46A, Chorvátsky Grob 900 25", type: "text" as TableRowType },
+        { label: "Sídlo", value: "Hrudky 1401/46A, 900 25 Chorvátsky Grob", type: "text" as TableRowType },
         { label: "Deň zápisu", value: "20.07.2021", type: "text" as TableRowType },
         { label: "Právna forma", value: "Spoločnosť s ručením obmedzeným", type: "text" as TableRowType },
         { label: "Konateľ", value: "Michal Kilian", type: "text" as TableRowType },
@@ -151,20 +151,20 @@ export default function About() {
     },
     cz: {
       title: "O nás",
-      intro: "bod.legal je produkt advokátní kanceláře KILIAN LEGAL s.r.o. Kombinujeme právní expertízu s AI technologií pro kontrolu obchodních smluv.",
+      intro: "bod.legal je produkt advokátní kanceláře KILIAN LEGAL s. r. o. Kombinujeme právní expertízu s AI technologií pro kontrolu obchodních smluv.",
       whatWeDoTitle: "Co děláme",
-      whatWeDoText: "Kontrolujeme obchodní smlouvy pro firmy a podnikatele. AI analyzuje každou klauzuli, identifikuje rizika a doplní odkazy na konkrétní paragrafy českých a evropských právních předpisů. U Standardní a Prémiové kontroly advokát ověří nálezy a podepíše report.",
+      whatWeDoText: "Kontrolujeme obchodní smlouvy pro firmy a podnikatele. AI analyzuje každou klauzuli, identifikuje rizika a doplní odkazy na konkrétní paragrafy českých a evropských právních předpisů. U Standardní a Prémiové kontroly advokátní kancelář nebo advokát ověří nálezy a podepíše report.",
       features: [
-        { icon: Scale, title: "Ověření advokátem", desc: "Report u Standardní a Prémiové kontroly ověřuje advokát zapsaný ve Slovenské advokátní komoře." },
+        { icon: Scale, title: "Ověření advokátní kanceláří nebo advokátem", desc: "Report u Standardní a Prémiové kontroly ověřuje advokátní kancelář nebo advokát zapsaný ve Slovenské advokátní komoře." },
         { icon: Brain, title: "AI analýza", desc: "Jazykové modely analyzují smlouvu klauzuli po klauzuli s odkazy na zakonyprolidi.cz a EUR-Lex." },
         { icon: Shield, title: "Bezpečnost", desc: "Šifrované úložiště, soulad s GDPR a advokátní mlčenlivost." },
         { icon: Users, title: "Pro firmy", desc: "Zaměřujeme se na obchodní smlouvy: dodavatelské, rámcové, licenční, SPA a podobné." },
       ],
-      companyTitle: "KILIAN LEGAL s.r.o.",
+      companyTitle: "KILIAN LEGAL s. r. o.",
       tableRows: [
-        { label: "Obchodní jméno", value: "KILIAN LEGAL s.r.o.", type: "text" as TableRowType },
+        { label: "Obchodní jméno", value: "KILIAN LEGAL s. r. o.", type: "text" as TableRowType },
         { label: "IČO", value: "53 957 008", type: "text" as TableRowType },
-        { label: "Sídlo", value: "Hrudky 1401/46A, Chorvátsky Grob 900 25, Slovenská republika", type: "text" as TableRowType },
+        { label: "Sídlo", value: "Hrudky 1401/46A, 900 25 Chorvátsky Grob, Slovenská republika", type: "text" as TableRowType },
         { label: "Den zápisu", value: "20.07.2021", type: "text" as TableRowType },
         { label: "Právní forma", value: "Společnost s ručením omezeným", type: "text" as TableRowType },
         { label: "Jednatel", value: "Michal Kilian", type: "text" as TableRowType },
@@ -183,20 +183,20 @@ export default function About() {
     },
     hu: {
       title: "Rólunk",
-      intro: "A bod.legal a KILIAN LEGAL s.r.o. ügyvédi iroda terméke. A jogi szakértelmet AI-technológiával ötvözzük az üzleti szerződések ellenőrzéséhez.",
+      intro: "A bod.legal a KILIAN LEGAL s. r. o. ügyvédi iroda terméke. A jogi szakértelmet AI-technológiával ötvözzük az üzleti szerződések ellenőrzéséhez.",
       whatWeDoTitle: "Mit csinálunk",
-      whatWeDoText: "Üzleti szerződéseket ellenőrzünk cégek és vállalkozók számára. Az AI minden klauzulát elemez, azonosítja a kockázatokat, és hivatkozásokat ad a szlovák és cseh, valamint az európai jogszabályok konkrét szakaszaira. A Standard és Prémium csomagoknál ügyvéd ellenőrzi a megállapításokat, és aláírja a jelentést.",
+      whatWeDoText: "Üzleti szerződéseket ellenőrzünk cégek és vállalkozók számára. Az AI minden klauzulát elemez, azonosítja a kockázatokat, és hivatkozásokat ad a szlovák és cseh, valamint az európai jogszabályok konkrét szakaszaira. A Standard és Prémium csomagoknál ügyvédi iroda vagy ügyvéd ellenőrzi a megállapításokat, és aláírja a jelentést.",
       features: [
-        { icon: Scale, title: "Ügyvédi ellenőrzés", desc: "A Standard és Prémium csomagok jelentéseit a Szlovák Ügyvédi Kamarában bejegyzett ügyvéd ellenőrzi." },
+        { icon: Scale, title: "Ügyvédi ellenőrzés", desc: "A Standard és Prémium csomagok jelentéseit a Szlovák Ügyvédi Kamarában bejegyzett ügyvédi iroda vagy ügyvéd ellenőrzi." },
         { icon: Brain, title: "AI-elemzés", desc: "A nyelvi modellek klauzuláról klauzulára elemzik a szerződést, Slov-Lex és EUR-Lex hivatkozásokkal." },
         { icon: Shield, title: "Biztonság", desc: "Titkosított tárolás, GDPR-megfelelőség és ügyvédi titoktartás." },
         { icon: Users, title: "Cégeknek", desc: "Üzleti szerződésekre összpontosítunk: szállítási, keret-, licenc-, SPA- és hasonló szerződések." },
       ],
-      companyTitle: "KILIAN LEGAL s.r.o.",
+      companyTitle: "KILIAN LEGAL s. r. o.",
       tableRows: [
-        { label: "Cégnév", value: "KILIAN LEGAL s.r.o.", type: "text" as TableRowType },
+        { label: "Cégnév", value: "KILIAN LEGAL s. r. o.", type: "text" as TableRowType },
         { label: "Cégjegyzékszám", value: "53 957 008", type: "text" as TableRowType },
-        { label: "Székhely", value: "Hrudky 1401/46A, Chorvátsky Grob 900 25, Szlovákia", type: "text" as TableRowType },
+        { label: "Székhely", value: "Hrudky 1401/46A, 900 25 Chorvátsky Grob, Szlovákia", type: "text" as TableRowType },
         { label: "Bejegyzés dátuma", value: "2021.07.20.", type: "text" as TableRowType },
         { label: "Jogi forma", value: "Korlátolt felelősségű társaság", type: "text" as TableRowType },
         { label: "Ügyvezető", value: "Michal Kilian", type: "text" as TableRowType },

@@ -97,7 +97,7 @@ describe("emailNewContractForReview full report", () => {
 
 describe("house rules for every template", () => {
   it.each(allTemplates().map(t => [t.name, t] as const))("%s carries the operator footer and the 30-day deletion note", (_name, t) => {
-    expect(t.html).toContain("KILIAN LEGAL s.r.o.");
+    expect(t.html).toContain("KILIAN LEGAL s. r. o.");
     expect(t.html).toContain("do 30 dní");
   });
 

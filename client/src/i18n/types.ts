@@ -302,6 +302,14 @@ export interface Translations {
     advokatVerifyLink: string;
     /** Header: e-mail sign-in link */
     signInEmail: string;
+    authName: string;
+    authEmail: string;
+    authPassword: string;
+    authSignIn: string;
+    authCreateAccount: string;
+    authToggleToRegister: string;
+    authToggleToLogin: string;
+    authFailed: string;
     /** Reviews: attribution as part of the heading */
     reviewsHeading: string;
     /** Comparison table: screen-reader label for the empty first column */

@@ -24,7 +24,7 @@ export const cz: Translations = {
   hero: {
     titleLine1: "Dostali jste smlouvu",
     titleLine2: "k podpisu?",
-    subtitle: "Nahrajte smlouvu a do 24 hodin obdržíte report s riziky, odkazy na zákony a návrhy úprav. U Standardní a Prémiové kontroly report ověří a podepíše advokát.",
+    subtitle: "Nahrajte smlouvu a do 24 hodin obdržíte report s riziky, odkazy na zákony a návrhy úprav. U Standardní a Prémiové kontroly report ověří a podepíše advokátní kancelář nebo advokát.",
     ctaUpload: "Nahrát smlouvu",
     ctaPricing: "Zobrazit ceník",
     ctaTrial: "Vyzkoušet zdarma",
@@ -123,7 +123,7 @@ export const cz: Translations = {
     standardTime: "do 24 hodin",
     standardFeatures: [
       "Vše ze Základní kontroly",
-      "Ověření advokátem (ČAK)",
+      "Ověření advokátní kanceláří nebo advokátem (SAK)",
       "Návrhy konkrétních úprav",
       "Prioritní podpora",
       "Do 20 stran",
@@ -162,7 +162,7 @@ export const cz: Translations = {
       },
       {
         question: "Je analýza právně závazná?",
-        answer: "Report slouží jako informační podklad pro vaše rozhodnutí. U Standardní a Prémiové kontroly je ověřen advokátem zapsaným v ČAK.",
+        answer: "Report slouží jako informační podklad pro vaše rozhodnutí. U Standardní a Prémiové kontroly je ověřen advokátní kanceláří nebo advokátem zapsaným v SAK.",
       },
       {
         question: "Jak je zajištěna důvěrnost?",
@@ -174,11 +174,11 @@ export const cz: Translations = {
       },
       {
         question: "Kdo je advokát, který report ověřuje?",
-        answer: "Reporty u Standardní a Prémiové kontroly ověřuje a podepisuje advokát zapsaný v advokátní komoře. Službu provozuje advokátní kancelář KILIAN LEGAL s.r.o.",
+        answer: "Reporty u Standardní a Prémiové kontroly ověřuje a podepisuje advokát zapsaný v advokátní komoře. Službu provozuje advokátní kancelář KILIAN LEGAL s. r. o.",
       },
       {
         question: "Co když se AI splete? Kdo odpovídá?",
-        answer: "U Standardní a Prémiové kontroly nálezy ověřuje advokát. Za ověřený report odpovídá advokátní kancelář, která má zákonné pojištění odpovědnosti. Bezplatný sken je informační náhled bez ověření.",
+        answer: "U Standardní a Prémiové kontroly nálezy ověřuje advokátní kancelář nebo advokát. Za ověřený report odpovídá advokátní kancelář, která má zákonné pojištění odpovědnosti. Bezplatný sken je informační náhled bez ověření.",
       },
       {
         question: "Je bezplatný sken opravdu zdarma?",
@@ -189,7 +189,7 @@ export const cz: Translations = {
   reviews: {
     rating: "5.0",
     count: "70 hodnocení na Google",
-    subtitle: "KILIAN LEGAL s.r.o. - provozovatel bod.legal",
+    subtitle: "KILIAN LEGAL s. r. o. - provozovatel bod.legal",
     viewAll: "Zobrazit všech 70 hodnocení na Google",
   },
   cta: {
@@ -198,7 +198,7 @@ export const cz: Translations = {
     button: "Nahrát smlouvu",
   },
   footer: {
-    description: "Kontrola smluv s AI a ověřením advokátem. Provozováno KILIAN LEGAL s.r.o.",
+    description: "Kontrola smluv s AI a ověřením advokátem. Provozováno KILIAN LEGAL s. r. o.",
     product: "Produkt",
     legalInfo: "Právní informace",
     company: "Společnost",
@@ -384,10 +384,18 @@ export const cz: Translations = {
     trialCardDesc: "Vyzkoušejte bod.legal na 15 dní. Kartu pouze ověříme, nic neúčtujeme.",
     trialCardCta: "Zjistit více o zkušební verzi",
     advokatTitle: "Kdo ověřuje reporty?",
-    advokatGeneric: "Standardní a Prémiové reporty ověřuje a podepisuje advokát zapsaný v advokátní komoře. Službu provozuje advokátní kancelář KILIAN LEGAL s.r.o.",
+    advokatGeneric: "Standardní a Prémiové reporty ověřuje a podepisuje advokát zapsaný v advokátní komoře. Službu provozuje advokátní kancelář KILIAN LEGAL s. r. o.",
     advokatRegisteredPrefix: "Advokát zapsaný ve Slovenské advokátní komoře, reg. č.",
     advokatVerifyLink: "Ověřit v seznamu SAK",
     signInEmail: "Přihlášení e-mailem",
+    authName: "Jméno",
+    authEmail: "E-mail",
+    authPassword: "Heslo",
+    authSignIn: "Přihlásit se e-mailem",
+    authCreateAccount: "Vytvořit účet",
+    authToggleToRegister: "Nemáte účet? Zaregistrujte se",
+    authToggleToLogin: "Máte účet? Přihlaste se",
+    authFailed: "Přihlášení selhalo. Zkontrolujte údaje a zkuste to znovu.",
     reviewsHeading: "Hodnocení advokátní kanceláře KILIAN LEGAL, provozovatele bod.legal",
     comparisonSrLabel: "Porovnání",
     consentText1: "Souhlasím s ",

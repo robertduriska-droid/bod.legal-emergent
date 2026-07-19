@@ -80,7 +80,7 @@ export async function sendEmail({ to, subject, html }: EmailParams): Promise<boo
 // --- Template building blocks ------------------------------------------------
 // House rules for every SK/CZ string below: no em or en dashes, plain Slovak,
 // prices written as "X eur", no superlatives, no outcome guarantees. Every
-// template renders the operator footer (KILIAN LEGAL s.r.o.) plus the 30 day
+// template renders the operator footer (KILIAN LEGAL s. r. o.) plus the 30 day
 // deletion note.
 
 /** Escape user or model supplied text before interpolating into HTML. */
@@ -102,7 +102,7 @@ const SEVERITY_LABELS: Record<string, string> = { high: "kritické", medium: "d�
 function emailFooter(): string {
   return `
         <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
-        <p style="color: #999; font-size: 12px; margin: 0 0 4px 0;">Prevádzkovateľ: KILIAN LEGAL s.r.o.</p>
+        <p style="color: #999; font-size: 12px; margin: 0 0 4px 0;">Prevádzkovateľ: KILIAN LEGAL s. r. o.</p>
         <p style="color: #999; font-size: 12px; margin: 0 0 4px 0;">Nahraté dokumenty mažeme do 30 dní od dokončenia kontroly.</p>
         <p style="color: #999; font-size: 12px; margin: 0;">bod.legal, AI kontrola zmlúv podľa slovenského práva</p>`;
 }

@@ -51,7 +51,7 @@ export default function Footer() {
             <h4 className="font-sans font-medium text-hero-text mb-3 text-[13px] uppercase tracking-[0.05em]">{t.footer.company}</h4>
             <ul className="space-y-2 text-sm font-sans">
               <li><Link href={localePath("/about")} className="hover:text-hero-text transition-colors">{t.header.about}</Link></li>
-              <li>KILIAN LEGAL s.r.o.</li>
+              <li>KILIAN LEGAL s. r. o.</li>
               <li>IČO: 53 957 008</li>
               <li><a href={`mailto:${CONTACT.email}`} className="hover:text-hero-text transition-colors">{CONTACT.email}</a></li>
               <li><a href={`tel:${CONTACT.phoneNumber}`} className="hover:text-hero-text transition-colors">{CONTACT.phoneDisplay}</a></li>
@@ -60,7 +60,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-hero-text/10 mt-8 pt-8 text-center text-xs font-sans">
-          <p>&copy; {new Date().getFullYear()} KILIAN LEGAL s.r.o. {t.footer.allRights}</p>
+          <p>&copy; {new Date().getFullYear()} KILIAN LEGAL s. r. o. {t.footer.allRights}</p>
           <p className="mt-1">
             {t.footer.legalSources}{" "}
             {locale === "cz" ? (

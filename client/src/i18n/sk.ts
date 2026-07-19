@@ -174,7 +174,7 @@ export const sk: Translations = {
       },
       {
         question: "Kto je advokát, ktorý report overuje?",
-        answer: "Reporty pri Štandardnej a Prémiovej kontrole overuje a podpisuje advokát zapísaný v Slovenskej advokátskej komore. Službu prevádzkuje advokátska kancelária KILIAN LEGAL s.r.o.",
+        answer: "Reporty pri Štandardnej a Prémiovej kontrole overuje a podpisuje advokát zapísaný v Slovenskej advokátskej komore. Službu prevádzkuje advokátska kancelária KILIAN LEGAL s. r. o.",
       },
       {
         question: "Čo ak sa AI pomýli? Kto zodpovedá?",
@@ -189,7 +189,7 @@ export const sk: Translations = {
   reviews: {
     rating: "5.0",
     count: "70 hodnotení na Google",
-    subtitle: "KILIAN LEGAL s.r.o. - prevádzkovateľ bod.legal",
+    subtitle: "KILIAN LEGAL s. r. o. - prevádzkovateľ bod.legal",
     viewAll: "Zobraziť všetkých 70 hodnotení na Google",
   },
   cta: {
@@ -198,7 +198,7 @@ export const sk: Translations = {
     button: "Nahrať zmluvu",
   },
   footer: {
-    description: "Kontrola zmlúv s AI a overením advokátskou kanceláriou alebo advokátom. Prevádzkované KILIAN LEGAL s.r.o.",
+    description: "Kontrola zmlúv s AI a overením advokátskou kanceláriou alebo advokátom. Prevádzkované KILIAN LEGAL s. r. o.",
     product: "Produkt",
     legalInfo: "Právne informácie",
     company: "Spoločnosť",
@@ -384,10 +384,18 @@ export const sk: Translations = {
     trialCardDesc: "Vyskúšajte bod.legal na 15 dní. Kartu iba overíme, nič neúčtujeme.",
     trialCardCta: "Zistiť viac o skúšobnej verzii",
     advokatTitle: "Kto overuje reporty?",
-    advokatGeneric: "Štandardné a Prémiové reporty overuje a podpisuje advokát zapísaný v Slovenskej advokátskej komore. Službu prevádzkuje advokátska kancelária KILIAN LEGAL s.r.o.",
+    advokatGeneric: "Štandardné a Prémiové reporty overuje a podpisuje advokát zapísaný v Slovenskej advokátskej komore. Službu prevádzkuje advokátska kancelária KILIAN LEGAL s. r. o.",
     advokatRegisteredPrefix: "Advokát zapísaný v Slovenskej advokátskej komore, reg. č.",
     advokatVerifyLink: "Overiť v zozname SAK",
     signInEmail: "Prihlásenie e-mailom",
+    authName: "Meno",
+    authEmail: "E-mail",
+    authPassword: "Heslo",
+    authSignIn: "Prihlásiť sa e-mailom",
+    authCreateAccount: "Vytvoriť konto",
+    authToggleToRegister: "Nemáte konto? Zaregistrujte sa",
+    authToggleToLogin: "Máte konto? Prihláste sa",
+    authFailed: "Prihlásenie zlyhalo. Skontrolujte údaje a skúste znova.",
     reviewsHeading: "Hodnotenia advokátskej kancelárie KILIAN LEGAL, prevádzkovateľa bod.legal",
     comparisonSrLabel: "Porovnanie",
     consentText1: "Súhlasím s ",

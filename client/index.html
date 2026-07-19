@@ -30,10 +30,9 @@
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+    <!-- Fonts: self-hosted so no visitor IP leaks to Google before cookie
+         consent (the marketing site self-hosts them for the same reason). -->
+    <link rel="stylesheet" href="/fonts/fonts.css" />
 
     <!-- Structured Data -->
     <script type="application/ld+json">
@@ -45,7 +44,7 @@
       "url": "https://app.bod.legal",
       "provider": {
         "@type": "Organization",
-        "name": "KILIAN LEGAL s.r.o.",
+        "name": "KILIAN LEGAL s. r. o.",
         "address": {
           "@type": "PostalAddress",
           "streetAddress": "Hrudky 1401/46A",
@@ -54,7 +53,7 @@
           "addressCountry": "SK"
         },
         "telephone": "+421917333692",
-        "email": "robert.duriska@bod.legal"
+        "email": "info@bod.legal"
       },
       "aggregateRating": {
         "@type": "AggregateRating",
@@ -63,7 +62,7 @@
         "bestRating": "5",
         "worstRating": "1"
       },
-      "priceRange": "249-497 EUR",
+      "priceRange": "249-490 EUR",
       "areaServed": {
         "@type": "Country",
         "name": "Slovakia"
@@ -77,14 +76,21 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      // Only load analytics if user accepted cookies
-      if (localStorage.getItem('bod_cookie_consent') === 'accepted') {
-        var s = document.createElement('script');
-        s.defer = true;
-        s.src = '%VITE_ANALYTICS_ENDPOINT%/umami';
-        s.setAttribute('data-website-id', '%VITE_ANALYTICS_WEBSITE_ID%');
-        document.body.appendChild(s);
-      }
+      // Load analytics only if the user accepted cookies AND the build-time
+      // analytics vars were actually set. Otherwise the %VITE_...% placeholders
+      // ship literally and would fire a request to a broken URL.
+      (function () {
+        var endpoint = '%VITE_ANALYTICS_ENDPOINT%';
+        var websiteId = '%VITE_ANALYTICS_WEBSITE_ID%';
+        var configured = endpoint.indexOf('%VITE_') !== 0 && websiteId.indexOf('%VITE_') !== 0;
+        if (configured && localStorage.getItem('bod_cookie_consent') === 'accepted') {
+          var s = document.createElement('script');
+          s.defer = true;
+          s.src = endpoint + '/umami';
+          s.setAttribute('data-website-id', websiteId);
+          document.body.appendChild(s);
+        }
+      })();
     </script>
   </body>
 

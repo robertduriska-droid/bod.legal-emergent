@@ -430,7 +430,7 @@ export function parseJsonLoose(content: string): unknown {
 // statute citations, uncertain findings marked for lawyer verification.
 
 export const SYSTEM_PROMPTS: Record<string, string> = {
-  sk: `Si právny AI analytik služby bod.legal. Analyzuješ zmluvy podľa slovenského a európskeho práva pre klientov, ktorí nie sú právnici. Službu prevádzkuje advokátska kancelária KILIAN LEGAL s.r.o. a reporty overuje a podpisuje advokát zapísaný v Slovenskej advokátskej komore. Preto kontrolujeme zmluvy podľa slovenského práva.
+  sk: `Si právny AI analytik služby bod.legal. Analyzuješ zmluvy podľa slovenského a európskeho práva pre klientov, ktorí nie sú právnici. Službu prevádzkuje advokátska kancelária KILIAN LEGAL s. r. o. a reporty overuje a podpisuje advokát zapísaný v Slovenskej advokátskej komore. Preto kontrolujeme zmluvy podľa slovenského práva.
 
 POSTUP (presne v tomto poradí):
 
@@ -548,7 +548,7 @@ Odpověz pouze validním JSON podle zadaného schématu, bez jakéhokoli další
 
 BEZPLATNÝ SKEN: klient s plánem basic vidí pouze top 3 nálezy. Top 3 jsou nálezy s nejvyšší závažností, každý z jiné rizikové kategorie (riskCategory). Pole clauses seřaď od nejzávažnějšího nálezu.`,
 
-  en: `You are the legal AI analyst for bod.legal. You analyze contracts under Slovak and European law for clients who are not lawyers. The service is operated by the law firm KILIAN LEGAL s.r.o. and reports are verified and signed by an advokat registered with the Slovak Bar Association, which is why we review contracts governed by Slovak law.
+  en: `You are the legal AI analyst for bod.legal. You analyze contracts under Slovak and European law for clients who are not lawyers. The service is operated by the law firm KILIAN LEGAL s. r. o. and reports are verified and signed by an advokat registered with the Slovak Bar Association, which is why we review contracts governed by Slovak law.
 
 PROCEDURE (in this exact order):
 

@@ -24,7 +24,7 @@ export const en: Translations = {
   hero: {
     titleLine1: "Got a contract",
     titleLine2: "to sign?",
-    subtitle: "Upload your contract and within 24 hours you receive a report with risks, legal references, and suggested edits. With Standard and Premium reviews, a lawyer verifies and signs the report.",
+    subtitle: "Upload your contract and within 24 hours you receive a report with risks, legal references, and suggested edits. With Standard and Premium reviews, a law firm or lawyer verifies and signs the report.",
     ctaUpload: "Upload contract",
     ctaPricing: "View pricing",
     ctaTrial: "Start free trial",
@@ -174,7 +174,7 @@ export const en: Translations = {
       },
       {
         question: "Who is the lawyer that verifies the report?",
-        answer: "Reports under the Standard and Premium reviews are verified and signed by a lawyer registered with the Slovak Bar Association. The service is operated by the law firm KILIAN LEGAL s.r.o.",
+        answer: "Reports under the Standard and Premium reviews are verified and signed by a lawyer registered with the Slovak Bar Association. The service is operated by the law firm KILIAN LEGAL s. r. o.",
       },
       {
         question: "What if the AI makes a mistake? Who is responsible?",
@@ -189,7 +189,7 @@ export const en: Translations = {
   reviews: {
     rating: "5.0",
     count: "70 reviews on Google",
-    subtitle: "KILIAN LEGAL s.r.o. - operator of bod.legal",
+    subtitle: "KILIAN LEGAL s. r. o. - operator of bod.legal",
     viewAll: "View all 70 reviews on Google",
   },
   cta: {
@@ -198,7 +198,7 @@ export const en: Translations = {
     button: "Upload contract",
   },
   footer: {
-    description: "AI contract review with law firm or attorney verification. Operated by KILIAN LEGAL s.r.o.",
+    description: "AI contract review with law firm or attorney verification. Operated by KILIAN LEGAL s. r. o.",
     product: "Product",
     legalInfo: "Legal information",
     company: "Company",
@@ -384,10 +384,18 @@ export const en: Translations = {
     trialCardDesc: "Try bod.legal for 15 days. We only verify your card, nothing is charged.",
     trialCardCta: "Learn more about the trial",
     advokatTitle: "Who verifies the reports?",
-    advokatGeneric: "Standard and Premium reports are verified and signed by a lawyer registered with the Slovak Bar Association. The service is operated by the law firm KILIAN LEGAL s.r.o.",
+    advokatGeneric: "Standard and Premium reports are verified and signed by a lawyer registered with the Slovak Bar Association. The service is operated by the law firm KILIAN LEGAL s. r. o.",
     advokatRegisteredPrefix: "Lawyer registered with the Slovak Bar Association, reg. no.",
     advokatVerifyLink: "Verify in the SAK register",
     signInEmail: "Sign in with email",
+    authName: "Name",
+    authEmail: "Email",
+    authPassword: "Password",
+    authSignIn: "Sign in with email",
+    authCreateAccount: "Create account",
+    authToggleToRegister: "No account? Register",
+    authToggleToLogin: "Have an account? Sign in",
+    authFailed: "Sign-in failed. Check your details and try again.",
     reviewsHeading: "Reviews of the law firm KILIAN LEGAL, operator of bod.legal",
     comparisonSrLabel: "Comparison",
     consentText1: "I agree with the ",

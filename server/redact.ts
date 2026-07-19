@@ -1,7 +1,7 @@
 // PII redaction: strip personal and identifying data BEFORE any external model call.
 //
 // This is a non-negotiable of the service (see CLAUDE.md §2.2): bod.legal runs
-// under KILIAN LEGAL s.r.o. and its advokat is bound by mlcanlivost (§ 23
+// under KILIAN LEGAL s. r. o. and its advokat is bound by mlcanlivost (§ 23
 // zakona c. 586/2003 Z. z.), so client contracts must never reach a third-party
 // model with personal data intact.
 //

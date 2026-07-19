@@ -3,12 +3,14 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useT } from "@/i18n";
 
 /**
  * Classic email + password auth form. Reuses the app's session cookie, so on
  * success we simply reload to let the existing auth check pick up the session.
  */
 export default function EmailAuthForm() {
+  const { t } = useT();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +30,7 @@ export default function EmailAuthForm() {
       }
       window.location.reload();
     } catch (err: any) {
-      toast.error(err?.message || "Authentication failed");
+      toast.error(err?.message || t.wp1.authFailed);
     }
   };
 
@@ -41,7 +43,7 @@ export default function EmailAuthForm() {
         <input
           className={inputCls}
           type="text"
-          placeholder="Name"
+          placeholder={t.wp1.authName}
           value={name}
           onChange={(e) => setName(e.target.value)}
           data-testid="email-auth-name"
@@ -51,7 +53,7 @@ export default function EmailAuthForm() {
         className={inputCls}
         type="email"
         required
-        placeholder="Email"
+        placeholder={t.wp1.authEmail}
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         data-testid="email-auth-email"
@@ -61,14 +63,14 @@ export default function EmailAuthForm() {
         type="password"
         required
         minLength={mode === "register" ? 8 : undefined}
-        placeholder="Password"
+        placeholder={t.wp1.authPassword}
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         data-testid="email-auth-password"
       />
       <Button type="submit" size="lg" className="w-full" disabled={pending} data-testid="email-auth-submit">
         {pending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-        {mode === "login" ? "Sign in with email" : "Create account"}
+        {mode === "login" ? t.wp1.authSignIn : t.wp1.authCreateAccount}
       </Button>
       <button
         type="button"
@@ -76,7 +78,7 @@ export default function EmailAuthForm() {
         onClick={() => setMode(mode === "login" ? "register" : "login")}
         data-testid="email-auth-toggle"
       >
-        {mode === "login" ? "No account? Register" : "Have an account? Sign in"}
+        {mode === "login" ? t.wp1.authToggleToRegister : t.wp1.authToggleToLogin}
       </button>
     </form>
   );
