@@ -387,3 +387,15 @@ section { padding: 104px 0; }
   font-size: 12px; font-weight: 700; letter-spacing: .02em;
   border-radius: 99px; padding: 5px 12px; margin-bottom: 14px;
 }
+
+/* The firm's motto in the hero: near-white, spaced, prominent. Mirrors the app
+   home so the two surfaces carry the same promise. */
+.hero-motto {
+  margin-top: 24px;
+  font-size: 15px;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--hero-text) 92%, transparent);
+}
+@media (min-width: 720px) { .hero-motto { font-size: 17px; } }
