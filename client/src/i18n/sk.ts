@@ -122,7 +122,7 @@ export const sk: Translations = {
     standardPrice: "249 eur",
     standardTime: "do 24 hodín",
     standardFeatures: [
-      "Všetko zo Základnej kontroly",
+      "Všetko z bezplatného skenu",
       "Overenie kanceláriou alebo advokátom (SAK)",
       "Návrhy konkrétnych úprav",
       "Prioritná podpora",

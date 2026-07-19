@@ -122,7 +122,7 @@ export const hu: Translations = {
     standardPrice: "119 000 Ft",
     standardTime: "24 órán belül",
     standardFeatures: [
-      "Minden az Alap ellenőrzésből",
+      "Minden az ingyenes szkenből",
       "Ügyvédi ellenőrzés (SAK)",
       "Konkrét módosítási javaslatok",
       "Elsőbbségi támogatás",

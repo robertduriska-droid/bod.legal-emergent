@@ -122,7 +122,7 @@ export const en: Translations = {
     standardPrice: "€249",
     standardTime: "within 24 hours",
     standardFeatures: [
-      "Everything from Basic review",
+      "Everything from the free scan",
       "Law firm or attorney verification (SAK)",
       "Specific edit suggestions",
       "Priority support",

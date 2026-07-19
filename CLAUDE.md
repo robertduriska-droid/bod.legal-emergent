@@ -21,7 +21,7 @@ as advokát; the signing advokát is Kilian.
 - **What it does:** AI reviews a contract clause by clause, personal data is redacted before processing, an SAK-registered advokát verifies and signs the result, delivered within 24h at a fixed price.
 - **Market:** Slovakia. All client-facing copy is Slovak. English is a parallel version, same Slovak law.
 - **Buyer:** B2B konateľ and agencies. Not consumers, not residential.
-- **Flagship deliverable:** clause report + advokát verification + suggested edits, **249 eur**, up to 50 pages. **Redline is NOT in the flagship** (decided 2026-07-16, amends the original brief): the redline document, non-standard/complex contracts and up to 100 pages are what **Prémium 497 eur** adds. Express is a +127 eur add-on.
+- **Flagship deliverable:** clause report + advokát verification + suggested edits, **249 eur**, up to 20 pages. **Redline is NOT in the flagship** (decided 2026-07-16, amends the original brief): the redline document, non-standard/complex contracts and up to 50 pages are what **Prémium 490 eur** adds. Express is a +127 eur add-on.
 - **Ladder:** free AI scan (lead magnet) → Express upsell → bundle → negotiation-to-signature add-on → subscription 449 eur/mesiac (founding rate 349 eur for the first 20).
 - **Growth:** lead-getters (accountants, invoicing platforms), not paid social.
 - **Reference model:** general.legal (AI first pass, licensed attorney signs, flat-fee productized menu, free template funnel).
@@ -124,13 +124,13 @@ out. P1.5's trust block is now truthful and may ship.
 
 ### 8.2 Pricing RESOLVED (2026-07-16)
 Robert decided: free scan (0 eur) / **Štandardná 249 eur** (was 297) / **Prémiová
-497 eur** / Express +127 eur. Changed in all 20 places incl. VOP and tests.
+490 eur** / Express +127 eur. Changed in all 20 places incl. VOP and tests.
 
 Two decisions that amend the original brief:
 - the **249 flagship does NOT include the redline**. Redline stays a Prémium
   feature (`includesRedline: false` on standard, `true` on premium).
-- **Prémium 497 justifies itself with scope, not redline alone**: bigger
-  (up to 100 pages) and non-standard/complex contracts.
+- **Prémium 490 justifies itself with scope, not redline alone**: bigger
+  (up to 50 pages) and non-standard/complex contracts.
 
 Still open: the **449 eur/mesiac subscription** does not exist in the app (there
 is only a 15-day trial in `Trial.tsx` via Stripe SetupIntent), and the flagship
