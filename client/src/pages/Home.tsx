@@ -13,21 +13,7 @@ import { ADVOKAT, SAK_REGISTER_SEARCH_URL, isAdvokatConfigured } from "@shared/a
 import { useT } from "@/i18n";
 
 export default function Home() {
-  const [lightboxImg, setLightboxImg] = useLocalState<string | null>(null);
-  const [brokenImgs, setBrokenImgs] = useLocalState<Record<number, boolean>>({});
-  const lightboxCloseRef = useRef<HTMLButtonElement | null>(null);
   const { t, locale, localePath } = useT();
-
-  // Lightbox a11y: Escape closes, close button receives initial focus.
-  useEffect(() => {
-    if (!lightboxImg) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setLightboxImg(null);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    lightboxCloseRef.current?.focus();
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [lightboxImg]);
 
   // Splash intro - show once per session
   const [showSplash, setShowSplash] = useLocalState(() => {
@@ -127,41 +113,22 @@ export default function Home() {
           <p className="text-muted-foreground text-center mb-12 max-w-xl mx-auto font-sans">
             {t.howItWorks.subtitle}
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { src: "/img/krok-1.svg", Icon: Upload, alt: t.howItWorks.step1Title, title: t.howItWorks.step1Title, desc: t.howItWorks.step1Desc },
-              { src: "/img/krok-2.svg", Icon: Brain, alt: t.howItWorks.step2Title, title: t.howItWorks.step2Title, desc: t.howItWorks.step2Desc },
-              { src: "/img/krok-3.svg", Icon: UserCheck, alt: t.howItWorks.step3Title, title: t.howItWorks.step3Title, desc: t.howItWorks.step3Desc },
+              { Icon: Upload, step: "01", title: t.howItWorks.step1Title, desc: t.howItWorks.step1Desc },
+              { Icon: Brain, step: "02", title: t.howItWorks.step2Title, desc: t.howItWorks.step2Desc },
+              { Icon: UserCheck, step: "03", title: t.howItWorks.step3Title, desc: t.howItWorks.step3Desc },
             ].map((item, i) => (
-              <Card key={i} className="border-0 shadow-sm bg-white overflow-hidden group cursor-pointer" onClick={() => !brokenImgs[i] && setLightboxImg(item.src)}>
-                <CardContent className="p-0">
-                  <div className="aspect-[4/3] overflow-hidden bg-muted relative">
-                    {brokenImgs[i] ? (
-                      <div className="w-full h-full flex items-center justify-center bg-[#0A1428]">
-                        <item.Icon className="h-16 w-16 text-amber-200/80" aria-hidden="true" />
-                      </div>
-                    ) : (
-                      <>
-                        <img
-                          src={item.src}
-                          alt={item.alt}
-                          onError={() => setBrokenImgs(prev => ({ ...prev, [i]: true }))}
-                          className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-110"
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center">
-                          <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg">
-                            <svg className="w-5 h-5 text-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                            </svg>
-                          </div>
-                        </div>
-                      </>
-                    )}
+              <Card key={i} className="border border-green-100 shadow-sm bg-white transition-transform duration-200 hover:-translate-y-1 hover:shadow-md">
+                <CardContent className="p-7">
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="w-14 h-14 rounded-2xl bg-green-50 border border-green-100 flex items-center justify-center">
+                      <item.Icon className="h-7 w-7 text-green-700" aria-hidden="true" />
+                    </div>
+                    <span className="font-serif text-4xl text-green-700/25 leading-none">{item.step}</span>
                   </div>
-                  <div className="p-6 text-center">
-                    <h3 className="font-sans text-xl font-semibold mb-2">{item.title}</h3>
-                    <p className="text-muted-foreground font-sans text-sm">{item.desc}</p>
-                  </div>
+                  <h3 className="font-sans text-xl font-semibold mb-2">{item.title.replace(/^\d+\.\s*/, "")}</h3>
+                  <p className="text-muted-foreground font-sans text-sm leading-relaxed">{item.desc}</p>
                 </CardContent>
               </Card>
             ))}
@@ -523,31 +490,7 @@ export default function Home() {
 
       <Footer />
 
-      {/* Lightbox overlay */}
-      {lightboxImg && (
-        <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 cursor-pointer"
-          onClick={() => setLightboxImg(null)}
-        >
-          <div className="relative max-w-5xl w-full animate-in fade-in zoom-in-95 duration-200">
-            <img
-              src={lightboxImg}
-              alt={locale === "en" ? "Enlarged detail" : locale === "cz" ? "Zvětšený detail" : "Zväčšený detail"}
-              className="w-full h-auto rounded-xl shadow-2xl"
-            />
-            <button
-              ref={lightboxCloseRef}
-              onClick={() => setLightboxImg(null)}
-              className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
-              aria-label={t.common.close}
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }
