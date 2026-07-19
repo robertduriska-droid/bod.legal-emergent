@@ -1,5 +1,7 @@
 # bod.legal — PRD / Working Notes
 
+> **Current state (2026-07):** operator **KILIAN LEGAL s. r. o.**; Manus fully removed (now Railway + Cloudflare R2 + OpenRouter/Claude Opus). Live pricing: Bezplatný sken 0 · Štandardná 249 (do 20 strán) · Prémiová 490 (do 50 strán) · Express +127. Single source of truth = `shared/types.ts` (PRICING_PLANS) and `CLAUDE.md`. The notes below are dated working history — figures in older entries (e.g. 197/297/497, 149/249/399, page limits) record past states, not current pricing.
+
 ## Original request
 - "https://github.com/Open-Legal-Products/mike integrate to my website bod.legal"
 - Follow-up (current task): "Add the Sign in with Google integration to my app."

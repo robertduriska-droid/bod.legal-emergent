@@ -1,5 +1,7 @@
 # MANUS IMPLEMENTATION BRIEF — bod.legal REBUILD
 
+> **SUPERSEDED — this is the original v1.0 brief (Manus era), kept for history only.** The live product differs. Operator: **KILIAN LEGAL s. r. o.** Live pricing: Bezplatný sken (0 eur, top 3 riziká) · Štandardná kontrola 249 eur (do 20 strán) · Prémiová kontrola 490 eur (do 50 strán) · Express +127 eur. Single source of truth = `shared/types.ts` (PRICING_PLANS) and `CLAUDE.md`. The figures, tables and names below are the original brief and are NOT current (e.g. the pricing table and page limits changed; Manus was fully removed).
+
 Owner: JUDr. Róbert Ďuriška, KILIAN LEGAL s.r.o., Bratislava
 Product: bod.legal (AI contract review, reviewed and signed by an advokát, operated under KILIAN LEGAL s.r.o.)
 Version: 1.0
