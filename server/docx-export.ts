@@ -19,7 +19,7 @@ import {
   PageNumber,
   NumberFormat,
 } from "docx";
-import { sdk } from "./_core/sdk";
+import { sdk, type AuthenticatedUser } from "./_core/sdk";
 import { getContractById, getClausesByContractId, getReportByContractId } from "./db";
 
 type Lang = "sk" | "en";
@@ -655,14 +655,18 @@ async function generateFinalDocx(
 
 export function registerDocxExport(app: Express) {
   app.get("/api/contracts/:id/report.docx", async (req: Request, res: Response) => {
+    // Authenticate first. authenticateRequest throws (it never returns null) on a
+    // missing/invalid session, so map that to a 401 here — otherwise the throw
+    // falls through to the catch below and is reported as a generic 500.
+    let user: AuthenticatedUser;
     try {
-      // Authenticate the request
-      const user = await sdk.authenticateRequest(req);
-      if (!user) {
-        res.status(401).json({ error: "Unauthorized" });
-        return;
-      }
+      user = await sdk.authenticateRequest(req);
+    } catch {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
 
+    try {
       const contractId = parseInt(req.params.id);
       if (isNaN(contractId)) {
         res.status(400).json({ error: "Invalid contract ID" });
@@ -716,13 +720,16 @@ export function registerDocxExport(app: Express) {
   // POST /api/contracts/:id/report-final.docx
   // Body: { decisions: Record<clauseId, 'accepted'|'rejected'>, lang?: 'sk'|'en' }
   app.post("/api/contracts/:id/report-final.docx", async (req: Request, res: Response) => {
+    // Authenticate first — see the note on the report.docx route above.
+    let user: AuthenticatedUser;
     try {
-      const user = await sdk.authenticateRequest(req);
-      if (!user) {
-        res.status(401).json({ error: "Unauthorized" });
-        return;
-      }
+      user = await sdk.authenticateRequest(req);
+    } catch {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
 
+    try {
       const contractId = parseInt(req.params.id);
       if (isNaN(contractId)) {
         res.status(400).json({ error: "Invalid contract ID" });

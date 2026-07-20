@@ -1,7 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { jsPDF } from "jspdf";
 import QRCode from "qrcode";
-import { sdk } from "./_core/sdk";
+import { sdk, type AuthenticatedUser } from "./_core/sdk";
 import { invokeLLM } from "./_core/llm";
 import { getContractById, getClausesByContractId, getReportByContractId } from "./db";
 import { getInterRegularBase64, getInterBoldBase64 } from "./fonts/font-data";
@@ -88,14 +88,18 @@ const LABELS = {
  */
 export function registerPdfExport(app: Express) {
   app.get("/api/contracts/:id/report.pdf", async (req: Request, res: Response) => {
+    // Authenticate first. authenticateRequest throws (it never returns null) on a
+    // missing/invalid session, so map that to a 401 here — otherwise the throw
+    // falls through to the catch below and is reported as a generic 500.
+    let user: AuthenticatedUser;
     try {
-      // Authenticate the request
-      const user = await sdk.authenticateRequest(req);
-      if (!user) {
-        res.status(401).json({ error: "Unauthorized" });
-        return;
-      }
+      user = await sdk.authenticateRequest(req);
+    } catch {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
 
+    try {
       const contractId = parseInt(req.params.id);
       if (isNaN(contractId)) {
         res.status(400).json({ error: "Invalid contract ID" });

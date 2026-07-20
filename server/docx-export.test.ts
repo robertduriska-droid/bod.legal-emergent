@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
 import express from "express";
 import request from "supertest";
+import { ForbiddenError } from "@shared/_core/errors";
 import { registerDocxExport } from "./docx-export";
 
 // Mock the SDK
@@ -43,9 +44,20 @@ describe("DOCX Export Endpoint", () => {
   });
 
   it("should reject unauthenticated requests", async () => {
-    mockAuth.mockResolvedValue(null);
+    // authenticateRequest throws (it never returns null) on a missing/invalid session.
+    mockAuth.mockRejectedValue(ForbiddenError("Invalid session cookie"));
     const res = await request(app).get("/api/contracts/1/report.docx");
     expect(res.status).toBe(401);
+  });
+
+  it("should return 401 (not a generic 500) when the session is invalid — redline export regression", async () => {
+    // Regression: authenticateRequest's thrown ForbiddenError used to fall through to the
+    // handler's catch block and surface as a generic 500 ("Failed to generate DOCX"),
+    // polluting error logs. The redline document is served by the report.docx route.
+    mockAuth.mockRejectedValue(ForbiddenError("Invalid session cookie"));
+    const res = await request(app).get("/api/contracts/1/report.docx");
+    expect(res.status).toBe(401);
+    expect(res.body.error).toBe("Unauthorized");
   });
 
   it("should reject invalid contract ID", async () => {
@@ -221,7 +233,8 @@ describe("Final DOCX Export Endpoint (POST)", () => {
   });
 
   it("should reject unauthenticated requests", async () => {
-    mockAuth.mockResolvedValue(null);
+    // authenticateRequest throws (it never returns null) on a missing/invalid session.
+    mockAuth.mockRejectedValue(ForbiddenError("Invalid session cookie"));
     const res = await request(app)
       .post("/api/contracts/1/report-final.docx")
       .send({ decisions: { "1": "accepted" }, lang: "sk" });
