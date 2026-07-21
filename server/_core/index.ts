@@ -18,6 +18,7 @@ import { registerMarketingSite } from "./marketingSite";
 import { startAnalysisWatchdog } from "./analysisWatchdog";
 import { startReviewReminder, registerReviewReminderDebug } from "./reviewReminder";
 import { registerStatsEndpoint, startWeeklyStatsMailer } from "./weeklyStats";
+import { registerMaintenance, isMaintenance } from "./maintenance";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -44,6 +45,10 @@ async function startServer() {
 
   const app = express();
   const server = createServer(app);
+  // Maintenance holding page. Registered FIRST so it covers the marketing site,
+  // the app and the API. No-op unless maintenance is on. The Stripe webhook and
+  // the read only debug endpoints stay reachable (see maintenance.ts).
+  registerMaintenance(app);
   // Stripe webhook MUST be registered before express.json() for signature verification
   registerStripeWebhook(app);
   // Root-domain marketing site (host-based; app.bod.legal is untouched)
@@ -83,10 +88,18 @@ async function startServer() {
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
     // After listen: background jobs must never delay or block serving.
+    // Retention keeps running even in maintenance: deleting uploads after 30
+    // days is a GDPR commitment, not a feature.
     startRetentionJob();
-    startAnalysisWatchdog();
-    startReviewReminder();
-    startWeeklyStatsMailer();
+    if (!isMaintenance()) {
+      startAnalysisWatchdog();
+      // Both of these send mail. While the service is down they would keep
+      // nagging info@ about a queue nobody can work on, so they stay off.
+      startReviewReminder();
+      startWeeklyStatsMailer();
+    } else {
+      console.log("[Maintenance] analysis watchdog and outgoing mail jobs are disabled.");
+    }
   });
 }
 
