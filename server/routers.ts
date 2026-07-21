@@ -70,6 +70,7 @@ import { LEGAL_SOURCES, RISK_CATEGORIES, PRICING_PLANS } from "@shared/types";
 import Stripe from "stripe";
 import { ENV } from "./_core/env";
 import { STRIPE_PRODUCTS } from "./stripe-products";
+import { isEverythingFree } from "./_core/freeMode";
 
 // ─── Anonymous free-scan claims ─────────────────────────────────────────────
 // Contracts uploaded without a session are owned by a claim token: a random
@@ -619,8 +620,35 @@ export const appRouter = router({
           throw new Error(`Invalid plan: ${planToCharge}`);
         }
 
-        const stripe = new Stripe(ENV.stripeSecretKey);
         const origin = ctx.req.headers.origin || getAppBaseUrl();
+
+        // Everything is free while the service is under review: grant the plan
+        // without touching Stripe, then do exactly what the payment webhook
+        // would have done. The client redirect is unchanged, it just lands on
+        // the success URL straight away.
+        if (isEverythingFree()) {
+          if (contract.status === "pending") {
+            await notifyOwner({
+              title: "Nová zmluva na analýzu (zadarmo)",
+              content: `Zmluva "${contract.fileName}" (plán: ${planToCharge}) bola prijatá bez platby, služba je v režime zadarmo. Analýza sa spúšťa automaticky.`,
+            }).catch(err => console.error("[Notification] Failed:", err));
+
+            await createNotification({
+              userId: ctx.user.id,
+              title: "Analýza sa začína",
+              message: `Analýza zmluvy "${contract.fileName}" sa spúšťa. Služba je momentálne bez poplatku.`,
+              type: "payment_received",
+              contractId: contract.id,
+            }).catch(err => console.error("[Notification] Failed to create:", err));
+
+            analyzeContract(contract.id).catch(err =>
+              console.error(`[Analysis] Failed for contract ${contract.id}:`, err)
+            );
+          }
+          return { checkoutUrl: `${origin}/contract/${input.contractId}?payment=success` };
+        }
+
+        const stripe = new Stripe(ENV.stripeSecretKey);
 
         // Build line items - plan + optional express add-on
         const lineItems: any[] = [
